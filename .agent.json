@@ -1,0 +1,30 @@
+{
+  "enabled": true,
+  "name": "Game Plug",
+  "description": "Platform de gestion de jeux vidéo",
+  "mode": "overlay",
+  "features": {
+    "chat": true,
+    "autofix": false,
+    "codeReview": false,
+    "fileEdit": true
+  },
+  "restrictions": {
+    "maxIterations": 10,
+    "allowedPaths": [
+      "src/**",
+      "public/**",
+      "config/**"
+    ],
+    "forbiddenPaths": [
+      "node_modules/**",
+      ".env",
+      ".git/**"
+    ]
+  },
+  "tools": {
+    "git": true,
+    "shell": true,
+    "filesystem": true
+  }
+}

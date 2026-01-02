@@ -1,0 +1,32 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "Checking for quality issues..."
+echo ""
+
+# 1. TypeScript Check
+echo "[1/2] TypeScript verification..."
+npm run check || {
+  echo ""
+  echo "ERROR: TypeScript errors detected"
+  echo "   Fix errors before committing"
+  echo "   Command: npm run check"
+  exit 1
+}
+echo "OK: TypeScript passed"
+echo ""
+
+# 2. ESLint Check
+echo "[2/2] ESLint verification..."
+npm run lint || {
+  echo ""
+  echo "ERROR: ESLint errors detected"
+  echo "   Fix errors before committing"
+  echo "   Command: npm run lint"
+  exit 1
+}
+echo "OK: ESLint passed"
+echo ""
+
+echo "All quality checks passed. Commit allowed."
+echo ""

@@ -1,0 +1,43 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - img [ref=e8]
+      - generic [ref=e10]: Rejoindre une Session
+      - paragraph [ref=e11]: Entrez le code fourni par votre Maître de Jeu
+    - generic [ref=e12]:
+      - generic [ref=e13]:
+        - text: Code de Session
+        - textbox "Code de Session" [active] [ref=e14]:
+          - /placeholder: ABC123
+          - text: ABC
+        - paragraph [ref=e15]: Code à 6 caractères (lettres et chiffres)
+      - button "Rejoindre la Session" [disabled]:
+        - generic:
+          - img
+          - text: Rejoindre la Session
+      - button "Retour à l'accueil" [ref=e18] [cursor=pointer]:
+        - img
+        - text: Retour à l'accueil
+      - generic [ref=e19]:
+        - heading "Comment obtenir un code ?" [level=3] [ref=e20]
+        - list [ref=e21]:
+          - listitem [ref=e22]: Demandez le code à votre Maître de Jeu
+          - listitem [ref=e23]: Le code est affiché dans son interface MJ
+          - listitem [ref=e24]: Le code reste actif tant que la session est ouverte
+          - listitem [ref=e25]: Vous pourrez créer ou choisir un personnage après connexion
+  - generic [ref=e30] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e31]:
+      - img [ref=e32]
+    - generic [ref=e35]:
+      - button "Open issues overlay" [ref=e36]:
+        - generic [ref=e37]:
+          - generic [ref=e38]: "0"
+          - generic [ref=e39]: "1"
+        - generic [ref=e40]: Issue
+      - button "Collapse issues badge" [ref=e41]:
+        - img [ref=e42]
+  - alert [ref=e44]
+```

@@ -1,0 +1,78 @@
+name: Quality Checks
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  quality-checks:
+    name: Quality Checks (TypeScript + ESLint)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript Check
+        run: |
+          echo "Verifying TypeScript..."
+          npm run check
+          RESULT=$?
+          if [ $RESULT -eq 0 ]; then
+            echo "OK: TypeScript - 0 errors"
+          else
+            echo "ERROR: TypeScript errors detected"
+            exit 1
+          fi
+
+      - name: ESLint Check
+        run: |
+          echo "Verifying ESLint..."
+          npm run lint
+          RESULT=$?
+          if [ $RESULT -eq 0 ]; then
+            echo "OK: ESLint - No issues"
+          else
+            echo "ERROR: ESLint issues detected"
+            exit 1
+          fi
+
+      - name: Build Check
+        run: |
+          echo "Verifying build..."
+          npm run build
+          RESULT=$?
+          if [ $RESULT -eq 0 ]; then
+            echo "OK: Build successful"
+          else
+            echo "ERROR: Build failed"
+            exit 1
+          fi
+
+      - name: All Checks Passed
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "  ALL QUALITY CHECKS PASSED"
+          echo "=========================================="
+          echo ""
+          echo "✓ TypeScript: 0 errors"
+          echo "✓ ESLint: No issues"
+          echo "✓ Build: Success"
+          echo ""

@@ -1,0 +1,111 @@
+# ==============================================================================
+# Docker Compose - Development Multi-Container (Next.js + NestJS)
+# ==============================================================================
+# Usage: docker compose -f docker-compose.dev.yml watch
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: game-plug-db-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: roleplug
+      POSTGRES_USER: roleplug
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-roleplug_dev}
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ./server/init-schema.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5434:5432"
+    networks:
+      - ia-webdev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U roleplug"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # NestJS Backend
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: development
+    container_name: game-plug-backend-dev
+    restart: unless-stopped
+    command: npm run start:dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://roleplug:${POSTGRES_PASSWORD:-roleplug_dev}@postgres:5432/roleplug
+      SESSION_SECRET: ${SESSION_SECRET:-dev-secret}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    volumes:
+      - ./server/src:/app/src
+      - ./shared:/app/shared
+      - avatars_dev:/app/public/avatars
+    ports:
+      - "40120:3000"
+    networks:
+      - ia-webdev-network
+    develop:
+      watch:
+        - action: sync
+          path: ./server/src
+          target: /app/src
+          ignore:
+            - node_modules/
+            - dist/
+        - action: rebuild
+          path: ./server/package.json
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+      target: development
+    container_name: game-plug-frontend-dev
+    restart: unless-stopped
+    command: npm run dev
+    depends_on:
+      - backend
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://backend:3000
+      NEXT_PUBLIC_WS_URL: ws://backend:3000
+    volumes:
+      - ./app/app:/app/app
+      - ./app/components:/app/components
+      - ./app/hooks:/app/hooks
+      - ./app/lib:/app/lib
+      - ./shared:/app/shared
+    ports:
+      - "40121:3000"
+    networks:
+      - ia-webdev-network
+    develop:
+      watch:
+        - action: sync
+          path: ./app
+          target: /app
+          ignore:
+            - node_modules/
+            - .next/
+        - action: rebuild
+          path: ./app/package.json
+
+volumes:
+  postgres_data_dev:
+    name: game-plug-postgres-dev
+  avatars_dev:
+    name: game-plug-avatars-dev
+
+networks:
+  ia-webdev-network:
+    external: true
+    name: ia-webdev_ia-webdev-network
