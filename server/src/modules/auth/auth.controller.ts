@@ -45,26 +45,26 @@ export class AuthController {
   ) {
     const user = await this.authService.signupGM(signupData);
 
-    // Create session for the new user (same as Express backend)
-    (req.session as any).user = {
-      id: user.id,
-      email: user.email,
-      authType: 'local',
-    };
+    // Use Passport's session management for proper serialization
+    // This ensures req.session.passport.user is properly set for subsequent requests
+    return new Promise((resolve, reject) => {
+      req.login(user, (err) => {
+        if (err) {
+          return reject(err);
+        }
 
-    // Also set req.user for consistency with Passport
-    (req as any).user = user;
-
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        isGM: user.isGM,
-        authType: user.authType,
-      },
-    };
+        resolve({
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            isGM: user.isGM,
+            authType: user.authType,
+          },
+        });
+      });
+    });
   }
 
   /**
@@ -80,26 +80,25 @@ export class AuthController {
     try {
       const user = await this.authService.authenticateLocal(loginData);
 
-      // Create session for the authenticated user (same as Express backend)
-      (req.session as any).user = {
-        id: user.id,
-        email: user.email,
-        authType: 'local',
-      };
+      // Use Passport's session management for proper serialization
+      return new Promise((resolve, reject) => {
+        req.login(user, (err) => {
+          if (err) {
+            return reject(new UnauthorizedException('Session creation failed'));
+          }
 
-      // Also set req.user for consistency with Passport
-      (req as any).user = user;
-
-      return {
-        user: {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          isGM: user.isGM,
-          authType: user.authType,
-        },
-      };
+          resolve({
+            user: {
+              id: user.id,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              isGM: user.isGM,
+              authType: user.authType,
+            },
+          });
+        });
+      });
     } catch (error) {
       // Re-throw UnauthorizedException from service
       if (error instanceof UnauthorizedException) {
@@ -118,15 +117,20 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   logout(@Req() req: Request, @Res() res: Response) {
-    // Clear user from session (same as Express backend)
-    (req.session as any).user = null;
-
-    req.session.destroy((err) => {
+    // Use Passport's logout which properly clears req.user and session
+    req.logout((err) => {
       if (err) {
-        console.error('Error destroying session:', err);
+        console.error('Error during logout:', err);
         return res.status(500).json({ message: 'Erreur lors de la déconnexion' });
       }
-      res.json({ message: 'Déconnecté avec succès' });
+
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('Error destroying session:', err);
+          return res.status(500).json({ message: 'Erreur lors de la déconnexion' });
+        }
+        res.json({ message: 'Déconnecté avec succès' });
+      });
     });
   }
 

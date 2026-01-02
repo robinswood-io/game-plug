@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,7 @@ type SignupForm = z.infer<typeof gmSignupSchema>;
 export default function GMSignup() {
   const router = useRouter();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<SignupForm>({
@@ -44,6 +45,8 @@ export default function GMSignup() {
       return authApi.signup(data);
     },
     onSuccess: () => {
+      // Invalider le cache useAuth pour refetcher les données utilisateur
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       toast({
         title: "Compte créé avec succès !",
         description: "Vous êtes maintenant connecté en tant que Maître de Jeu.",

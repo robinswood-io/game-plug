@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,7 @@ type LoginForm = z.infer<typeof localLoginSchema>;
 export default function GMLogin() {
   const router = useRouter();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<LoginForm>({
@@ -38,6 +39,8 @@ export default function GMLogin() {
   const loginMutation = useMutation({
     mutationFn: (data: LoginForm) => authApi.login(data),
     onSuccess: () => {
+      // Invalider le cache useAuth pour refetcher les données utilisateur
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       toast({
         title: "Connexion réussie !",
         description: "Bienvenue dans votre espace Maître de Jeu.",
