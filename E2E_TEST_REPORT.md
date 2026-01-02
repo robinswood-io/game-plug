@@ -8,7 +8,7 @@
 
 ## 📊 Résumé Exécutif
 
-### ✅ Tests Réussis : 13/15 (87%)
+### ✅ Tests Réussis : 16/18 (89%) - MAJ après correction middleware
 
 **Points Forts:**
 - ✅ **Console errors: 0** sur page d'accueil (CRITIQUE)
@@ -20,6 +20,18 @@
 **Problèmes Identifiés:**
 - 🐛 **BUG CRITIQUE**: Middleware Next.js - boucle de redirection infinie
 - ⚠️ Routes publiques inaccessibles (`/gm-login`, `/gm-signup`, `/join`)
+
+**✅ CORRECTION APPLIQUÉE (2026-01-02):**
+- Commit: `372d5ee` - fix: correction middleware - routes publiques accessibles
+- Modifications:
+  - `app/middleware.ts`: Ajout publicRoutes, modification `/gm` → `/gm/`, logique exclusion
+  - `docker-compose.dev.yml`: Ajout volume mount `./app/middleware.ts:/app/middleware.ts`
+- **Tests post-correction (Playwright):**
+  - `/gm-login`: ✅ 200 OK, 1 form, 2 fields, 0 console errors
+  - `/gm-signup`: ✅ 200 OK, 1 form, 4 fields, 0 console errors
+  - `/join`: ✅ 200 OK, 1 field, 0 console errors
+  - Formulaire login interactif: ✅ Champs remplissables
+- **Statut:** 🎯 **CORRIGÉ - 3/3 routes publiques accessibles**
 
 ---
 
