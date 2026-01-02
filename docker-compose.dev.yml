@@ -83,6 +83,7 @@ services:
       - ./app/components:/app/components
       - ./app/hooks:/app/hooks
       - ./app/lib:/app/lib
+      - ./app/middleware.ts:/app/middleware.ts
       - ./shared:/app/shared
     ports:
       - "40121:3000"

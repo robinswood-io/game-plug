@@ -5,20 +5,30 @@ export function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get('connect.sid');
   const { pathname } = request.nextUrl;
 
+  // Define public routes (accessible without authentication)
+  const publicRoutes = [
+    '/gm-login',
+    '/gm-signup',
+    '/join',
+  ];
+
   // Define protected routes
   const protectedRoutes = [
     '/sessions',
     '/character',
-    '/gm',
+    '/gm/',  // Slash final pour éviter de protéger /gm-login
     '/character-creation',
     '/character-edit',
   ];
 
+  // Check if current path is a public route
+  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
+
   // Check if the current path starts with any protected route
   const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
 
-  // If protected route and no session cookie, redirect to login
-  if (isProtectedRoute && !sessionCookie) {
+  // If protected route, not public, and no session cookie, redirect to login
+  if (isProtectedRoute && !isPublicRoute && !sessionCookie) {
     return NextResponse.redirect(new URL('/gm-login', request.url));
   }
 
