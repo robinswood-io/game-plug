@@ -84,6 +84,7 @@ services:
       - ./app/hooks:/app/hooks
       - ./app/lib:/app/lib
       - ./app/middleware.ts:/app/middleware.ts
+      - ./app/public:/app/public
       - ./shared:/app/shared
     ports:
       - "40121:3000"
