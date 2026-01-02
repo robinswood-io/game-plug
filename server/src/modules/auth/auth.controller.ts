@@ -8,6 +8,8 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
@@ -27,6 +29,8 @@ import type { User } from '../../shared/schema';
  */
 @Controller('api/auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(private readonly authService: AuthService) {}
 
   /**
@@ -73,28 +77,38 @@ export class AuthController {
     @Body(new ZodValidationPipe(loginSchema)) loginData: LoginDto,
     @Req() req: Request,
   ) {
-    const user = await this.authService.authenticateLocal(loginData);
+    try {
+      const user = await this.authService.authenticateLocal(loginData);
 
-    // Create session for the authenticated user (same as Express backend)
-    (req.session as any).user = {
-      id: user.id,
-      email: user.email,
-      authType: 'local',
-    };
-
-    // Also set req.user for consistency with Passport
-    (req as any).user = user;
-
-    return {
-      user: {
+      // Create session for the authenticated user (same as Express backend)
+      (req.session as any).user = {
         id: user.id,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        isGM: user.isGM,
-        authType: user.authType,
-      },
-    };
+        authType: 'local',
+      };
+
+      // Also set req.user for consistency with Passport
+      (req as any).user = user;
+
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          isGM: user.isGM,
+          authType: user.authType,
+        },
+      };
+    } catch (error) {
+      // Re-throw UnauthorizedException from service
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      // Log unexpected errors but still return 401
+      this.logger.error('Login error:', error);
+      throw new UnauthorizedException('Authentication failed');
+    }
   }
 
   /**
