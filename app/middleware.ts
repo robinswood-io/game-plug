@@ -15,6 +15,7 @@ export function middleware(request: NextRequest) {
   // Define protected routes
   const protectedRoutes = [
     '/sessions',
+    '/session',  // Protect /session/:id routes (select-character, etc.)
     '/character',
     '/gm/',  // Slash final pour éviter de protéger /gm-login
     '/character-creation',
