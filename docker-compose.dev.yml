@@ -76,8 +76,8 @@ services:
       - backend
     environment:
       NODE_ENV: development
-      NEXT_PUBLIC_API_URL: http://backend:3000
-      NEXT_PUBLIC_WS_URL: ws://backend:3000
+      # Use public URL for browser access (via nginx)
+      NEXT_PUBLIC_API_URL: https://game-plug.robinswood.io
     volumes:
       - ./app/app:/app/app
       - ./app/components:/app/components

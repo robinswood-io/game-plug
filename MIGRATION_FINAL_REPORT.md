@@ -123,6 +123,22 @@ docker compose -f docker-compose.dev.yml up -d
 
 ---
 
+## Configuration Finale
+
+### Docker Compose (Multi-Container)
+- **Fichier**: `docker-compose.dev.yml`
+- **Services**: postgres (5434), backend (40120), frontend (40121)
+- **Réseau**: ia-webdev-network (externe)
+- **Env vars frontend**: `NEXT_PUBLIC_API_URL=https://game-plug.robinswood.io`
+
+### Nginx Configuration
+- **Fichier**: `/opt/ia-webdev/nginx/conf.d/game-plug.conf`
+- **Routes**:
+  - `/api/` → backend (NestJS)
+  - `/game-ws/` → backend (Socket.IO WebSocket)
+  - `/` → frontend (Next.js)
+  - `/_next/webpack-hmr` → frontend HMR
+
 ## Issues à Résoudre (Phase Post-Migration)
 
 1. **Type Errors Frontend** (React 19 + Radix UI)
@@ -134,8 +150,8 @@ docker compose -f docker-compose.dev.yml up -d
    - Optimiser bundle size
 
 3. **Tests E2E**
-   - Créer tests Playwright pour parcours utilisateur
-   - Valider WebSocket en conditions réelles
+   - Créer tests Playwright pour parcours utilisateur complets
+   - Valider WebSocket en conditions réelles (sessions multi-joueurs)
 
 ---
 
