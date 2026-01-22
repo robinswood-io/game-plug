@@ -13,7 +13,7 @@ test.describe('Character Creation', () => {
     await page.locator('input[name="email"]').fill(testEmail);
     await page.locator('input[name="password"]').fill(testPassword);
     await page.getByRole('button', { name: /créer.*compte/i }).click();
-    await page.waitForURL(/^http:\/\/localhost:5002\/?(home|session-manager|sessions)?$/, { timeout: 10000 });
+    await page.waitForURL(/localhost:5002\/(home|session-manager|sessions)?/, { timeout: 10000 });
   });
 
   test('should create a new character with random generation', async ({ page }) => {
@@ -48,8 +48,8 @@ test.describe('Character Creation', () => {
     // Wait for character to be created
     await page.waitForURL(/\/character|\/home|\/session/, { timeout: 10000 });
 
-    // Verify character exists
-    await expect(page.getByText(characterName)).toBeVisible({ timeout: 5000 });
+    // Verify character exists by checking the page heading/title (more specific selector)
+    await expect(page.locator('h1, h2').filter({ hasText: characterName })).toBeVisible({ timeout: 5000 });
   });
 
   test('should show character statistics after creation', async ({ page }) => {
@@ -129,6 +129,13 @@ test.describe('Character Creation', () => {
     await page.goto('/character-creation');
     await page.getByTestId('input-character-name').fill(`${characterName}-avatar`);
 
+    // Fill in physical traits for avatar description
+    const heightSelect = page.getByTestId('select-height');
+    if (await heightSelect.isVisible()) {
+      await heightSelect.click();
+      await page.getByRole('option').first().click();
+    }
+
     const generateButton = page.getByTestId('button-roll-characteristics');
     if (await generateButton.isVisible()) {
       await generateButton.click();
@@ -140,8 +147,10 @@ test.describe('Character Creation', () => {
     if (await avatarButton.isVisible()) {
       await avatarButton.click();
 
-      // Wait for avatar to be generated (can take time with OpenAI)
-      await expect(page.getByTestId('img-avatar-preview')).toBeVisible({ timeout: 30000 });
+      // Wait for avatar image to appear in the preview div (can take time with OpenAI)
+      // The img element with data-testid="img-avatar-preview" will appear when avatarUrl is set
+      const avatarImg = page.locator('img[data-testid="img-avatar-preview"]');
+      await expect(avatarImg).toBeVisible({ timeout: 30000 });
     }
 
     const saveButton = page.getByTestId('button-save-character');

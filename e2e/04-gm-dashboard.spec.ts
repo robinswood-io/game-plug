@@ -37,30 +37,44 @@ test.describe('GM Dashboard Features', () => {
 
   test('should load GM dashboard successfully', async ({ page }) => {
     await page.goto('/session-manager');
+    await page.waitForTimeout(1000);
 
-    // Click on GM dashboard link
-    const dashboardLink = page.getByRole('link', { name: /dashboard|tableau.*bord|gérer|manage/i }).first();
-    if (await dashboardLink.isVisible()) {
-      await dashboardLink.click();
-      await page.waitForURL(/\/gm-dashboard|\/session\/.*\/dashboard/);
+    // Navigate to GM dashboard - look for the created session and access its dashboard
+    const sessionLink = page.getByText(sessionName).first();
+    if (await sessionLink.isVisible({ timeout: 5000 })) {
+      // Click on the session to enter it
+      await sessionLink.click();
+      await page.waitForTimeout(1000);
+
+      // Check if we're on GM dashboard or session page
+      const dashboardIndicator = page.getByText(/Interface Maître de Jeu|GM Dashboard|Maître/i);
+      if (await dashboardIndicator.isVisible({ timeout: 5000 })) {
+        // Already on dashboard
+      } else {
+        // Navigate to dashboard
+        const dashboardLink = page.getByRole('link', { name: /dashboard|tableau.*bord/i }).first();
+        if (await dashboardLink.isVisible({ timeout: 3000 })) {
+          await dashboardLink.click();
+        }
+      }
     } else {
-      // Direct navigation
+      // Direct navigation as fallback
       await page.goto('/gm-dashboard-simplified');
     }
 
-    // Verify dashboard loaded
-    await expect(page.getByText(/personnages|characters|joueurs|players|session/i)).toBeVisible({ timeout: 10000 });
+    // Verify dashboard loaded - check for session name in header
+    await expect(page.getByTestId('text-session-name')).toBeVisible({ timeout: 10000 });
   });
 
   test('should display character list in dashboard', async ({ page }) => {
     await page.goto('/gm-dashboard-simplified');
     await page.waitForTimeout(2000);
 
-    // Should see characters section
-    const charactersSection = page.getByText(/personnages|characters|roster|liste/i);
-    await expect(charactersSection).toBeVisible({ timeout: 10000 });
+    // Should see character card with name - using more specific selector
+    const characterCard = page.locator(`[data-testid*="text-character-name"]`).first();
+    await expect(characterCard).toBeVisible({ timeout: 10000 });
 
-    // Should see the created character
+    // Should see the created character name somewhere on the page
     await expect(page.getByText(characterName)).toBeVisible({ timeout: 5000 });
   });
 
@@ -104,20 +118,21 @@ test.describe('GM Dashboard Features', () => {
       await chaptersButton.click();
       await page.waitForTimeout(1000);
 
-      // Fill chapter details
-      const nameInput = page.getByLabel(/Nom du Chapitre|Chapter Name/i);
-      if (await nameInput.isVisible()) {
+      // Fill chapter details - look for input with proper label
+      const nameInput = page.locator('input[placeholder*="Chapitre"]').first();
+      if (await nameInput.isVisible({ timeout: 3000 })) {
         await nameInput.fill('Chapter 1: The Investigation Begins');
+        await page.waitForTimeout(500);
       }
 
-      // Save chapter
-      const saveButton = page.getByRole('button', { name: /Créer|Create|Enregistrer|Save/i }).last();
-      if (await saveButton.isVisible()) {
+      // Save chapter - look for submit button in the form
+      const saveButton = page.locator('button:has-text("Créer")').first();
+      if (await saveButton.isVisible({ timeout: 3000 })) {
         await saveButton.click();
         await page.waitForTimeout(1000);
       }
 
-      // Verify chapter created
+      // Verify chapter created - wait for the text to appear
       await expect(page.getByText(/Investigation Begins|Chapter 1/i)).toBeVisible({ timeout: 5000 });
     }
   });
@@ -146,10 +161,11 @@ test.describe('GM Dashboard Features', () => {
     const gameboardButton = page.locator('button[data-testid="button-floating-projection"]');
     if (await gameboardButton.isVisible({ timeout: 5000 })) {
       await gameboardButton.click();
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(1500);
 
-      // Should open projection dialog
-      await expect(page.getByText(/projection|Projection|Visual|Visuelle/i)).toBeVisible({ timeout: 5000 });
+      // Should open projection dialog - look for modal or dialog content
+      const projectionContent = page.locator('[role="dialog"]').first();
+      await expect(projectionContent).toBeVisible({ timeout: 5000 });
     }
   });
 
@@ -180,22 +196,21 @@ test.describe('GM Dashboard Features', () => {
     await page.goto('/gm-dashboard-simplified');
     await page.waitForTimeout(2000);
 
-    // Look for NPC/enemy related buttons - we'll use the narrative section as fallback
-    // since NPCs are often managed through narrative entries or a dedicated section
-    const narrativeTextarea = page.locator('textarea[data-testid="textarea-narrative-entry"]');
+    // Look for the custom narration textarea in the Narrative Tools
+    const narrativeTextarea = page.locator('textarea[data-testid="textarea-custom-narration"]');
     if (await narrativeTextarea.isVisible({ timeout: 5000 })) {
-      // Add NPC as a narrative entry for now
+      // Add NPC as a narrative entry
       await narrativeTextarea.fill('Mysterious Stranger - A hooded figure with unknown intentions');
       await page.waitForTimeout(500);
 
-      // Save as NPC entry
-      const saveButton = page.locator('button[data-testid="button-save-narrative"]');
-      if (await saveButton.isVisible()) {
-        await saveButton.click();
+      // Send as narration
+      const sendButton = page.locator('button[data-testid="button-send-narration"]');
+      if (await sendButton.isVisible({ timeout: 3000 })) {
+        await sendButton.click();
         await page.waitForTimeout(1000);
       }
 
-      // Verify NPC/entry created
+      // Verify entry was added to narrative history
       await expect(page.getByText(/Mysterious Stranger|hooded figure/i)).toBeVisible({ timeout: 5000 });
     }
   });
