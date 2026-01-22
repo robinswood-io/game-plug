@@ -35,7 +35,8 @@ export const users = pgTable("users", {
   // Local authentication fields
   passwordHash: varchar("password_hash"), // For local GM accounts
   authType: varchar("auth_type").default('replit'), // 'replit' or 'local'
-  isGM: boolean("is_gm").default(false), // Flag to identify GMs
+  isGM: boolean("is_gm").default(false), // Flag to identify GMs (legacy)
+  role: varchar("role").default('player').notNull(), // RBAC role: 'admin', 'gamemaster', 'player'
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -374,6 +375,31 @@ export const insertNarrativeEntrySchema = createInsertSchema(narrativeEntries).o
   id: true,
   createdAt: true,
   updatedAt: true,
+});
+
+// Refresh tokens table (for @robinswood/auth)
+export const refreshTokens = pgTable("refresh_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  token: varchar("token", { length: 128 }).unique().notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  familyId: varchar("family_id").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdFromIp: varchar("created_from_ip", { length: 45 }),
+  createdByUserAgent: text("created_by_user_agent"),
+  isRevoked: boolean("is_revoked").default(false).notNull(),
+  usedAt: timestamp("used_at"),
+  replacedBy: varchar("replaced_by", { length: 128 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Password reset tokens table (for @robinswood/auth)
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").references(() => users.email, { onDelete: 'cascade' }),
+  token: text("token").unique().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Local signup schema for GMs

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../../common/database/database.service';
 import { GameplayService } from '../gameplay.service';
-import type { Character, ActiveEffect } from '@shared/schema';
+import type { Character, ActiveEffect } from '../../../shared/schema';
 
 export interface EffectProcessingResult {
   updateData: Partial<Character>;

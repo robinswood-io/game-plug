@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Character } from '@shared/schema';
+import type { Character } from '../../../shared/schema';
 import { BuffsService } from './buffs.service';
 
 @Injectable()

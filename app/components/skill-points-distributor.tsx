@@ -250,7 +250,7 @@ export default function SkillPointsDistributor({
                       size="sm"
                       variant="outline"
                       onClick={() => adjustPoints(skill.key, -1)}
-                      disabled={!pendingPoints[skill.key] || pendingPoints[skill.key] <= 0}
+                      disabled={(pendingPoints[skill.key] ?? 0) <= 0}
                       className="h-8 w-8 p-0"
                     >
                       <Minus className="h-3 w-3" />

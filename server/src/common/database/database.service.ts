@@ -45,6 +45,15 @@ export class DatabaseService implements OnModuleDestroy {
   }
 
   /**
+   * Get the PostgreSQL connection pool
+   * Used by session store (PGStore) to share the same pool as Drizzle
+   * This ensures consistent connection pooling configuration
+   */
+  getPool(): Pool {
+    return this.pool;
+  }
+
+  /**
    * Get the database schema
    */
   get schema() {
@@ -56,6 +65,23 @@ export class DatabaseService implements OnModuleDestroy {
    */
   async transaction<T>(callback: (tx: any) => Promise<T>): Promise<T> {
     return this.client.transaction(callback);
+  }
+
+  /**
+   * Get user ID from email (for @robinswood/auth compatibility)
+   */
+  async getUserIdByEmail(email: string): Promise<string> {
+    const [user] = await this.drizzle
+      .select({ id: schema.users.id })
+      .from(schema.users)
+      .where(eq(schema.users.email, email))
+      .limit(1);
+
+    if (!user) {
+      throw new Error(`User with email ${email} not found`);
+    }
+
+    return user.id;
   }
 
   // Character operations

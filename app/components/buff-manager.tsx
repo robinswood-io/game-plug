@@ -254,20 +254,22 @@ export default function BuffManager({ characters, onApplyBuff }: BuffManagerProp
     // Parse dice formulas like "1d6+2"
     const diceRegex = /(\d+)d(\d+)([+-]\d+)?/;
     const match = formula.match(diceRegex);
-    
-    if (match) {
-      const [, count, sides, modifier] = match;
+
+    if (match && match[1] && match[2]) {
+      const count = parseInt(match[1], 10);
+      const sides = parseInt(match[2], 10);
+      const modifier = match[3] ? parseInt(match[3], 10) : 0;
+
       let total = 0;
-      for (let i = 0; i < parseInt(count); i++) {
-        total += Math.floor(Math.random() * parseInt(sides)) + 1;
+      for (let i = 0; i < count; i++) {
+        total += Math.floor(Math.random() * sides) + 1;
       }
-      if (modifier) {
-        total += parseInt(modifier);
-      }
+      total += modifier;
       return total;
     }
-    
-    return parseInt(formula) || 0;
+
+    const parsed = parseInt(formula, 10);
+    return isNaN(parsed) ? 0 : parsed;
   };
 
   const handleApplyBuff = async () => {
@@ -338,10 +340,14 @@ export default function BuffManager({ characters, onApplyBuff }: BuffManagerProp
   };
 
   const categorizedPresets = BUFF_PRESETS.reduce((acc, preset) => {
-    if (!acc[preset.category]) {
-      acc[preset.category] = [];
+    const category = preset.category;
+    if (!acc[category]) {
+      acc[category] = [];
     }
-    acc[preset.category].push(preset);
+    const presetList = acc[category];
+    if (presetList) {
+      presetList.push(preset);
+    }
     return acc;
   }, {} as Record<string, BuffPreset[]>);
 

@@ -242,11 +242,12 @@ export default function GMRollWithEffects({
           const character = characters.find(c => c.id === charId);
           
           if (character) {
+            const presetLabel = selectedPreset?.label ?? 'Effect';
             await onApplyEffect({
               characterIds: [charId],
               effectType: effectType as any,
               value,
-              description: `${description || selectedPreset.label}: ${value} points`
+              description: `${description || presetLabel}: ${value} points`
             });
           }
         });
@@ -256,9 +257,10 @@ export default function GMRollWithEffects({
         const totalAffected = selectedCharacters.length;
         const avgResult = Array.from(results.values()).reduce((a, b) => a + b, 0) / results.size;
         
+        const presetLabel = selectedPreset?.label ?? 'Effect';
         toast({
           title: "Effets appliqués",
-          description: `${selectedPreset.label} appliqué à ${totalAffected} personnage(s). Moyenne: ${avgResult.toFixed(1)}`,
+          description: `${presetLabel} appliqué à ${totalAffected} personnage(s). Moyenne: ${avgResult.toFixed(1)}`,
         });
       }
       
@@ -325,7 +327,7 @@ export default function GMRollWithEffects({
           <TabsContent value="preset" className="space-y-4 mt-4">
             <div className="space-y-2">
               <Label>Type de jet</Label>
-              <Select value={selectedPreset.value} onValueChange={handlePresetChange}>
+              <Select value={selectedPreset?.value ?? ''} onValueChange={handlePresetChange}>
                 <SelectTrigger data-testid="select-preset-roll">
                   <SelectValue />
                 </SelectTrigger>
@@ -346,7 +348,7 @@ export default function GMRollWithEffects({
               </Select>
             </div>
 
-            {selectedPreset.canApplyEffect && (
+            {selectedPreset?.canApplyEffect && (
               <div className="p-3 bg-gray-800/50 rounded-lg space-y-2">
                 <div className="flex items-center justify-between">
                   <Label className="text-sm">Appliquer automatiquement l'effet</Label>

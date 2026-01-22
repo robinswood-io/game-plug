@@ -7,7 +7,9 @@ import {
   MessageBody,
   ConnectedSocket,
 } from '@nestjs/websockets';
+import { UseGuards } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
+import { WsJwtGuard } from '../../common/guards/ws-jwt.guard';
 import {
   JoinSessionData,
   RollData,
@@ -22,19 +24,23 @@ import {
 @WebSocketGateway({
   path: '/game-ws',
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: process.env.FRONTEND_URL || 'http://localhost:3001',
     credentials: true,
   },
 })
+@UseGuards(WsJwtGuard) // ✅ Authenticate all WebSocket connections
 export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
   handleConnection(client: ExtendedSocket) {
-    console.log(`New WebSocket connection: ${client.id}`);
+    // User is already authenticated via WsJwtGuard
+    const user = (client as any).user;
+    console.log(`Authenticated WebSocket connection: ${client.id}, user: ${user.email}`);
+
     client.emit('message', {
       type: 'connected',
-      data: 'Connected to Call of Cthulhu game server',
+      data: `Welcome ${user.email} to Call of Cthulhu game server`,
       timestamp: new Date(),
     });
   }
@@ -51,26 +57,29 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
     @ConnectedSocket() client: ExtendedSocket,
     @MessageBody() data: JoinSessionData,
   ) {
+    // Extract authenticated user from JWT (set by WsJwtGuard)
+    const user = (client as any).user;
+
     client.sessionId = data.sessionId;
-    client.userId = data.userId;
+    client.userId = user.email; // ✅ Use authenticated user email (NOT client-provided userId)
 
     console.log(
-      `Socket ${client.id} joined session ${data.sessionId} with userId: ${data.userId || 'guest'}, role: ${data.role || 'player'}`,
+      `Socket ${client.id} joined session ${data.sessionId} as authenticated user: ${user.email}, role: ${user.role}`,
     );
 
     client.join(`session:${data.sessionId}`);
 
-    if (data.userId) {
-      client.to(`session:${data.sessionId}`).emit('message', {
-        type: 'user_joined',
-        data: { userId: data.userId },
-        timestamp: new Date(),
-      });
-    }
+    // Broadcast to other users in session
+    client.to(`session:${data.sessionId}`).emit('message', {
+      type: 'user_joined',
+      data: { userId: user.email, role: user.role },
+      timestamp: new Date(),
+    });
 
+    // Confirm to joining client
     client.emit('message', {
       type: 'joined_session',
-      data: { sessionId: data.sessionId },
+      data: { sessionId: data.sessionId, userId: user.email },
       timestamp: new Date(),
     });
   }

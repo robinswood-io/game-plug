@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService, type InsertActiveEffect } from '../../../common/database/database.service';
-import { activeEffects } from '@shared/schema';
+import { activeEffects } from '../../../shared/schema';
 import { eq, and } from 'drizzle-orm';
 
 // Call of Cthulhu 7th Edition - Status Effects Logic

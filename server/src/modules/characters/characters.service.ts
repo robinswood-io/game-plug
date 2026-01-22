@@ -17,6 +17,23 @@ export class CharactersService {
     private readonly sessionsGateway: SessionsGateway,
   ) {}
 
+  /**
+   * Get user ID from email (for @robinswood/auth compatibility)
+   */
+  private async getUserIdByEmail(email: string): Promise<string> {
+    const [user] = await this.db.client
+      .select({ id: this.db.schema.users.id })
+      .from(this.db.schema.users)
+      .where(eq(this.db.schema.users.email, email))
+      .limit(1);
+
+    if (!user) {
+      throw new NotFoundException(`User with email ${email} not found`);
+    }
+
+    return user.id;
+  }
+
   async createCharacter(
     data: CreateCharacterDto,
     sessionId: string,
@@ -351,5 +368,45 @@ export class CharactersService {
       .where(eq(this.db.schema.characters.id, characterId));
 
     return character?.userId === userId;
+  }
+
+  // ===============================================
+  // Email-based wrapper methods (for @robinswood/auth compatibility)
+  // ===============================================
+
+  /**
+   * Create character using user email
+   */
+  async createCharacterByEmail(
+    data: CreateCharacterDto,
+    sessionId: string,
+    userEmail?: string,
+  ): Promise<Character> {
+    const userId = userEmail ? await this.getUserIdByEmail(userEmail) : undefined;
+    return this.createCharacter(data, sessionId, userId);
+  }
+
+  /**
+   * Get characters by user email
+   */
+  async getCharactersByUserEmail(userEmail: string): Promise<Character[]> {
+    const userId = await this.getUserIdByEmail(userEmail);
+    return this.getCharactersByUser(userId);
+  }
+
+  /**
+   * Check GM ownership using email
+   */
+  async checkGMOwnershipByEmail(characterId: string, userEmail: string): Promise<boolean> {
+    const userId = await this.getUserIdByEmail(userEmail);
+    return this.checkGMOwnership(characterId, userId);
+  }
+
+  /**
+   * Check character ownership using email
+   */
+  async checkCharacterOwnershipByEmail(characterId: string, userEmail: string): Promise<boolean> {
+    const userId = await this.getUserIdByEmail(userEmail);
+    return this.checkCharacterOwnership(characterId, userId);
   }
 }

@@ -4,13 +4,13 @@ import {
   Body,
   Param,
   UseGuards,
-  Request,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { DatabaseService } from '../../common/database/database.service';
-import { SessionAuthGuard } from '../../common/guards/session-auth.guard';
+import { JwtAuthGuard, User } from '@robinswood/auth';
+import type { IAuthUser } from '@robinswood/auth';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { GenerateAvatarDto, generateAvatarSchema } from './dto/generate-avatar.dto';
 import { GenerateSceneDto, generateSceneSchema } from './dto/generate-scene.dto';
@@ -27,7 +27,7 @@ export class AiController {
    * POST /api/generate-avatar
    */
   @Post('generate-avatar')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async generateAvatar(
     @Body(new ZodValidationPipe(generateAvatarSchema)) dto: GenerateAvatarDto,
   ) {
@@ -97,14 +97,14 @@ export class AiController {
    * POST /api/sessions/:sessionId/generate-all-avatars
    */
   @Post('sessions/:sessionId/generate-all-avatars')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async generateSessionAvatars(
     @Param('sessionId') sessionId: string,
     @Body() body: { forceRegenerate?: boolean },
-    @Request() req: any,
+    @User() user: IAuthUser,
   ) {
     try {
-      const userId = req.user?.id;
+      const userId = await this.db.getUserIdByEmail(user.email);
       const { forceRegenerate = false } = body;
 
       // Check if user is GM
@@ -187,10 +187,10 @@ export class AiController {
    * POST /api/migrate-avatars
    */
   @Post('migrate-avatars')
-  @UseGuards(SessionAuthGuard)
-  async migrateAvatars(@Request() req: any) {
+  @UseGuards(JwtAuthGuard)
+  async migrateAvatars(@User() user: IAuthUser) {
     try {
-      console.log(`Avatar migration triggered by user ${req.user?.id}`);
+      console.log(`Avatar migration triggered by user ${user.email}`);
 
       const result = await this.aiService.migrateExistingAvatars();
 
@@ -209,14 +209,14 @@ export class AiController {
    * POST /api/gameboard/generate-scene
    */
   @Post('gameboard/generate-scene')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async generateScene(
     @Body(new ZodValidationPipe(generateSceneSchema)) dto: GenerateSceneDto,
     @Body() body: { sessionId?: string },
-    @Request() req: any,
+    @User() user: IAuthUser,
   ) {
     try {
-      const userId = req.user?.id;
+      const userId = await this.db.getUserIdByEmail(user.email);
       const { prompt } = dto;
       const { sessionId } = body;
 

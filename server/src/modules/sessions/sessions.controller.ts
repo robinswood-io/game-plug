@@ -6,13 +6,13 @@ import {
   Delete,
   Body,
   Param,
-  Req,
   UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
 import { SessionsService } from './sessions.service';
-import { SessionAuthGuard } from '../../common/guards/session-auth.guard';
+import { JwtAuthGuard, User } from '@robinswood/auth';
+import type { IAuthUser } from '@robinswood/auth';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import {
   createSessionSchema,
@@ -30,8 +30,6 @@ import {
   updateChapterSchema,
   type UpdateChapterDto,
 } from './dto/update-chapter.dto';
-import type { Request } from 'express';
-import type { User } from '../../shared/schema';
 
 /**
  * Sessions Controller
@@ -57,13 +55,6 @@ export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}
 
   /**
-   * Helper to get user ID from request
-   */
-  private getUserId(req: Request): string {
-    return ((req as any).user as User).id;
-  }
-
-  /**
    * Join a session by code (public)
    * GET /api/sessions/join/:code
    */
@@ -78,13 +69,12 @@ export class SessionsController {
    * POST /api/sessions
    */
   @Post('sessions')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async createSession(
     @Body(new ZodValidationPipe(createSessionSchema)) data: CreateSessionDto,
-    @Req() req: Request,
+    @User() user: IAuthUser,
   ) {
-    const gmId = this.getUserId(req);
-    const session = await this.sessionsService.createSession(gmId, data);
+    const session = await this.sessionsService.createSessionByEmail(user.email, data);
     return session;
   }
 
@@ -93,10 +83,9 @@ export class SessionsController {
    * GET /api/sessions
    */
   @Get('sessions')
-  @UseGuards(SessionAuthGuard)
-  async getGMSessions(@Req() req: Request) {
-    const gmId = this.getUserId(req);
-    const sessions = await this.sessionsService.getSessionsByGM(gmId);
+  @UseGuards(JwtAuthGuard)
+  async getGMSessions(@User() user: IAuthUser) {
+    const sessions = await this.sessionsService.getSessionsByGMEmail(user.email);
     return sessions;
   }
 
@@ -115,14 +104,13 @@ export class SessionsController {
    * PATCH /api/sessions/:id
    */
   @Patch('sessions/:id')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async updateSession(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(updateSessionSchema)) data: UpdateSessionDto,
-    @Req() req: Request,
+    @User() user: IAuthUser,
   ) {
-    const gmId = this.getUserId(req);
-    const session = await this.sessionsService.updateSession(id, gmId, data);
+    const session = await this.sessionsService.updateSessionByEmail(id, user.email, data);
     return session;
   }
 
@@ -131,11 +119,10 @@ export class SessionsController {
    * DELETE /api/sessions/:id
    */
   @Delete('sessions/:id')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async deleteSession(@Param('id') id: string, @Req() req: Request) {
-    const gmId = this.getUserId(req);
-    await this.sessionsService.deleteSession(id, gmId);
+  async deleteSession(@Param('id') id: string, @User() user: IAuthUser) {
+    await this.sessionsService.deleteSessionByEmail(id, user.email);
     return { message: 'Session deleted successfully' };
   }
 
@@ -154,14 +141,13 @@ export class SessionsController {
    * POST /api/sessions/:sessionId/chapters
    */
   @Post('sessions/:sessionId/chapters')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async createChapter(
     @Param('sessionId') sessionId: string,
     @Body(new ZodValidationPipe(createChapterSchema)) data: CreateChapterDto,
-    @Req() req: Request,
+    @User() user: IAuthUser,
   ) {
-    const gmId = this.getUserId(req);
-    const chapter = await this.sessionsService.createChapter(sessionId, gmId, data);
+    const chapter = await this.sessionsService.createChapterByEmail(sessionId, user.email, data);
     return chapter;
   }
 
@@ -180,14 +166,13 @@ export class SessionsController {
    * PATCH /api/chapters/:id
    */
   @Patch('chapters/:id')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async updateChapter(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(updateChapterSchema)) data: UpdateChapterDto,
-    @Req() req: Request,
+    @User() user: IAuthUser,
   ) {
-    const gmId = this.getUserId(req);
-    const chapter = await this.sessionsService.updateChapter(id, gmId, data);
+    const chapter = await this.sessionsService.updateChapterByEmail(id, user.email, data);
     return chapter;
   }
 
@@ -196,11 +181,10 @@ export class SessionsController {
    * DELETE /api/chapters/:id
    */
   @Delete('chapters/:id')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async deleteChapter(@Param('id') id: string, @Req() req: Request) {
-    const gmId = this.getUserId(req);
-    await this.sessionsService.deleteChapter(id, gmId);
+  async deleteChapter(@Param('id') id: string, @User() user: IAuthUser) {
+    await this.sessionsService.deleteChapterByEmail(id, user.email);
     return { message: 'Chapter deleted successfully' };
   }
 }

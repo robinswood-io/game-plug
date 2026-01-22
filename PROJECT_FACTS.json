@@ -1,0 +1,107 @@
+{
+  "project_name": "game-plug",
+  "version": "1.0.0",
+  "description": "Plateforme RPG digital Call of Cthulhu 7e - AI avatars, WebSocket sync, dice mechanics",
+
+  "env_urls": {
+    "dev": "https://game-plug.robinswood.io",
+    "staging": "https://staging-game-plug.robinswood.io",
+    "production": "https://game-plug.robinswood.io"
+  },
+
+  "ports": {
+    "frontend": 3000,
+    "frontend_external_dev": 40121,
+    "backend": 3000,
+    "backend_external_dev": 40120,
+    "db": 5432,
+    "db_external_dev": 5434
+  },
+
+  "containers": {
+    "frontend": "game-plug-frontend-dev",
+    "backend": "game-plug-backend-dev",
+    "db": "game-plug-db-dev"
+  },
+
+  "official_commands": {
+    "dev": "npm run dev",
+    "build": "npm run build",
+    "test": "npm test",
+    "migrate": "npm run db:migrate",
+    "deploy": "./scripts/deploy.sh"
+  },
+
+  "paths": {
+    "app_root": "/app",
+    "backend": "/app/server",
+    "frontend": "/app/app",
+    "shared": "/app/shared",
+    "migrations": "/app/server/drizzle/migrations"
+  },
+
+  "auth_mode": "session",
+
+  "health_endpoints": {
+    "frontend": "https://game-plug.robinswood.io/api/health",
+    "backend": "https://game-plug.robinswood.io/api/health",
+    "backend_internal": "http://game-plug-backend-dev:3000/health"
+  },
+
+  "observability_links": {
+    "grafana_dashboard": "https://grafana.robinswood.io/d/game-plug",
+    "loki_logs_backend": "https://grafana.robinswood.io/explore?orgId=1&left=%7B%22datasource%22%3A%22loki%22%2C%22queries%22%3A%5B%7B%22expr%22%3A%22%7Bcontainer%3D%5C%22game-plug-backend-dev%5C%22%7D%22%7D%5D%7D",
+    "loki_logs_frontend": "https://grafana.robinswood.io/explore?orgId=1&left=%7B%22datasource%22%3A%22loki%22%2C%22queries%22%3A%5B%7B%22expr%22%3A%22%7Bcontainer%3D%5C%22game-plug-frontend-dev%5C%22%7D%22%7D%5D%7D",
+    "prometheus_metrics": "https://grafana.robinswood.io/explore?datasource=prometheus"
+  },
+
+  "database": {
+    "type": "postgresql",
+    "host": "postgres",
+    "port": 5432,
+    "name": "roleplug",
+    "migrations_tool": "drizzle"
+  },
+
+  "dependencies": {
+    "critical": ["database"],
+    "optional": ["openai_api"]
+  },
+
+  "docker": {
+    "compose_file": "docker-compose.dev.yml",
+    "services": ["frontend", "backend", "postgres"],
+    "networks": ["ia-webdev-network"]
+  },
+
+  "stack": {
+    "backend": "NestJS",
+    "frontend": "Next.js",
+    "orm": "Drizzle",
+    "validation": "Zod",
+    "realtime": "WebSocket",
+    "ai": "OpenAI (DALL-E)",
+    "ui": "React + Tailwind"
+  },
+
+  "architecture": {
+    "pattern": "Dual containers (frontend + backend)",
+    "features": "AI-powered RPG, DALL-E avatars, WebSocket real-time, dice mechanics, Call of Cthulhu 7e"
+  },
+
+  "git": {
+    "repository": "private",
+    "branch_main": "main",
+    "branch_dev": "develop"
+  },
+
+  "contacts": {
+    "owner": "thibault@youcom.io",
+    "team": "dev-team"
+  },
+
+  "runbook_path": "docs/runbook.json",
+  "context_index_path": "CONTEXT_INDEX.yaml",
+
+  "notes": "Active development. Dual container architecture (Next.js + NestJS). WebSocket real-time sync. DALL-E avatar generation."
+}

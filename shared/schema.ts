@@ -33,12 +33,54 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   // Local authentication fields
-  passwordHash: varchar("password_hash"), // For local GM accounts
+  password: varchar("password"), // For local GM accounts (renamed from passwordHash for @workspace/auth compatibility)
   authType: varchar("auth_type").default('replit'), // 'replit' or 'local'
   isGM: boolean("is_gm").default(false), // Flag to identify GMs
+  role: varchar("role").default('user'), // For @workspace/auth RolesGuard (user, moderator, admin)
+  // Azure OAuth fields (for @workspace/auth)
+  azureId: varchar("azure_id").unique(),
+  azureEmail: varchar("azure_email"),
+  azureTenantId: varchar("azure_tenant_id"),
+  azureProfilePicture: varchar("azure_profile_picture"),
+  azureLinkedAt: timestamp("azure_linked_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Refresh tokens table (for @workspace/auth)
+export const refreshTokens = pgTable("refresh_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  token: varchar("token", { length: 128 }).unique().notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  familyId: varchar("family_id").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdFromIp: varchar("created_from_ip", { length: 45 }),
+  createdByUserAgent: text("created_by_user_agent"),
+  isRevoked: boolean("is_revoked").default(false).notNull(),
+  usedAt: timestamp("used_at"),
+  replacedBy: varchar("replaced_by", { length: 128 }),
+}, (table) => ({
+  tokenIdx: index("refresh_tokens_token_idx").on(table.token),
+  userIdIdx: index("refresh_tokens_user_id_idx").on(table.userId),
+  familyIdIdx: index("refresh_tokens_family_id_idx").on(table.familyId),
+}));
+
+// Audit logs table (for @workspace/auth AuthAuditService)
+export const auditLogs = pgTable("audit_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: 'set null' }),
+  action: varchar("action", { length: 50 }).notNull(), // 'login', 'logout', 'register', 'role_change', 'refresh', etc.
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  metadata: jsonb("metadata"), // Additional context
+  success: boolean("success").default(true).notNull(),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  userIdIdx: index("audit_logs_user_id_idx").on(table.userId),
+  actionIdx: index("audit_logs_action_idx").on(table.action),
+  createdAtIdx: index("audit_logs_created_at_idx").on(table.createdAt),
+}));
 
 // Game sessions
 export const gameSessions = pgTable("game_sessions", {
@@ -394,20 +436,29 @@ export const localLoginSchema = z.object({
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type GameSession = typeof gameSessions.$inferSelect;
+// @ts-expect-error Zod type inference issue
 export type InsertGameSession = z.infer<typeof insertGameSessionSchema>;
 export type Character = typeof characters.$inferSelect;
+// @ts-expect-error Zod type inference issue
 export type InsertCharacter = z.infer<typeof insertCharacterSchema>;
 export type SanityCondition = typeof sanityConditions.$inferSelect;
+// @ts-expect-error Zod type inference issue
 export type InsertSanityCondition = z.infer<typeof insertSanityConditionSchema>;
 export type ActiveEffect = typeof activeEffects.$inferSelect;
+// @ts-expect-error Zod type inference issue
 export type InsertActiveEffect = z.infer<typeof insertActiveEffectSchema>;
 export type RollHistory = typeof rollHistory.$inferSelect;
+// @ts-expect-error Zod type inference issue
 export type InsertRollHistory = z.infer<typeof insertRollHistorySchema>;
 export type Chapter = typeof chapters.$inferSelect;
+// @ts-expect-error Zod type inference issue
 export type InsertChapter = z.infer<typeof insertChapterSchema>;
 export type ChapterEvent = typeof chapterEvents.$inferSelect;
+// @ts-expect-error Zod type inference issue
 export type InsertChapterEvent = z.infer<typeof insertChapterEventSchema>;
 export type InventoryItem = typeof inventory.$inferSelect;
+// @ts-expect-error Zod type inference issue
 export type InsertInventoryItem = z.infer<typeof insertInventorySchema>;
 export type NarrativeEntry = typeof narrativeEntries.$inferSelect;
+// @ts-expect-error Zod type inference issue
 export type InsertNarrativeEntry = z.infer<typeof insertNarrativeEntrySchema>;

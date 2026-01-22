@@ -17,6 +17,23 @@ export class SessionsService {
   constructor(private readonly db: DatabaseService) {}
 
   /**
+   * Get user ID from email (for @robinswood/auth compatibility)
+   */
+  private async getUserIdByEmail(email: string): Promise<string> {
+    const [user] = await this.db.client
+      .select({ id: this.db.schema.users.id })
+      .from(this.db.schema.users)
+      .where(eq(this.db.schema.users.email, email))
+      .limit(1);
+
+    if (!user) {
+      throw new NotFoundException(`User with email ${email} not found`);
+    }
+
+    return user.id;
+  }
+
+  /**
    * Generate a unique 6-character session code
    */
   private generateSessionCode(): string {
@@ -248,5 +265,77 @@ export class SessionsService {
     await this.db.client
       .delete(this.db.schema.chapters)
       .where(eq(this.db.schema.chapters.id, id));
+  }
+
+  // ===============================================
+  // Email-based wrapper methods (for @robinswood/auth compatibility)
+  // ===============================================
+
+  /**
+   * Create a session using GM email
+   */
+  async createSessionByEmail(gmEmail: string, data: CreateSessionDto): Promise<GameSession> {
+    const gmId = await this.getUserIdByEmail(gmEmail);
+    return this.createSession(gmId, data);
+  }
+
+  /**
+   * Get all sessions for a GM using email
+   */
+  async getSessionsByGMEmail(gmEmail: string): Promise<GameSession[]> {
+    const gmId = await this.getUserIdByEmail(gmEmail);
+    return this.getSessionsByGM(gmId);
+  }
+
+  /**
+   * Update a session using GM email
+   */
+  async updateSessionByEmail(
+    id: string,
+    gmEmail: string,
+    data: UpdateSessionDto,
+  ): Promise<GameSession> {
+    const gmId = await this.getUserIdByEmail(gmEmail);
+    return this.updateSession(id, gmId, data);
+  }
+
+  /**
+   * Delete a session using GM email
+   */
+  async deleteSessionByEmail(id: string, gmEmail: string): Promise<void> {
+    const gmId = await this.getUserIdByEmail(gmEmail);
+    return this.deleteSession(id, gmId);
+  }
+
+  /**
+   * Create a chapter using GM email
+   */
+  async createChapterByEmail(
+    sessionId: string,
+    gmEmail: string,
+    data: CreateChapterDto,
+  ): Promise<Chapter> {
+    const gmId = await this.getUserIdByEmail(gmEmail);
+    return this.createChapter(sessionId, gmId, data);
+  }
+
+  /**
+   * Update a chapter using GM email
+   */
+  async updateChapterByEmail(
+    id: string,
+    gmEmail: string,
+    data: UpdateChapterDto,
+  ): Promise<Chapter> {
+    const gmId = await this.getUserIdByEmail(gmEmail);
+    return this.updateChapter(id, gmId, data);
+  }
+
+  /**
+   * Delete a chapter using GM email
+   */
+  async deleteChapterByEmail(id: string, gmEmail: string): Promise<void> {
+    const gmId = await this.getUserIdByEmail(gmEmail);
+    return this.deleteChapter(id, gmId);
   }
 }

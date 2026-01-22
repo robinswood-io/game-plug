@@ -25,11 +25,11 @@ import { DRIZZLE_ORM, DATABASE_CONNECTION } from './database.constants';
         }
 
         // Même configuration Pool que Express backend
+        // NOTE: connectionTimeoutMillis removed - was causing auth failures (28P01)
         return new Pool({
           connectionString,
           max: 20,
           idleTimeoutMillis: 30000,
-          connectionTimeoutMillis: 2000,
         });
       },
       inject: [ConfigService],

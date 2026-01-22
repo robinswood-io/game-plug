@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Liens Claude CLI centralises
+- Central: `./claude-cli-central`
+- Projets (racine): `./claude-cli-projects`
+- Projets: `./claude-cli-project-home-ubuntu`, `./claude-cli-project-home-cindy`, `./claude-cli-project-opt-workspace-work`, `./claude-cli-project-tmp`
+
 ## Project Overview
 
 **Rôle Plug** is a modern web-based digital platform for playing Call of Cthulhu 7th Edition RPG sessions. It provides real-time tools for Game Masters (GMs) to manage sessions and for players to create and interact with their investigator characters. The platform features AI-generated avatars and scenes, WebSocket-based synchronization, and a lovecraftian-themed UI.
@@ -12,6 +17,59 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Database: PostgreSQL with Drizzle ORM
 - UI: Radix UI + shadcn/ui + Tailwind CSS
 - AI: OpenAI (DALL-E 3 for avatars/scenes, GPT for narrative)
+
+
+## 🎯 Objectif Migration Stack
+
+**Statut actuel:** ❌ Non conforme au standard technique
+- ❌ Backend: Express.js + TypeScript + WebSocket (NON conforme)
+- ❌ Frontend: React 18 + Vite + Wouter (NON conforme)
+
+**Objectif de migration:**
+- **Backend cible:** NestJS 11+ (API + logique métier + DB + WebSocket Gateway)
+- **Frontend cible:** Next.js 16 + Turbopack + App Router
+- **Raison:** Standardisation complète sur NestJS (backend) + Next.js (frontend) pour TOUS les projets
+- **Avantages migration:**
+  - NestJS WebSocket Gateway (remplacement WebSocket Server custom)
+  - Modules NestJS (isolation Game Master, Players, Sessions, AI)
+  - Dependency Injection (meilleure architecture services RPG)
+  - Turbopack remplace Vite (hot reload interface RPG)
+  - Server Components Next.js (optimisation chargement scénarios)
+  - App Router avec layouts (navigation GM/Player modes)
+  - Next.js API Routes (webhooks, AI endpoints)
+  - SSR pour SEO landing pages RPG
+  - Standardisation stack avec pns-gen (déjà migré)
+
+**Plan de migration:** À planifier (Express WebSocket → NestJS Gateway + React/Wouter → Next.js App Router, attention sync temps réel sessions RPG existantes)
+
+## 🎯 Objectif : Migration Server Actions
+
+**Statut:** ❌ Non implémenté (dépend de migration Next.js)
+
+**Priorité:** Moyenne - Après migration Next.js
+
+**Objectif:** Une fois migré vers Next.js, implémenter Server Actions pour:
+- Type safety end-to-end (données personnages, scénarios)
+- Formulaires création personnages/scénarios
+- Actions Game Master (lancer dés, événements)
+- Revalidation sessions en temps réel
+
+**Actions prioritaires après migration Next.js:**
+- [ ] CRUD Investigators (création personnage, skills, inventory)
+- [ ] CRUD Sessions (scénarios, NPCs, events)
+- [ ] Actions GM (dice rolls, sanity checks, combat)
+- [ ] Génération avatars DALL-E (avec Server Action)
+
+**Guide:** `~/.claude/guides/migration-nextjs-server-actions.md`
+
+**Référence:** Le projet `jlm-app` utilise déjà les Server Actions (voir `/srv/workspace/jlm-app/app/actions/`)
+
+## Database Protection Rules ⛔
+## Database Protection Rules ⛔
+
+
+**CRITICAL:** Database wipe is **STRICTLY FORBIDDEN** without prior backup.
+All agents must follow backup procedures before any destructive operations.
 
 ## Claude Code Agents
 
@@ -246,17 +304,84 @@ Note: `.env` is git-ignored. Avatar files in `public/avatars/` are also ignored 
 
 ### Common Development Patterns
 
-#### Making API Calls
-Use TanStack Query for all API calls:
+#### Making API Calls (TanStack Query Pattern - Standard)
+
+**📖 Lecture (Fetching Data):**
+
+Use custom hooks wrapping `useQuery` for all data fetching:
+
 ```typescript
-const { data: character } = useQuery({
-  queryKey: ['/api/characters', characterId],
-  queryFn: async () => {
-    const response = await fetch(`/api/characters/${characterId}`);
-    return response.json();
-  }
-});
+// hooks/use-characters.ts
+import { useQuery } from '@tanstack/react-query';
+
+export function useCharacter(characterId: string) {
+  return useQuery({
+    queryKey: ['/api/characters', characterId],
+    queryFn: async () => {
+      const response = await fetch(`/api/characters/${characterId}`);
+      if (!response.ok) throw new Error('Failed to fetch character');
+      return response.json();
+    },
+    staleTime: 30000, // 30s cache
+    enabled: !!characterId, // Only fetch if characterId exists
+  });
+}
+
+// Usage in component:
+const { data: character, isLoading, error } = useCharacter(characterId);
 ```
+
+**✍️ Écriture (Mutations):**
+
+Use `useMutation` with query invalidation for all mutations:
+
+```typescript
+// hooks/use-characters.ts
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
+export function useUpdateHealth() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ characterId, health }: { characterId: string; health: number }) => {
+      const res = await fetch(`/api/characters/${characterId}/health`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ health }),
+      });
+      if (!res.ok) throw new Error('Failed to update health');
+      return res.json();
+    },
+    onSuccess: (data, variables) => {
+      // Invalider cache du personnage
+      queryClient.invalidateQueries({ queryKey: ['/api/characters', variables.characterId] });
+      // WebSocket broadcast pour sync temps réel
+      // (géré côté serveur)
+    },
+    onError: (error) => {
+      console.error('Health update failed:', error);
+    },
+  });
+}
+
+// Usage in component:
+const mutation = useUpdateHealth();
+
+const handleDamage = (damage: number) => {
+  mutation.mutate({ characterId, health: currentHealth - damage });
+};
+
+// Access loading state:
+{mutation.isPending && <Spinner />}
+```
+
+**Avantages:**
+- ✅ Cache automatique avec staleTime
+- ✅ Loading/error states automatiques
+- ✅ Cache invalidation après mutations
+- ✅ Coordination avec WebSocket pour real-time sync
+- ✅ Optimistic updates possibles
+- ✅ Type-safety avec TypeScript
 
 #### Broadcasting WebSocket Messages
 Server-side:

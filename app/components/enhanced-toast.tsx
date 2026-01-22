@@ -45,6 +45,7 @@ export default function EnhancedToast({
       }, duration);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [duration, onClose]);
 
   if (!isVisible) return null;

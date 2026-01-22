@@ -1,0 +1,46 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - img [ref=e10]
+        - generic [ref=e13]:
+          - generic [ref=e14]: PNS Gen
+          - generic [ref=e15]: Connexion
+          - paragraph [ref=e16]: Connectez-vous avec vos identifiants professionnels
+      - generic [ref=e18]:
+        - generic [ref=e19]:
+          - img [ref=e20]
+          - paragraph [ref=e22]: Connexion de développement par rôle
+        - generic [ref=e24]:
+          - generic [ref=e25]:
+            - button "Rédacteur" [ref=e26]:
+              - img
+              - text: Rédacteur
+            - button "Validateur" [ref=e27]:
+              - img
+              - text: Validateur
+            - button "Admin" [ref=e28]:
+              - img
+              - text: Admin
+          - generic [ref=e29]:
+            - generic [ref=e30]: Sélectionnez votre rôle
+            - combobox [ref=e31]:
+              - generic: Sélectionnez votre rôle
+              - img [ref=e32]
+          - button "Se connecter" [ref=e34]:
+            - img
+            - text: Se connecter
+      - button "Retour" [ref=e36]:
+        - img
+        - text: Retour
+    - region "Notifications (F8)":
+      - list
+    - button "Signaler un problème ou une idée" [ref=e37] [cursor=pointer]:
+      - img [ref=e38]
+  - button "Open Next.js Dev Tools" [ref=e45] [cursor=pointer]:
+    - img [ref=e46]
+  - alert [ref=e49]: Authentification - PNS Gen
+```

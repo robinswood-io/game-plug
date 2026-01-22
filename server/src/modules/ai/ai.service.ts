@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import OpenAI from 'openai';
 import { AvatarStorageService } from './services/avatar-storage.service';
-import type { Character } from '@shared/schema';
+import type { Character } from '../../shared/schema';
 
 @Injectable()
 export class AiService {

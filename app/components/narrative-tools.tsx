@@ -204,7 +204,9 @@ export default function NarrativeTools({
               className="w-full border-aged-gold/50 text-aged-gold hover:bg-aged-gold/10"
               onClick={() => {
                 const randomHook = STORY_HOOKS[Math.floor(Math.random() * STORY_HOOKS.length)];
-                handleStoryHook(randomHook);
+                if (randomHook) {
+                  handleStoryHook(randomHook);
+                }
               }}
               data-testid="button-random-hook"
             >

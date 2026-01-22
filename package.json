@@ -1,26 +1,17 @@
 {
-  "name": "game-plug-monorepo",
-  "version": "2.0.0",
+  "name": "game-plug",
+  "version": "1.0.0",
   "private": true,
-  "type": "module",
-  "license": "MIT",
   "scripts": {
     "dev": "echo 'Use: cd app && npm run dev OR cd server && npm run start:dev'",
-    "dev:app": "cd app && npm run dev",
+    "dev:app": "cd app && npm run dev -- --port 3001",
     "dev:server": "cd server && npm run start:dev",
+    "dev:all": "npx concurrently \"npm run dev:server\" \"npm run dev:app\"",
     "build": "npm run build:app && npm run build:server",
     "build:app": "cd app && npm run build",
-    "build:server": "cd server && npm run build",
-    "start": "echo 'Use docker-compose-dev.yml for development'",
-    "check": "cd app && npx tsc --noEmit && cd ../server && npx tsc --noEmit",
-    "docker:dev": "docker compose -f docker-compose-dev.yml watch",
-    "docker:prod": "docker compose -f docker-compose.prod.yml up -d"
+    "build:server": "cd server && npm run build"
   },
-  "workspaces": [
-    "app",
-    "server"
-  ],
   "devDependencies": {
-    "typescript": "^5.6.3"
+    "concurrently": "^8.2.2"
   }
 }

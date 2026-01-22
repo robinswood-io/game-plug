@@ -5,152 +5,202 @@ import {
   Body,
   Req,
   Res,
-  UseGuards,
   HttpCode,
   HttpStatus,
+  UseGuards,
   UnauthorizedException,
-  Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
-import { SessionAuthGuard } from '../../common/guards/session-auth.guard';
-import { signupSchema, type SignupDto } from './dto/signup.dto';
-import { loginSchema, type LoginDto } from './dto/login.dto';
-import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
-import type { User } from '../../shared/schema';
+import { JwtAuthGuard, User, Public } from '@robinswood/auth';
+import type { IAuthUser } from '@robinswood/auth';
 
 /**
- * Auth Controller
- * Replicates auth routes from Express backend:
- * - POST /api/auth/signup
- * - POST /api/auth/login
- * - POST /api/auth/logout
- * - GET /api/auth/user
+ * Authentication Controller for game-plug
+ * Endpoints for JWT authentication with refresh token rotation
+ *
+ * Strategy:
+ * - Access tokens: JWT in response body (15min)
+ * - Refresh tokens: HttpOnly cookies (30 days)
+ * - Public routes: @Public() decorator
+ * - Protected routes: @UseGuards(JwtAuthGuard) + @User() decorator
+ * - Rate limiting: @Throttle() on auth endpoints
+ *
+ * Pattern: Follow jlm-app auth controller
+ * Ref: /srv/workspace/jlm-app/server/src/modules/auth/auth.controller.ts
  */
-@Controller('api/auth')
+@Controller('auth')
 export class AuthController {
-  private readonly logger = new Logger(AuthController.name);
-
   constructor(private readonly authService: AuthService) {}
 
   /**
-   * Local GM signup route
-   * POST /api/auth/signup
+   * POST /auth/signup
+   * Register new user (GM or Player)
+   * Auto-login after successful registration
    */
+  @Public()
   @Post('signup')
   @HttpCode(HttpStatus.CREATED)
+  @Throttle({ default: { limit: 5, ttl: 900000 } }) // 5 requests per 15min
   async signup(
-    @Body(new ZodValidationPipe(signupSchema)) signupData: SignupDto,
+    @Body()
+    signupDto: {
+      email: string;
+      password: string;
+      firstName: string;
+      lastName: string;
+      role?: string;
+    },
     @Req() req: Request,
-  ) {
-    const user = await this.authService.signupGM(signupData);
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ accessToken: string; user: IAuthUser }> {
+    // Create user
+    await this.authService.signup(signupDto);
 
-    // Use Passport's session management for proper serialization
-    // This ensures req.session.passport.user is properly set for subsequent requests
-    return new Promise((resolve, reject) => {
-      req.login(user, (err) => {
-        if (err) {
-          return reject(err);
-        }
+    // Auto-login after signup
+    const loginResult = await this.authService.login(
+      { email: signupDto.email, password: signupDto.password },
+      req,
+    );
 
-        resolve({
-          user: {
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            isGM: user.isGM,
-            authType: user.authType,
-          },
-        });
-      });
+    // Set refresh token in HttpOnly cookie
+    res.cookie('refreshToken', loginResult.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
-  }
-
-  /**
-   * Local login route
-   * POST /api/auth/login
-   */
-  @Post('login')
-  @HttpCode(HttpStatus.OK)
-  async login(
-    @Body(new ZodValidationPipe(loginSchema)) loginData: LoginDto,
-    @Req() req: Request,
-  ) {
-    try {
-      const user = await this.authService.authenticateLocal(loginData);
-
-      // Use Passport's session management for proper serialization
-      return new Promise((resolve, reject) => {
-        req.login(user, (err) => {
-          if (err) {
-            return reject(new UnauthorizedException('Session creation failed'));
-          }
-
-          resolve({
-            user: {
-              id: user.id,
-              email: user.email,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              isGM: user.isGM,
-              authType: user.authType,
-            },
-          });
-        });
-      });
-    } catch (error) {
-      // Re-throw UnauthorizedException from service
-      if (error instanceof UnauthorizedException) {
-        throw error;
-      }
-      // Log unexpected errors but still return 401
-      this.logger.error('Login error:', error);
-      throw new UnauthorizedException('Authentication failed');
-    }
-  }
-
-  /**
-   * Logout route
-   * POST /api/auth/logout
-   */
-  @Post('logout')
-  @HttpCode(HttpStatus.OK)
-  logout(@Req() req: Request, @Res() res: Response) {
-    // Use Passport's logout which properly clears req.user and session
-    req.logout((err) => {
-      if (err) {
-        console.error('Error during logout:', err);
-        return res.status(500).json({ message: 'Erreur lors de la déconnexion' });
-      }
-
-      req.session.destroy((err) => {
-        if (err) {
-          console.error('Error destroying session:', err);
-          return res.status(500).json({ message: 'Erreur lors de la déconnexion' });
-        }
-        res.json({ message: 'Déconnecté avec succès' });
-      });
-    });
-  }
-
-  /**
-   * Get current user
-   * GET /api/auth/user
-   * Requires authentication
-   */
-  @Get('user')
-  @UseGuards(SessionAuthGuard)
-  async getUser(@Req() req: Request) {
-    const user = (req as any).user as User;
 
     return {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      isGM: user.isGM,
-      authType: user.authType,
+      accessToken: loginResult.accessToken,
+      user: loginResult.user,
     };
+  }
+
+  /**
+   * POST /auth/login
+   * Authenticate with email + password
+   * Returns access token + sets refresh token cookie
+   */
+  @Public()
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 900000 } }) // 10 requests per 15min
+  async login(
+    @Body() loginDto: { email: string; password: string },
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ accessToken: string; user: IAuthUser }> {
+    const result = await this.authService.login(loginDto, req);
+
+    // Set refresh token in HttpOnly cookie (XSS protection)
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
+
+    return {
+      accessToken: result.accessToken,
+      user: result.user,
+    };
+  }
+
+  /**
+   * POST /auth/refresh
+   * Refresh access token using refresh token cookie
+   * Rotates refresh token (RFC 6749)
+   */
+  @Public()
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refreshToken(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ accessToken: string }> {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      throw new UnauthorizedException('No refresh token provided');
+    }
+
+    const result = await this.authService.refreshToken(refreshToken, req);
+
+    // Update refresh token cookie (rotation)
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+
+    return { accessToken: result.accessToken };
+  }
+
+  /**
+   * GET /auth/me
+   * Get authenticated user profile
+   * Requires valid JWT in Authorization header
+   */
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async getProfile(@User() user: IAuthUser): Promise<IAuthUser> {
+    return user;
+  }
+
+  /**
+   * POST /auth/logout
+   * Logout user and revoke refresh token
+   * Clears refresh token cookie
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  async logout(
+    @User() user: IAuthUser,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ success: boolean }> {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (refreshToken) {
+      await this.authService.logout(user.email, refreshToken);
+    }
+
+    // Clear refresh token cookie
+    res.clearCookie('refreshToken');
+
+    return { success: true };
+  }
+
+  /**
+   * POST /auth/password-reset/request
+   * Request password reset email
+   * Rate limited to prevent abuse
+   */
+  @Public()
+  @Post('password-reset/request')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 3, ttl: 900000 } }) // 3 requests per 15min
+  async requestPasswordReset(
+    @Body() { email }: { email: string },
+  ): Promise<{ message: string; token?: string }> {
+    return this.authService.requestPasswordReset(email);
+  }
+
+  /**
+   * POST /auth/password-reset/confirm
+   * Reset password with token
+   * Token expires after 60 minutes
+   */
+  @Public()
+  @Post('password-reset/confirm')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(
+    @Body() { token, newPassword }: { token: string; newPassword: string },
+  ): Promise<{ success: boolean }> {
+    return this.authService.resetPassword(token, newPassword);
   }
 }

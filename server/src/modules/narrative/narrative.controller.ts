@@ -7,15 +7,14 @@ import {
   Body,
   Param,
   UseGuards,
-  Request,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
 import { DatabaseService } from '../../common/database/database.service';
 import { AiService } from '../ai/ai.service';
-import { SessionAuthGuard } from '../../common/guards/session-auth.guard';
+import { JwtAuthGuard, User } from '@robinswood/auth';
+import type { IAuthUser } from '@robinswood/auth';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
-import { AuthenticatedRequest } from '../../common/types/request.types';
 import { CreateNarrativeDto, createNarrativeSchema } from './dto/create-narrative.dto';
 import { UpdateNarrativeDto, updateNarrativeSchema } from './dto/update-narrative.dto';
 import { narrativeSuggestionSchema } from '../ai/dto/narrative-suggestion.dto';
@@ -32,10 +31,10 @@ export class NarrativeController {
    * GET /api/sessions/:sessionId/narrative
    */
   @Get('sessions/:sessionId/narrative')
-  @UseGuards(SessionAuthGuard)
-  async getSessionNarrativeEntries(@Param('sessionId') sessionId: string, @Request() req: AuthenticatedRequest) {
+  @UseGuards(JwtAuthGuard)
+  async getSessionNarrativeEntries(@Param('sessionId') sessionId: string, @User() user: IAuthUser) {
     try {
-      const userId = req.user?.id;
+      const userId = await this.db.getUserIdByEmail(user.email);
 
       // Check if user is GM of the session
       const session = await this.db.getGameSession(sessionId);
@@ -59,14 +58,14 @@ export class NarrativeController {
    * POST /api/sessions/:sessionId/narrative
    */
   @Post('sessions/:sessionId/narrative')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async createNarrativeEntry(
     @Param('sessionId') sessionId: string,
     @Body(new ZodValidationPipe(createNarrativeSchema)) dto: CreateNarrativeDto,
-    @Request() req: AuthenticatedRequest,
+    @User() user: IAuthUser,
   ) {
     try {
-      const userId = req.user?.id;
+      const userId = await this.db.getUserIdByEmail(user.email);
 
       // Check if user is GM of the session
       const session = await this.db.getGameSession(sessionId);
@@ -97,14 +96,14 @@ export class NarrativeController {
    * POST /api/sessions/:sessionId/narrative/ai-suggest
    */
   @Post('sessions/:sessionId/narrative/ai-suggest')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async getAiNarrativeSuggestion(
     @Param('sessionId') sessionId: string,
     @Body(new ZodValidationPipe(narrativeSuggestionSchema)) dto: { context: string },
-    @Request() req: AuthenticatedRequest,
+    @User() user: IAuthUser,
   ) {
     try {
-      const userId = req.user?.id;
+      const userId = await this.db.getUserIdByEmail(user.email);
 
       // Check if user is GM of the session
       const session = await this.db.getGameSession(sessionId);
@@ -129,14 +128,14 @@ export class NarrativeController {
    * PATCH /api/narrative/:id
    */
   @Patch('narrative/:id')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async updateNarrativeEntry(
     @Param('id') entryId: string,
     @Body(new ZodValidationPipe(updateNarrativeSchema)) dto: UpdateNarrativeDto,
-    @Request() req: AuthenticatedRequest,
+    @User() user: IAuthUser,
   ) {
     try {
-      const userId = req.user?.id;
+      const userId = await this.db.getUserIdByEmail(user.email);
 
       // Get entry to check ownership
       const entry = await this.db.getNarrativeEntry(entryId);
@@ -166,10 +165,10 @@ export class NarrativeController {
    * DELETE /api/narrative/:id
    */
   @Delete('narrative/:id')
-  @UseGuards(SessionAuthGuard)
-  async deleteNarrativeEntry(@Param('id') entryId: string, @Request() req: AuthenticatedRequest) {
+  @UseGuards(JwtAuthGuard)
+  async deleteNarrativeEntry(@Param('id') entryId: string, @User() user: IAuthUser) {
     try {
-      const userId = req.user?.id;
+      const userId = await this.db.getUserIdByEmail(user.email);
 
       // Get entry to check ownership
       const entry = await this.db.getNarrativeEntry(entryId);
@@ -199,10 +198,10 @@ export class NarrativeController {
    * PATCH /api/narrative/:id/toggle-visibility
    */
   @Patch('narrative/:id/toggle-visibility')
-  @UseGuards(SessionAuthGuard)
-  async toggleNarrativeVisibility(@Param('id') entryId: string, @Request() req: AuthenticatedRequest) {
+  @UseGuards(JwtAuthGuard)
+  async toggleNarrativeVisibility(@Param('id') entryId: string, @User() user: IAuthUser) {
     try {
-      const userId = req.user?.id;
+      const userId = await this.db.getUserIdByEmail(user.email);
 
       // Get entry to check ownership and current visibility
       const entry = await this.db.getNarrativeEntry(entryId);

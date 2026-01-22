@@ -1563,7 +1563,7 @@ export default function UnifiedAmbientController({
   };
 
   const handleVolumeChange = (newVolume: number[]) => {
-    const vol = newVolume[0];
+    const vol = newVolume[0] ?? 0;
     setVolume(vol);
     
     // Restart sound with new volume if playing

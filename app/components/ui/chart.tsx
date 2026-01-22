@@ -263,11 +263,12 @@ const ChartLegend = RechartsPrimitive.Legend
 
 const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<"div"> &
-    Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
-      hideIcon?: boolean
-      nameKey?: string
-    }
+  React.ComponentProps<"div"> & {
+    payload?: Array<Record<string, unknown>> | undefined;
+    verticalAlign?: "top" | "middle" | "bottom" | undefined;
+    hideIcon?: boolean
+    nameKey?: string
+  }
 >(
   (
     { className, hideIcon = false, payload, verticalAlign = "bottom", nameKey },
@@ -288,13 +289,15 @@ const ChartLegendContent = React.forwardRef<
           className
         )}
       >
-        {payload.map((item: any) => {
-          const key = `${nameKey || item.dataKey || "value"}`
-          const itemConfig = getPayloadConfigFromPayload(config, item, key)
+        {payload.map((item: Record<string, unknown>) => {
+          const key = `${nameKey || (item.dataKey as string | undefined) || "value"}`
+          const itemConfig = getPayloadConfigFromPayload(config, item as Record<string, unknown>, key)
+          const itemValue = (item.value as string | number | null) ?? ""
+          const itemColor = (item.color as string | undefined) ?? "#000"
 
           return (
             <div
-              key={item.value}
+              key={itemValue}
               className={cn(
                 "flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground"
               )}
@@ -305,7 +308,7 @@ const ChartLegendContent = React.forwardRef<
                 <div
                   className="h-2 w-2 shrink-0 rounded-[2px]"
                   style={{
-                    backgroundColor: item.color,
+                    backgroundColor: itemColor,
                   }}
                 />
               )}

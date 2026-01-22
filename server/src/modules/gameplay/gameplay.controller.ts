@@ -7,14 +7,14 @@ import {
   Body,
   Param,
   UseGuards,
-  Request,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
 import { GameplayService } from './gameplay.service';
 import { DatabaseService } from '../../common/database/database.service';
 import { SessionsGateway } from '../sessions/sessions.gateway';
-import { SessionAuthGuard } from '../../common/guards/session-auth.guard';
+import { JwtAuthGuard, User } from '@robinswood/auth';
+import type { IAuthUser } from '@robinswood/auth';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { EffectsProcessorService } from './services/effects-processor.service';
 import { ApplyEffectDto, applyEffectSchema } from './dto/apply-effect.dto';
@@ -22,10 +22,6 @@ import { DiceRollDto, diceRollSchema } from './dto/dice-roll.dto';
 import { GrantSkillPointsDto, grantSkillPointsSchema } from './dto/skill-points.dto';
 import { DistributeSkillPointsDto, distributeSkillPointsSchema } from './dto/skill-points.dto';
 import type { InsertActiveEffect } from '../../common/database/database.service';
-
-interface AuthenticatedRequest {
-  user?: { id: string };
-}
 
 @Controller('api')
 export class GameplayController {
@@ -37,13 +33,13 @@ export class GameplayController {
   ) {}
 
   @Post('characters/:id/skill-points')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async grantSkillPoints(
     @Param('id') characterId: string,
     @Body(new ZodValidationPipe(grantSkillPointsSchema)) dto: GrantSkillPointsDto,
-    @Request() req: AuthenticatedRequest,
+    @User() user: IAuthUser,
   ) {
-    const userId = req.user?.id;
+    const userId = await this.db.getUserIdByEmail(user.email);
     const character = await this.db.getCharacter(characterId);
 
     if (!character) {
@@ -76,13 +72,13 @@ export class GameplayController {
   }
 
   @Post('characters/:id/distribute-points')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async distributeSkillPoints(
     @Param('id') characterId: string,
     @Body(new ZodValidationPipe(distributeSkillPointsSchema)) dto: DistributeSkillPointsDto,
-    @Request() req: AuthenticatedRequest,
+    @User() user: IAuthUser,
   ) {
-    const userId = req.user?.id;
+    const userId = await this.db.getUserIdByEmail(user.email);
     const character = await this.db.getCharacter(characterId);
 
     if (!character) {
@@ -133,13 +129,13 @@ export class GameplayController {
   }
 
   @Post('characters/:id/effects')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async applyEffect(
     @Param('id') characterId: string,
     @Body(new ZodValidationPipe(applyEffectSchema)) dto: ApplyEffectDto,
-    @Request() req: AuthenticatedRequest,
+    @User() user: IAuthUser,
   ) {
-    const userId = req.user?.id;
+    const userId = await this.db.getUserIdByEmail(user.email);
     const character = await this.db.getCharacter(characterId);
 
     if (!character) {
@@ -197,7 +193,7 @@ export class GameplayController {
   }
 
   @Patch('effects/:id')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async updateEffect(
     @Param('id') effectId: string,
     @Body() updateData: Record<string, unknown>,
@@ -207,22 +203,19 @@ export class GameplayController {
   }
 
   @Delete('effects/:id')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async deleteEffect(@Param('id') effectId: string) {
     await this.db.deleteActiveEffect(effectId);
     return { message: 'Effect deleted successfully' };
   }
 
   @Post('rolls')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async createRoll(
     @Body(new ZodValidationPipe(diceRollSchema)) dto: DiceRollDto,
-    @Request() req: AuthenticatedRequest,
+    @User() user: IAuthUser,
   ) {
-    const userId = req.user?.id;
-    if (!userId) {
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    }
+    const userId = await this.db.getUserIdByEmail(user.email);
 
     const diceFormula =
       dto.modifier !== undefined && dto.modifier !== 0
@@ -267,7 +260,7 @@ export class GameplayController {
   }
 
   @Get('sessions/:id/rolls')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async getSessionRolls(@Param('id') sessionId: string) {
     return this.db.getSessionRollHistory(sessionId);
   }

@@ -167,7 +167,7 @@ export default function CreateCharacterPage() {
     const adjustedTotalPoints = totalPoints + ageBonus;
     occupation.occupationSkills.forEach((skill) => {
       const baseValue = baseSkills[skill] || 0;
-      const weight = skillPriorities[skill];
+      const weight = skillPriorities[skill] ?? 1;
       const points = Math.floor((adjustedTotalPoints * weight) / totalWeight);
       newAllocations[skill] = Math.min(points, 90 - baseValue); // Max 90% during creation
     });
@@ -500,7 +500,10 @@ export default function CreateCharacterPage() {
       finalSessionId = undefined;
     }
     if (!finalSessionId && sessions && sessions.length > 0) {
-      finalSessionId = sessions[0].id;
+      const firstSession = sessions[0];
+      if (firstSession) {
+        finalSessionId = firstSession.id;
+      }
     }
     if (!finalSessionId) {
       finalSessionId = `temp-${Date.now()}`;

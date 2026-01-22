@@ -492,9 +492,12 @@ function EnhancedCharacterCard({
                         if (quickBuff) {
                           const parts = quickBuff.split('/');
                           const name = parts[0];
-                          const value = parseInt(parts[1] || "1");
-                          onApplyBuff(name, value);
-                          setQuickBuff("");
+                          const valueStr = parts[1] ?? "1";
+                          const value = parseInt(valueStr, 10);
+                          if (!isNaN(value)) {
+                            onApplyBuff(name ?? '', value);
+                            setQuickBuff("");
+                          }
                         }
                       }}
                       className="h-8 px-2 bg-eldritch-green hover:bg-green-700"

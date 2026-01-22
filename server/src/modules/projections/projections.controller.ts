@@ -3,13 +3,13 @@ import {
   Post,
   Body,
   UseGuards,
-  Request,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
 import { AiService } from '../ai/ai.service';
 import { DatabaseService } from '../../common/database/database.service';
-import { SessionAuthGuard } from '../../common/guards/session-auth.guard';
+import { JwtAuthGuard, User } from '@robinswood/auth';
+import type { IAuthUser } from '@robinswood/auth';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { generateSceneSchema } from '../ai/dto/generate-scene.dto';
 
@@ -28,14 +28,14 @@ export class ProjectionsController {
    * specifically designed for GameBoard projection use.
    */
   @Post('gameboard/generate-scene')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async generateScene(
     @Body(new ZodValidationPipe(generateSceneSchema)) dto: { prompt: string; description?: string },
     @Body() body: { sessionId?: string },
-    @Request() req: any,
+    @User() user: IAuthUser,
   ) {
     try {
-      const userId = req.user?.id;
+      const userId = await this.db.getUserIdByEmail(user.email);
       const { prompt } = dto;
       const { sessionId } = body;
 

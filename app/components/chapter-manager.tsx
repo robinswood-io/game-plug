@@ -134,15 +134,20 @@ export default function ChapterManager({ sessionId, isGM, characters = [] }: Cha
     mutationFn: async ({ id, direction }: { id: string; direction: 'up' | 'down' }) => {
       const currentIndex = chapters.findIndex(c => c.id === id);
       const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-      
+
       if (newIndex < 0 || newIndex >= chapters.length) return;
-      
+
+      const currentChapter = chapters[currentIndex];
+      const newChapter = chapters[newIndex];
+
+      if (!currentChapter || !newChapter) return;
+
       const updates = [];
-      updates.push(apiRequest("PATCH", `/api/chapters/${chapters[currentIndex].id}`, { 
-        orderIndex: newIndex 
+      updates.push(apiRequest("PATCH", `/api/chapters/${currentChapter.id}`, {
+        orderIndex: newIndex
       }));
-      updates.push(apiRequest("PATCH", `/api/chapters/${chapters[newIndex].id}`, { 
-        orderIndex: currentIndex 
+      updates.push(apiRequest("PATCH", `/api/chapters/${newChapter.id}`, {
+        orderIndex: currentIndex
       }));
       
       await Promise.all(updates);

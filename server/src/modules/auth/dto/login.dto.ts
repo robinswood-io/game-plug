@@ -1,13 +1,16 @@
-import { localLoginSchema } from '../../../shared/schema';
 import { z } from 'zod';
 
 /**
- * Login DTO
- * Reuses the schema from @shared/schema for consistency with Express backend
+ * Login DTO Schema - Zod validation
+ * Reuses schema from shared/schema.ts for consistency
  */
-export type LoginDto = z.infer<typeof localLoginSchema>;
+export const LoginDtoSchema = z.object({
+  email: z.string().email('Email invalide'),
+  password: z.string().min(1, 'Mot de passe requis'),
+});
 
 /**
- * Export the schema for validation
+ * Type inference from schema
+ * Ensures DTO type is always in sync with validation schema
  */
-export const loginSchema = localLoginSchema;
+export type LoginDto = z.infer<typeof LoginDtoSchema>;

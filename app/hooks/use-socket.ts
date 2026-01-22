@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Socket } from 'socket.io-client';
-import { getSocket, GameMessage, JoinSessionData } from '@/lib/socket-client';
+import { useAuthContext } from '@/contexts/auth-context';
+import { getSocket, connectSocket, GameMessage, JoinSessionData } from '@/lib/socket-client-jwt';
 
 export interface UseSocketReturn {
   socket: Socket | null;
@@ -15,26 +16,36 @@ export interface UseSocketReturn {
 }
 
 export const useSocket = (): UseSocketReturn => {
+  const { accessToken } = useAuthContext();
   const [connected, setConnected] = useState(false);
   const [socket, setSocket] = useState<Socket | null>(null);
   const messageHandlersRef = useRef<Set<(message: GameMessage) => void>>(new Set());
 
   useEffect(() => {
-    // Initialiser Socket.IO
-    const s = getSocket();
+    // Only initialize socket if authenticated
+    if (!accessToken) {
+      setSocket(null);
+      setConnected(false);
+      return;
+    }
+
+    // Initialize Socket.IO with JWT
+    const s = getSocket(accessToken);
     setSocket(s);
 
     // Event handlers
     const onConnect = () => {
       setConnected(true);
+      console.log('✅ Socket.IO connected with JWT');
     };
 
     const onDisconnect = () => {
       setConnected(false);
+      console.log('❌ Socket.IO disconnected');
     };
 
     const onMessage = (message: GameMessage) => {
-      // Appeler tous les handlers enregistrés
+      // Call all registered handlers
       messageHandlersRef.current.forEach((handler) => {
         handler(message);
       });
@@ -44,7 +55,7 @@ export const useSocket = (): UseSocketReturn => {
     s.on('disconnect', onDisconnect);
     s.on('message', onMessage);
 
-    // Connexion initiale
+    // Initial connection
     if (!s.connected) {
       s.connect();
     } else {
@@ -56,9 +67,9 @@ export const useSocket = (): UseSocketReturn => {
       s.off('connect', onConnect);
       s.off('disconnect', onDisconnect);
       s.off('message', onMessage);
-      // Ne pas déconnecter le socket (singleton)
+      // Don't disconnect socket (singleton)
     };
-  }, []);
+  }, [accessToken]); // Reconnect when token changes
 
   const joinSession = useCallback((data: JoinSessionData) => {
     if (socket) {

@@ -1,8 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import * as session from 'express-session';
-import * as passport from 'passport';
-import * as connectPg from 'connect-pg-simple';
+import * as cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
@@ -11,30 +9,10 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule);
     console.log('[STARTUP] NestJS application created successfully');
 
-    // Session middleware (compatible avec Express existant)
-    console.log('[STARTUP] Setting up session middleware...');
-    const PgSession = connectPg(session);
-    app.use(
-      session({
-        store: new PgSession({
-          conString: process.env.DATABASE_URL,
-          tableName: 'sessions',
-        }),
-        secret: process.env.SESSION_SECRET || 'your-secret-key',
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-          maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        },
-      }),
-    );
-    console.log('[STARTUP] Session middleware configured');
-
-    // Passport initialization
-    console.log('[STARTUP] Initializing Passport...');
-    app.use(passport.initialize());
-    app.use(passport.session());
-    console.log('[STARTUP] Passport initialized');
+    // Cookie parser for refresh tokens in HttpOnly cookies
+    console.log('[STARTUP] Setting up cookie parser for JWT refresh tokens...');
+    app.use(cookieParser());
+    console.log('[STARTUP] Cookie parser configured');
 
     // Global validation pipe
     console.log('[STARTUP] Setting up validation pipe...');
@@ -52,6 +30,8 @@ async function bootstrap() {
     app.enableCors({
       origin: process.env.FRONTEND_URL || 'http://localhost:5173',
       credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
     });
     console.log('[STARTUP] CORS enabled');
 
@@ -60,7 +40,7 @@ async function bootstrap() {
     await app.listen(port);
 
     console.log(`🚀 NestJS Backend running on http://localhost:${port}`);
-    console.log(`📊 Database: ${process.env.DATABASE_URL ? 'Connected' : 'No DATABASE_URL'}`);
+    console.log(`🔐 Authentication: JWT + Refresh Tokens (@robinswood/auth)`);
   } catch (error) {
     console.error('[STARTUP ERROR] Failed to start application:', error);
     console.error('[STARTUP ERROR] Stack trace:', error.stack);

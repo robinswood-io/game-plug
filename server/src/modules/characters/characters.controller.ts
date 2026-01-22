@@ -6,14 +6,14 @@ import {
   Delete,
   Body,
   Param,
-  Req,
   UseGuards,
   HttpCode,
   HttpStatus,
   ForbiddenException,
 } from '@nestjs/common';
 import { CharactersService } from './characters.service';
-import { SessionAuthGuard } from '../../common/guards/session-auth.guard';
+import { JwtAuthGuard, User } from '@robinswood/auth';
+import type { IAuthUser } from '@robinswood/auth';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import {
   createCharacterSchema,
@@ -36,33 +36,25 @@ import {
   createActiveEffectSchema,
   type CreateActiveEffectDto,
 } from './dto/active-effect.dto';
-import type { Request } from 'express';
-import type { User } from '../../shared/schema';
 
 @Controller('api/characters')
 export class CharactersController {
   constructor(private readonly charactersService: CharactersService) {}
 
-  private getUserId(req: Request): string {
-    return ((req as any).user as User).id;
-  }
-
   @Post()
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async createCharacter(
     @Body(new ZodValidationPipe(createCharacterSchema)) data: CreateCharacterDto,
-    @Req() req: Request,
+    @User() user: IAuthUser,
   ) {
-    const userId = this.getUserId(req);
     const sessionId = (data as any).sessionId || 'default';
-    return this.charactersService.createCharacter(data, sessionId, userId);
+    return this.charactersService.createCharacterByEmail(data, sessionId, user.email);
   }
 
   @Get()
-  @UseGuards(SessionAuthGuard)
-  async getUserCharacters(@Req() req: Request) {
-    const userId = this.getUserId(req);
-    return this.charactersService.getCharactersByUser(userId);
+  @UseGuards(JwtAuthGuard)
+  async getUserCharacters(@User() user: IAuthUser) {
+    return this.charactersService.getCharactersByUserEmail(user.email);
   }
 
   @Get(':id')
@@ -71,15 +63,14 @@ export class CharactersController {
   }
 
   @Patch(':id')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async updateCharacter(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(updateCharacterSchema)) data: UpdateCharacterDto,
-    @Req() req: Request,
+    @User() user: IAuthUser,
   ) {
-    const userId = this.getUserId(req);
-    const isGM = await this.charactersService.checkGMOwnership(id, userId);
-    const isOwner = await this.charactersService.checkCharacterOwnership(id, userId);
+    const isGM = await this.charactersService.checkGMOwnershipByEmail(id, user.email);
+    const isOwner = await this.charactersService.checkCharacterOwnershipByEmail(id, user.email);
 
     if (!isGM && !isOwner) {
       throw new ForbiddenException('Permission denied');
@@ -89,15 +80,14 @@ export class CharactersController {
   }
 
   @Patch(':id/notes')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async updateCharacterNotes(
     @Param('id') id: string,
     @Body() body: { notes: string },
-    @Req() req: Request,
+    @User() user: IAuthUser,
   ) {
-    const userId = this.getUserId(req);
-    const isGM = await this.charactersService.checkGMOwnership(id, userId);
-    const isOwner = await this.charactersService.checkCharacterOwnership(id, userId);
+    const isGM = await this.charactersService.checkGMOwnershipByEmail(id, user.email);
+    const isOwner = await this.charactersService.checkCharacterOwnershipByEmail(id, user.email);
 
     if (!isGM && !isOwner) {
       throw new ForbiddenException('Permission denied');
@@ -116,15 +106,14 @@ export class CharactersController {
   }
 
   @Post(':id/inventory')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async addInventoryItem(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(createInventoryItemSchema)) data: CreateInventoryItemDto,
-    @Req() req: Request,
+    @User() user: IAuthUser,
   ) {
-    const userId = this.getUserId(req);
-    const isGM = await this.charactersService.checkGMOwnership(id, userId);
-    const isOwner = await this.charactersService.checkCharacterOwnership(id, userId);
+    const isGM = await this.charactersService.checkGMOwnershipByEmail(id, user.email);
+    const isOwner = await this.charactersService.checkCharacterOwnershipByEmail(id, user.email);
 
     if (!isGM && !isOwner) {
       throw new ForbiddenException('Permission denied');
@@ -134,7 +123,7 @@ export class CharactersController {
   }
 
   @Post(':id/sanity-conditions')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async addSanityCondition(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(createSanityConditionSchema)) data: CreateSanityConditionDto,
@@ -143,20 +132,37 @@ export class CharactersController {
   }
 
   @Post(':id/effects')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async addActiveEffect(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(createActiveEffectSchema)) data: CreateActiveEffectDto,
-    @Req() req: Request,
+    @User() user: IAuthUser,
   ) {
-    const userId = this.getUserId(req);
-    const isGM = await this.charactersService.checkGMOwnership(id, userId);
+    const isGM = await this.charactersService.checkGMOwnershipByEmail(id, user.email);
 
     if (!isGM) {
       throw new ForbiddenException('Only GM can add effects');
     }
 
     return this.charactersService.addActiveEffect(id, data);
+  }
+
+  @Get('test/admin-only')
+  @UseGuards(JwtAuthGuard)
+  async testAdminOnly(@User() user: IAuthUser) {
+    return {
+      message: 'Access granted - Admin only endpoint',
+      user,
+    };
+  }
+
+  @Get('test/moderator-or-admin')
+  @UseGuards(JwtAuthGuard)
+  async testModeratorOrAdmin(@User() user: IAuthUser) {
+    return {
+      message: 'Access granted - Moderator or Admin',
+      user,
+    };
   }
 }
 
@@ -165,7 +171,7 @@ export class InventoryController {
   constructor(private readonly charactersService: CharactersService) {}
 
   @Patch(':id')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async updateInventoryItem(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(updateInventoryItemSchema)) data: any,
@@ -174,7 +180,7 @@ export class InventoryController {
   }
 
   @Delete(':id')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async deleteInventoryItem(@Param('id') id: string) {
     await this.charactersService.deleteInventoryItem(id);
@@ -187,13 +193,13 @@ export class EffectsController {
   constructor(private readonly charactersService: CharactersService) {}
 
   @Patch(':id')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   async updateEffect(@Param('id') id: string, @Body() data: any) {
     return this.charactersService.updateActiveEffect(id, data);
   }
 
   @Delete(':id')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async deleteEffect(@Param('id') id: string) {
     await this.charactersService.deleteActiveEffect(id);

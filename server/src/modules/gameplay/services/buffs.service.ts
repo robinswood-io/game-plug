@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../../../common/database/database.service';
-import type { Character } from '@shared/schema';
+import type { Character } from '../../../shared/schema';
 
 @Injectable()
 export class BuffsService {

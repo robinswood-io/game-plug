@@ -33,22 +33,22 @@ export interface DerivedStats {
  */
 export function rollDice(formula: string): DiceResult {
   const cleanFormula = formula.toLowerCase().trim();
-  
+
   // Handle simple numbers
   if (/^\d+$/.test(cleanFormula)) {
-    const value = parseInt(cleanFormula);
+    const value = parseInt(cleanFormula, 10);
     return { total: value, rolls: [value], formula };
   }
-  
+
   // Parse dice notation: XdY+Z or XdY-Z
   const match = cleanFormula.match(/^(\d+)?d(\d+)([+-]\d+)?$/);
   if (!match) {
     throw new Error(`Invalid dice formula: ${formula}`);
   }
-  
-  const numDice = parseInt(match[1] || '1');
-  const numSides = parseInt(match[2]);
-  const modifier = parseInt(match[3] || '0');
+
+  const numDice = parseInt(match[1] ?? '1', 10);
+  const numSides = parseInt(match[2] ?? '0', 10);
+  const modifier = parseInt(match[3] ?? '0', 10);
   
   if (numDice < 1 || numDice > 100) {
     throw new Error('Number of dice must be between 1 and 100');
@@ -169,7 +169,14 @@ export function determineSuccessLevel(roll: number, skillValue: number): 'extrem
  * Roll for sanity loss using Call of Cthulhu notation (e.g., "1d4/1d8")
  */
 export function rollSanityLoss(formula: string, success: boolean): DiceResult {
-  const [successLoss, failureLoss] = formula.split('/');
+  const parts = formula.split('/');
+  const successLoss = parts[0];
+  const failureLoss = parts[1];
+
+  if (!successLoss || !failureLoss) {
+    throw new Error(`Invalid sanity loss formula: ${formula}`);
+  }
+
   const lossFormula = success ? successLoss : failureLoss;
   return rollDice(lossFormula);
 }
@@ -180,15 +187,15 @@ export function rollSanityLoss(formula: string, success: boolean): DiceResult {
 export function parseDiceFormula(formula: string): { numDice: number; numSides: number; modifier: number } | null {
   const cleanFormula = formula.toLowerCase().trim();
   const match = cleanFormula.match(/^(\d+)?d(\d+)([+-]\d+)?$/);
-  
-  if (!match) {
+
+  if (!match || !match[2]) {
     return null;
   }
-  
+
   return {
-    numDice: parseInt(match[1] || '1'),
-    numSides: parseInt(match[2]),
-    modifier: parseInt(match[3] || '0'),
+    numDice: parseInt(match[1] ?? '1', 10),
+    numSides: parseInt(match[2], 10),
+    modifier: parseInt(match[3] ?? '0', 10),
   };
 }
 
@@ -199,16 +206,38 @@ export function generateQuickCharacteristics(): CharacterStats {
   // Alternative method using fixed point allocation for quicker generation
   const baseValues = [40, 50, 50, 50, 60, 60, 70, 80];
   const shuffled = baseValues.sort(() => Math.random() - 0.5);
-  
+
+  const strength = shuffled[0];
+  const constitution = shuffled[1];
+  const size = shuffled[2];
+  const dexterity = shuffled[3];
+  const appearance = shuffled[4];
+  const intelligence = shuffled[5];
+  const power = shuffled[6];
+  const education = shuffled[7];
+
+  if (
+    strength === undefined ||
+    constitution === undefined ||
+    size === undefined ||
+    dexterity === undefined ||
+    appearance === undefined ||
+    intelligence === undefined ||
+    power === undefined ||
+    education === undefined
+  ) {
+    throw new Error('Failed to generate random characteristics');
+  }
+
   return {
-    strength: shuffled[0],
-    constitution: shuffled[1],
-    size: shuffled[2],
-    dexterity: shuffled[3],
-    appearance: shuffled[4],
-    intelligence: shuffled[5],
-    power: shuffled[6],
-    education: shuffled[7],
+    strength,
+    constitution,
+    size,
+    dexterity,
+    appearance,
+    intelligence,
+    power,
+    education,
     luck: rollDice('3d6').total * 5, // Luck is always rolled
   };
 }

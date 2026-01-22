@@ -172,15 +172,18 @@ export default function DiceRoller({ character }: DiceRollerProps) {
     playSound('roll');
     
     // Show animated dice
-    const diceSequence = [];
+    const diceSequence: number[] = [];
     for (let i = 0; i < 10; i++) {
       diceSequence.push(Math.floor(Math.random() * 100) + 1);
     }
-    
+
     // Animate dice rolling
     for (let i = 0; i < diceSequence.length; i++) {
-      setAnimatingDice([diceSequence[i]]);
-      await new Promise(resolve => setTimeout(resolve, 100));
+      const value = diceSequence[i];
+      if (value !== undefined) {
+        setAnimatingDice([value]);
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
     }
     
     const roll = rollDice("1d100");

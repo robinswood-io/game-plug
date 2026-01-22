@@ -1,0 +1,81 @@
+# ==============================================================================
+# Docker Compose - Development Monolithic (Single Container)
+# ==============================================================================
+# Usage: docker compose -f docker-compose.dev-mono.yml up
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: game-plug-db-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: roleplug
+      POSTGRES_USER: roleplug
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-roleplug_dev}
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ./server/init-schema.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5434:5432"
+    networks:
+      - ia-webdev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U roleplug"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Monolithic App (NestJS + Next.js)
+  app:
+    image: node:20-alpine
+    container_name: game-plug-app-dev
+    restart: unless-stopped
+    working_dir: /app
+    command: sh -c "npm install && cd server && npm install && cd ../app && npm install && cd .. && npm run dev:all"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      # Backend
+      PORT: 3000
+      DATABASE_URL: postgresql://roleplug:${POSTGRES_PASSWORD:-roleplug_dev}@postgres:5432/roleplug
+      SESSION_SECRET: ${SESSION_SECRET:-dev-secret}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # Frontend
+      NEXT_PUBLIC_API_URL: https://game-plug.robinswood.io
+    volumes:
+      # Bind mount complet du projet
+      - .:/app
+      # Exclusions
+      - /app/node_modules
+      - /app/app/node_modules
+      - /app/server/node_modules
+      - /app/app/.next
+      # Volume persistant pour avatars
+      - avatars_dev:/app/server/public/avatars
+    ports:
+      - "40120:3000"  # Backend API
+      - "40121:3001"  # Frontend Next.js
+    networks:
+      - ia-webdev-network
+    deploy:
+      resources:
+        limits:
+          cpus: '3.0'
+          memory: 3G
+        reservations:
+          cpus: '1.5'
+          memory: 1.5G
+
+volumes:
+  postgres_data_dev:
+    name: game-plug-postgres-dev
+  avatars_dev:
+    name: game-plug-avatars-dev
+
+networks:
+  ia-webdev-network:
+    external: true
+    name: ia-webdev_ia-webdev-network

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Character } from '@shared/schema';
+import type { Character } from '../../shared/schema';
 import { StatusEffectsService, type StatusCheck } from './services/status-effects.service';
 import { BuffsService } from './services/buffs.service';
 import { TreatmentService } from './services/treatment.service';

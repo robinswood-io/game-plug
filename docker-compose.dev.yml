@@ -1,7 +1,7 @@
 # ==============================================================================
 # Docker Compose - Development Multi-Container (Next.js + NestJS)
 # ==============================================================================
-# Usage: docker compose -f docker-compose.dev.yml watch
+# Usage: docker compose -f docker-compose.dev.yml up
 
 services:
   # PostgreSQL Database
@@ -44,24 +44,32 @@ services:
       DATABASE_URL: postgresql://roleplug:${POSTGRES_PASSWORD:-roleplug_dev}@postgres:5432/roleplug
       SESSION_SECRET: ${SESSION_SECRET:-dev-secret}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      FRONTEND_URL: https://game-plug.robinswood.io
     volumes:
-      - ./server/src:/app/src
+      # Bind mount complet du backend
+      - ./server:/app
+
+      # Exclusions
+      - /app/node_modules
+
+      # Volume partagé (code commun frontend/backend)
       - ./shared:/app/shared
+
+      # Volume persistant pour avatars DALL-E
       - avatars_dev:/app/public/avatars
     ports:
       - "40120:3000"
     networks:
       - ia-webdev-network
-    develop:
-      watch:
-        - action: sync
-          path: ./server/src
-          target: /app/src
-          ignore:
-            - node_modules/
-            - dist/
-        - action: rebuild
-          path: ./server/package.json
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
 
   # Next.js Frontend
   frontend:
@@ -79,27 +87,28 @@ services:
       # Use public URL for browser access (via nginx)
       NEXT_PUBLIC_API_URL: https://game-plug.robinswood.io
     volumes:
-      - ./app/app:/app/app
-      - ./app/components:/app/components
-      - ./app/hooks:/app/hooks
-      - ./app/lib:/app/lib
-      - ./app/middleware.ts:/app/middleware.ts
-      - ./app/public:/app/public
+      # Bind mount complet du frontend
+      - ./app:/app
+
+      # Exclusions Next.js
+      - /app/node_modules
+      - /app/.next
+
+      # Volume partagé (code commun frontend/backend)
       - ./shared:/app/shared
     ports:
       - "40121:3000"
     networks:
       - ia-webdev-network
-    develop:
-      watch:
-        - action: sync
-          path: ./app
-          target: /app
-          ignore:
-            - node_modules/
-            - .next/
-        - action: rebuild
-          path: ./app/package.json
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
 
 volumes:
   postgres_data_dev:

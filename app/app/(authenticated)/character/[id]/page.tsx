@@ -98,8 +98,6 @@ export default function CharacterSheetPage() {
     // Join the session room
     joinSession({
       sessionId: character.sessionId,
-      userId: character.userId || undefined,
-      role: 'player',
     });
     hasJoinedSession.current = true;
 
