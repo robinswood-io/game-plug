@@ -28,7 +28,7 @@
         - generic [ref=e15]:
           - generic [ref=e16]:
             - generic [ref=e17]: "Connecté:"
-            - generic [ref=e18]: gm-dashboard-test-1769087391308@test.com
+            - generic [ref=e18]: gm-dashboard-test-1769100352706-pf1ewc@test.com
           - button [ref=e19] [cursor=pointer]:
             - img
           - generic [ref=e22]: En ligne
@@ -55,7 +55,7 @@
         - generic [ref=e61]:
           - generic [ref=e62]:
             - generic [ref=e63]:
-              - heading "Dashboard Test 1769087391308" [level=3] [ref=e64]
+              - heading "Dashboard Test 1769100352646" [level=3] [ref=e64]
               - generic [ref=e65]: Active
             - generic [ref=e66]:
               - generic [ref=e67]:
@@ -63,14 +63,14 @@
                 - text: 22/01/2026
               - generic [ref=e70]:
                 - img [ref=e71]
-                - text: 13:09
+                - text: 16:45
           - generic [ref=e74]:
             - button [ref=e75] [cursor=pointer]:
               - img
             - button [ref=e76] [cursor=pointer]:
               - img
             - link "Gérer" [ref=e77] [cursor=pointer]:
-              - /url: /gm/82e53cea-38f6-466f-a444-63e54c7fe319
+              - /url: /gm/0238dfa6-246f-4f4a-a89f-1b37efb0fc77
               - button "Gérer" [ref=e78]:
                 - img
                 - text: Gérer

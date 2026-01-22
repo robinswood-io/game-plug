@@ -1,12 +1,16 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('GM Dashboard Features', () => {
-  const testEmail = `gm-dashboard-test-${Date.now()}@test.com`;
   const testPassword = 'SecurePassword123!';
   const sessionName = `Dashboard Test ${Date.now()}`;
   const characterName = `Test Character ${Date.now()}`;
 
+  let sessionId: string;
+
   test.beforeEach(async ({ page }) => {
+    // Generate unique email for each test
+    const testEmail = `gm-dashboard-test-${Date.now()}-${Math.random().toString(36).substring(7)}@test.com`;
+
     // Create account, login, create session, create character
     await page.goto('/gm-signup');
     await page.locator('input[name="firstName"]').fill('Test');
@@ -21,7 +25,12 @@ test.describe('GM Dashboard Features', () => {
     await page.getByTestId('button-create-session').click();
     await page.getByTestId('input-session-name').fill(sessionName);
     await page.getByTestId('button-confirm-create').click();
-    await page.waitForTimeout(2000);
+
+    // Wait for redirect to GM dashboard and extract session ID
+    await page.waitForURL(/\/gm\//, { timeout: 10000 });
+    const currentUrl = page.url();
+    const match = currentUrl.match(/\/gm\/(.+)/);
+    sessionId = match?.[1] || '';
 
     // Create character
     await page.goto('/character-creation');
@@ -47,7 +56,7 @@ test.describe('GM Dashboard Features', () => {
       await page.waitForTimeout(1000);
 
       // Check if we're on GM dashboard or session page
-      const dashboardIndicator = page.getByText(/Interface Maître de Jeu|GM Dashboard|Maître/i);
+      const dashboardIndicator = page.getByText(/Interface Maître de Jeu|GM Dashboard|Maître/i).first();
       if (await dashboardIndicator.isVisible({ timeout: 5000 })) {
         // Already on dashboard
       } else {
@@ -59,7 +68,7 @@ test.describe('GM Dashboard Features', () => {
       }
     } else {
       // Direct navigation as fallback
-      await page.goto('/gm-dashboard-simplified');
+      await page.goto(`/gm/${sessionId}`);
     }
 
     // Verify dashboard loaded - check for session name in header
@@ -67,19 +76,19 @@ test.describe('GM Dashboard Features', () => {
   });
 
   test('should display character list in dashboard', async ({ page }) => {
-    await page.goto('/gm-dashboard-simplified');
+    await page.goto(`/gm/${sessionId}`);
     await page.waitForTimeout(2000);
 
-    // Should see character card with name - using more specific selector
-    const characterCard = page.locator(`[data-testid*="text-character-name"]`).first();
-    await expect(characterCard).toBeVisible({ timeout: 10000 });
+    // Should see character card with name - testid pattern is text-character-name-${id}
+    const characterNameElement = page.locator('[data-testid^="text-character-name-"]').first();
+    await expect(characterNameElement).toBeVisible({ timeout: 10000 });
 
     // Should see the created character name somewhere on the page
     await expect(page.getByText(characterName)).toBeVisible({ timeout: 5000 });
   });
 
   test('should apply buff/effect to character', async ({ page }) => {
-    await page.goto('/gm-dashboard-simplified');
+    await page.goto(`/gm/${sessionId}`);
     await page.waitForTimeout(2000);
 
     // Get the first character ID from the page
@@ -109,7 +118,7 @@ test.describe('GM Dashboard Features', () => {
   });
 
   test('should manage chapters and events', async ({ page }) => {
-    await page.goto('/gm-dashboard-simplified');
+    await page.goto(`/gm/${sessionId}`);
     await page.waitForTimeout(2000);
 
     // Look for chapters button using data-testid
@@ -138,7 +147,7 @@ test.describe('GM Dashboard Features', () => {
   });
 
   test('should view roll history', async ({ page }) => {
-    await page.goto('/gm-dashboard-simplified');
+    await page.goto(`/gm/${sessionId}`);
     await page.waitForTimeout(2000);
 
     // Perform a GM roll first
@@ -154,7 +163,7 @@ test.describe('GM Dashboard Features', () => {
   });
 
   test('should access gameboard projection', async ({ page }) => {
-    await page.goto('/gm-dashboard-simplified');
+    await page.goto(`/gm/${sessionId}`);
     await page.waitForTimeout(2000);
 
     // Look for floating projection button using data-testid
@@ -170,7 +179,7 @@ test.describe('GM Dashboard Features', () => {
   });
 
   test('should manage narrative entries', async ({ page }) => {
-    await page.goto('/gm-dashboard-simplified');
+    await page.goto(`/gm/${sessionId}`);
     await page.waitForTimeout(2000);
 
     // Look for narrative textarea using data-testid
@@ -193,7 +202,7 @@ test.describe('GM Dashboard Features', () => {
   });
 
   test('should manage NPCs and enemies', async ({ page }) => {
-    await page.goto('/gm-dashboard-simplified');
+    await page.goto(`/gm/${sessionId}`);
     await page.waitForTimeout(2000);
 
     // Look for the custom narration textarea in the Narrative Tools

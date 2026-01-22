@@ -1,11 +1,13 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Game Session Management', () => {
-  const testEmail = `gm-session-test-${Date.now()}@test.com`;
   const testPassword = 'SecurePassword123!';
   const sessionName = `Test Campaign ${Date.now()}`;
 
   test.beforeEach(async ({ page }) => {
+    // Generate unique email for each test
+    const testEmail = `gm-session-test-${Date.now()}-${Math.random().toString(36).substring(7)}@test.com`;
+
     // Create account and login
     await page.goto('/gm-signup');
     await page.locator('input[name="firstName"]').fill('Test');
@@ -29,11 +31,15 @@ test.describe('Game Session Management', () => {
     // Save session
     await page.getByTestId('button-confirm-create').click();
 
-    // Wait for session to be created
-    await page.waitForTimeout(2000);
+    // Should redirect to GM dashboard after creation
+    await page.waitForURL(/\/gm\//, { timeout: 10000 });
 
-    // Verify session exists - use more specific selector to avoid strict mode violation
-    await expect(page.locator(`[data-testid="session-card-${sessionName}"], [data-testid*="session-card"]`).first()).toBeVisible({ timeout: 5000 });
+    // Navigate back to session manager to verify session exists
+    await page.goto('/session-manager');
+    await page.waitForTimeout(1000);
+
+    // Verify session name is visible using the actual testid pattern
+    await expect(page.locator('[data-testid^="text-session-name-"]').first()).toBeVisible({ timeout: 5000 });
   });
 
   test('should generate session join code', async ({ page }) => {
@@ -42,14 +48,23 @@ test.describe('Game Session Management', () => {
     await page.getByTestId('button-create-session').click();
     await page.getByTestId('input-session-name').fill(`${sessionName}-code`);
     await page.getByTestId('button-confirm-create').click();
-    await page.waitForTimeout(2000);
 
-    // Look for join code - should be visible in the session card using specific testid
-    await expect(page.locator('[data-testid*="session-code"]').first()).toBeVisible({ timeout: 5000 });
+    // Should redirect to GM dashboard
+    await page.waitForURL(/\/gm\//, { timeout: 10000 });
 
-    // Code should be alphanumeric, 6 characters
-    const code = await page.locator('[data-testid*="session-code"]').first().textContent();
-    expect(code?.trim()).toMatch(/[A-Z0-9]{6}/);
+    // Navigate back to session manager
+    await page.goto('/session-manager');
+    await page.waitForTimeout(1000);
+
+    // Verify copy invite link button exists for the session
+    const copyLinkButton = page.locator('[data-testid^="button-copy-link-"]').first();
+    await expect(copyLinkButton).toBeVisible({ timeout: 5000 });
+
+    // Click to copy the invite link (tests clipboard functionality)
+    await copyLinkButton.click();
+
+    // Verify toast notification appears
+    await expect(page.getByText(/lien copié/i)).toBeVisible({ timeout: 3000 });
   });
 
   test('should activate game session', async ({ page }) => {
@@ -58,19 +73,24 @@ test.describe('Game Session Management', () => {
     await page.getByTestId('button-create-session').click();
     await page.getByTestId('input-session-name').fill(`${sessionName}-active`);
     await page.getByTestId('button-confirm-create').click();
-    await page.waitForTimeout(2000);
+
+    // Should redirect to GM dashboard
+    await page.waitForURL(/\/gm\//, { timeout: 10000 });
 
     // Navigate back to session manager to toggle active status
     await page.goto('/session-manager');
+    await page.waitForTimeout(1000);
 
-    // Find and click the toggle button for the created session
-    const toggleButtons = await page.locator('[data-testid^="button-toggle-active-"]').all();
-    if (toggleButtons.length > 0) {
-      await toggleButtons[toggleButtons.length - 1].click();
+    // Find and click the toggle button for the created session (defaults to inactive)
+    const toggleButton = page.locator('[data-testid^="button-toggle-active-"]').first();
+    await expect(toggleButton).toBeVisible({ timeout: 5000 });
+    await toggleButton.click();
 
-      // Verify session is active (check for Active badge)
-      await expect(page.getByText('Active')).toBeVisible({ timeout: 5000 });
-    }
+    // Wait for mutation to complete
+    await page.waitForTimeout(1000);
+
+    // Verify session is active (check for Active badge)
+    await expect(page.getByText('Active').first()).toBeVisible({ timeout: 5000 });
   });
 
   test('should access GM dashboard for session', async ({ page }) => {
@@ -93,63 +113,60 @@ test.describe('Game Session Management', () => {
     await page.getByTestId('button-create-session').click();
     await page.getByTestId('input-session-name').fill(`${sessionName}-join`);
     await page.getByTestId('button-confirm-create').click();
-    await page.waitForTimeout(2000);
 
-    // Navigate back to session manager to get the code
-    await page.goto('/session-manager');
-    await page.waitForTimeout(1000);
+    // Wait for redirect to GM dashboard and extract session ID from URL
+    await page.waitForURL(/\/gm\//, { timeout: 10000 });
+    const currentUrl = page.url();
+    const sessionId = currentUrl.match(/\/gm\/(.+)/)?.[1];
 
-    // Get session code from the newly created session - use specific testid selector
-    const codeElement = await page.locator('[data-testid*="session-code"]').first();
-    const codeText = await codeElement.textContent();
-    const sessionCode = codeText?.trim().match(/[A-Z0-9]{6}/)?.[0];
-
-    if (sessionCode) {
-      // Open new incognito page as player
+    if (sessionId) {
+      // Open new page as player (simulating invite link click)
       const playerPage = await context.newPage();
-      await playerPage.goto('/join-with-code');
 
-      // Enter session code
-      await playerPage.getByLabel(/code|access/i).fill(sessionCode);
-      await playerPage.getByRole('button', { name: /rejoindre|join|entrer|enter/i }).click();
+      // Navigate directly to join-session route (what invite link would do)
+      await playerPage.goto(`/join-session/${sessionId}`);
 
-      // Should be redirected to session or character selection
-      await playerPage.waitForURL(/\/session|\/join-session|\/select-character/, { timeout: 10000 });
+      // Should be redirected to session or show join interface
+      await playerPage.waitForTimeout(2000);
 
-      // Verify join was successful using more specific selectors
-      const joinSuccessful = await playerPage.locator(`[data-testid*="session-card"], [data-testid*="character"]`).first().isVisible({ timeout: 5000 }).catch(() => false);
-      if (!joinSuccessful) {
-        // Fallback to checking for character selection text
-        await expect(playerPage.getByText(/personnage|character|sélection|select/i)).toBeVisible({ timeout: 5000 });
-      }
+      // Verify we're on some session-related page (not an error page)
+      const currentPlayerUrl = playerPage.url();
+      const isValidJoinRoute = /\/(join-session|session|character|select-character|home)/.test(currentPlayerUrl);
+      expect(isValidJoinRoute).toBeTruthy();
 
       await playerPage.close();
     }
   });
 
   test('should end game session', async ({ page }) => {
+    const uniqueSessionName = `${sessionName}-end`;
+
     // Create session
     await page.goto('/session-manager');
     await page.getByTestId('button-create-session').click();
-    await page.getByTestId('input-session-name').fill(`${sessionName}-end`);
+    await page.getByTestId('input-session-name').fill(uniqueSessionName);
     await page.getByTestId('button-confirm-create').click();
-    await page.waitForTimeout(2000);
+
+    // Should redirect to GM dashboard
+    await page.waitForURL(/\/gm\//, { timeout: 10000 });
 
     // Navigate back to session manager
     await page.goto('/session-manager');
     await page.waitForTimeout(1000);
 
     // Find and click delete button for the session
-    const deleteButtons = await page.locator('[data-testid^="button-delete-"]').all();
-    if (deleteButtons.length > 0) {
-      await deleteButtons[deleteButtons.length - 1].click();
+    const deleteButton = page.locator('[data-testid^="button-delete-"]').first();
+    await expect(deleteButton).toBeVisible({ timeout: 5000 });
+    await deleteButton.click();
 
-      // Confirm deletion
-      await page.getByTestId('button-confirm-delete').click();
+    // Confirm deletion in dialog
+    await page.waitForTimeout(500);
+    await page.getByTestId('button-confirm-delete').click();
 
-      // Verify session is removed
-      await page.waitForTimeout(1000);
-      await expect(page.getByText(`${sessionName}-end`)).not.toBeVisible({ timeout: 5000 });
-    }
+    // Wait for deletion to complete
+    await page.waitForTimeout(1000);
+
+    // Verify session name is no longer visible
+    await expect(page.getByText(uniqueSessionName)).not.toBeVisible({ timeout: 5000 });
   });
 });

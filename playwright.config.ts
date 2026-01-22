@@ -28,6 +28,7 @@ export default defineConfig({
     timeout: 120000,
     env: {
       NODE_ENV: 'development',
+      PORT: '5002',
     },
   },
 });
