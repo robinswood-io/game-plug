@@ -1,0 +1,79 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - region "Notifications (F8)":
+    - list
+  - generic [ref=e3]:
+    - navigation [ref=e4]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - link "Rôle Plug" [ref=e8] [cursor=pointer]:
+            - /url: /
+            - heading "Rôle Plug" [level=1] [ref=e9]
+          - generic [ref=e10]:
+            - link "Joueur" [ref=e11] [cursor=pointer]:
+              - /url: /
+              - button "Joueur" [ref=e12]:
+                - img
+                - text: Joueur
+            - link "Sessions" [ref=e13] [cursor=pointer]:
+              - /url: /sessions
+              - button "Sessions" [ref=e14]:
+                - img
+                - text: Sessions
+            - button "Maître de Jeu" [disabled]:
+              - img
+              - text: Maître de Jeu
+        - generic [ref=e15]:
+          - generic [ref=e16]:
+            - generic [ref=e17]: "Connecté:"
+            - generic [ref=e18]: gm-session-test-1769077793918@test.com
+          - button [ref=e19] [cursor=pointer]:
+            - img
+          - generic [ref=e22]: En ligne
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - heading "Gestion des Sessions" [level=1] [ref=e25]
+        - paragraph [ref=e26]: Créez et gérez vos sessions de jeu. Invitez des joueurs et lancez des aventures lovecraftiennes.
+      - generic [ref=e27]:
+        - generic [ref=e30]:
+          - generic [ref=e31]:
+            - paragraph [ref=e32]: Sessions Totales
+            - paragraph [ref=e33]: "1"
+          - img [ref=e34]
+        - generic [ref=e41]:
+          - generic [ref=e42]:
+            - paragraph [ref=e43]: Sessions Actives
+            - paragraph [ref=e44]: "1"
+          - img [ref=e45]
+        - button "Nouvelle Session" [ref=e49] [cursor=pointer]:
+          - img
+          - text: Nouvelle Session
+      - generic [ref=e50]:
+        - generic [ref=e52]: Mes Sessions de Jeu
+        - generic [ref=e61]:
+          - generic [ref=e62]:
+            - generic [ref=e63]:
+              - heading "Test Campaign 1769077793918-join" [level=3] [ref=e64]
+              - generic [ref=e65]: Active
+            - generic [ref=e66]:
+              - generic [ref=e67]:
+                - img [ref=e68]
+                - text: 22/01/2026
+              - generic [ref=e70]:
+                - img [ref=e71]
+                - text: 10:29
+          - generic [ref=e74]:
+            - button [ref=e75] [cursor=pointer]:
+              - img
+            - button [ref=e76] [cursor=pointer]:
+              - img
+            - link "Gérer" [ref=e77] [cursor=pointer]:
+              - /url: /gm/4686ca12-ccc1-4d2e-ad02-f31cb98b3e5c
+              - button "Gérer" [ref=e78]:
+                - img
+                - text: Gérer
+            - button [ref=e79] [cursor=pointer]:
+              - img
+```

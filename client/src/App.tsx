@@ -62,6 +62,7 @@ function Router() {
             <Route path="/character-creation/:sessionId" component={CharacterCreation} />
             <Route path="/character-edit/:sessionId/:id" component={CharacterEdit} />
             <Route path="/sessions" component={SessionManager} />
+            <Route path="/session-manager" component={SessionManager} />
           </>
         )}
         <Route component={NotFound} />

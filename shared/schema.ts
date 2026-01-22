@@ -34,7 +34,7 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   // Local authentication fields
   passwordHash: varchar("password_hash"), // For local GM accounts
-  authType: varchar("auth_type").default('replit'), // 'replit' or 'local'
+  authType: varchar("auth_type").default('local'), // 'local' or 'dev-bypass'
   isGM: boolean("is_gm").default(false), // Flag to identify GMs
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

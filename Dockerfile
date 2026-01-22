@@ -1,32 +1,29 @@
-# Multi-stage build for Rôle Plug application
+# Multi-stage build for Rôle Plug application with Bun
 
 # Stage 1: Dependencies
-FROM node:20-alpine AS deps
+FROM oven/bun:1.3.6-alpine AS deps
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
-# Note: Installing all dependencies including devDependencies
-# because server code imports vite.ts module (even though setupVite is only called in dev mode)
-RUN npm ci && \
-    npm cache clean --force
+COPY package.json bun.lockb ./
+# Install all dependencies including devDependencies
+RUN bun install --frozen-lockfile
 
 # Stage 2: Build
-FROM node:20-alpine AS builder
+FROM oven/bun:1.3.6-alpine AS builder
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-RUN npm ci
+# Copy dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
 
 # Copy source code
 COPY . .
 
 # Build application (frontend + backend)
-RUN npm run build
+RUN bun run build
 
 # Stage 3: Production
-FROM node:20-alpine AS runner
+FROM oven/bun:1.3.6-alpine AS runner
 WORKDIR /app
 
 # Install dumb-init for proper signal handling
@@ -41,7 +38,8 @@ COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
 
 # Copy built application from builder stage
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
+COPY --from=builder --chown=nodejs:nodejs /app/package.json ./
+COPY --from=builder --chown=nodejs:nodejs /app/bun.lockb ./
 
 # Copy schema and drizzle config for database migrations
 COPY --from=builder --chown=nodejs:nodejs /app/shared ./shared
@@ -57,12 +55,12 @@ USER nodejs
 # Expose application port
 EXPOSE 5000
 
-# Health check
+# Health check (using bun instead of node)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:5000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+  CMD bun -e "const http = require('http'); http.get('http://localhost:5000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start application
-CMD ["npm", "start"]
+# Start application with Bun
+CMD ["bun", "start"]

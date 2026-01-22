@@ -208,7 +208,7 @@ export default function GMSignup() {
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center space-y-2">
               <p className="text-sm text-aged-parchment">
                 Déjà un compte ?{" "}
                 <Button
@@ -220,17 +220,36 @@ export default function GMSignup() {
                   Se connecter
                 </Button>
               </p>
-              <p className="text-xs text-aged-parchment/70 mt-2">
-                Ou{" "}
-                <Button
-                  variant="link"
-                  className="text-aged-gold hover:text-eldritch-green p-0 h-auto font-normal"
-                  onClick={() => navigate("/api/login")}
-                  data-testid="link-replit-auth"
-                >
-                  continuer avec Replit
-                </Button>
-              </p>
+
+              {import.meta.env.DEV && (
+                <p className="text-xs text-eldritch-green/80 font-source pt-2 border-t border-aged-gold/20">
+                  <Button
+                    variant="link"
+                    className="text-eldritch-green hover:text-aged-gold p-0 h-auto font-normal text-xs"
+                    onClick={async () => {
+                      // Dev bypass - directly set user in queryClient
+                      const devUser = {
+                        id: 'dev-gm-001',
+                        email: 'dev-gm@game-plug.local',
+                        authType: 'dev-bypass',
+                        isGM: true,
+                        firstName: 'Dev',
+                        lastName: 'GM'
+                      };
+                      queryClient.setQueryData(["/api/auth/user"], devUser);
+                      toast({
+                        title: "Dev Login",
+                        description: "Connecté en mode développement",
+                        variant: "default",
+                      });
+                      navigate("/");
+                    }}
+                    data-testid="button-dev-login"
+                  >
+                    🔧 Dev Login (Mode Développement)
+                  </Button>
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>

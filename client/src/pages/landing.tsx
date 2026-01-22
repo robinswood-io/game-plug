@@ -2,9 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Eye, Users, Dice6, Brain, UserPlus, LogIn } from "lucide-react";
 import { useLocation } from "wouter";
+import { queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Landing() {
   const [, navigate] = useLocation();
+  const { toast } = useToast();
 
   return (
     <div className="min-h-screen bg-deep-black text-bone-white">
@@ -73,19 +76,35 @@ export default function Landing() {
               </Card>
             </div>
 
-            <div className="mt-6 text-center">
-              <p className="text-aged-parchment text-sm font-source">
-                Ou{" "}
+            {import.meta.env.DEV && (
+              <div className="mt-6 text-center">
                 <Button
                   variant="link"
-                  className="text-aged-gold hover:text-eldritch-green p-0 h-auto font-normal"
-                  onClick={() => window.location.href = '/api/login'}
-                  data-testid="button-replit-login"
+                  className="text-eldritch-green hover:text-aged-gold text-xs font-source"
+                  onClick={async () => {
+                    // Dev bypass - directly set user in queryClient
+                    const devUser = {
+                      id: 'dev-gm-001',
+                      email: 'dev-gm@game-plug.local',
+                      authType: 'dev-bypass',
+                      isGM: true,
+                      firstName: 'Dev',
+                      lastName: 'GM'
+                    };
+                    queryClient.setQueryData(["/api/auth/user"], devUser);
+                    toast({
+                      title: "Dev Login",
+                      description: "Connecté en mode développement",
+                      variant: "default",
+                    });
+                    navigate("/");
+                  }}
+                  data-testid="button-dev-login-landing"
                 >
-                  continuer avec votre compte Replit
+                  🔧 Dev Login (Mode Développement)
                 </Button>
-              </p>
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -33,6 +33,14 @@ function generateSessionCode(): string {
   return code;
 }
 
+// Helper function to get user ID from authenticated request
+function getUserId(req: any): string {
+  if (!req.user || !req.user.id) {
+    throw new Error("User not authenticated");
+  }
+  return req.user.id;
+}
+
 export async function registerRoutes(app: Express): Promise<void> {
   // Health check endpoint for deployment  
   app.get('/api/health', (req, res) => {
@@ -49,7 +57,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
-      console.error("Error fetching user:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error fetching user:", errorMessage);
       res.status(500).json({ message: "Failed to fetch user" });
     }
   });
@@ -78,7 +87,8 @@ export async function registerRoutes(app: Express): Promise<void> {
         }
       });
     } catch (error) {
-      console.error("Error during signup:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error during signup:", errorMessage);
       const message = error instanceof Error ? error.message : "Erreur lors de l'inscription";
       res.status(400).json({ message });
     }
@@ -108,7 +118,8 @@ export async function registerRoutes(app: Express): Promise<void> {
         }
       });
     } catch (error) {
-      console.error("Error during login:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error during login:", errorMessage);
       const message = error instanceof Error ? error.message : "Erreur lors de la connexion";
       res.status(401).json({ message });
     }
@@ -138,7 +149,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       
       res.json(session);
     } catch (error) {
-      console.error("Error joining session:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error joining session:", errorMessage);
       res.status(500).json({ message: "Failed to join session" });
     }
   });
@@ -159,10 +171,11 @@ export async function registerRoutes(app: Express): Promise<void> {
         status: 'active'
       });
       const session = await storage.createGameSession(sessionData);
-      res.json(session);
+      res.status(201).json(session);
     } catch (error) {
-      console.error("Error creating session:", error);
-      res.status(400).json({ message: "Failed to create session" });
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("Error creating session:", errorMessage);
+      res.status(400).json({ message: "Failed to create session", error: errorMessage });
     }
   });
 
@@ -172,7 +185,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       const sessions = await storage.getGameSessionsByGM(userId);
       res.json(sessions);
     } catch (error) {
-      console.error("Error fetching sessions:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error fetching sessions:", errorMessage);
       res.status(500).json({ message: "Failed to fetch sessions" });
     }
   });
@@ -185,7 +199,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
       res.json(session);
     } catch (error) {
-      console.error("Error fetching session:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error fetching session:", errorMessage);
       res.status(500).json({ message: "Failed to fetch session" });
     }
   });
@@ -203,7 +218,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       const updatedSession = await storage.updateGameSession(req.params.id, req.body);
       res.json(updatedSession);
     } catch (error) {
-      console.error("Error updating session:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error updating session:", errorMessage);
       res.status(500).json({ message: "Failed to update session" });
     }
   });
@@ -221,7 +237,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       await storage.deleteGameSession(req.params.id);
       res.json({ message: "Session deleted successfully" });
     } catch (error) {
-      console.error("Error deleting session:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error deleting session:", errorMessage);
       res.status(500).json({ message: "Failed to delete session" });
     }
   });
@@ -243,7 +260,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       
       res.json(charactersWithDetails);
     } catch (error) {
-      console.error("Error fetching session characters:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error fetching session characters:", errorMessage);
       res.status(500).json({ message: "Failed to fetch session characters" });
     }
   });
@@ -265,10 +283,11 @@ export async function registerRoutes(app: Express): Promise<void> {
         sessionId: req.params.sessionId
       });
       const chapter = await storage.createChapter(chapterData);
-      res.json(chapter);
+      res.status(201).json(chapter);
     } catch (error) {
-      console.error("Error creating chapter:", error);
-      res.status(400).json({ message: "Failed to create chapter" });
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("Error creating chapter:", errorMessage);
+      res.status(400).json({ message: "Failed to create chapter", error: errorMessage });
     }
   });
 
@@ -277,7 +296,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       const chapters = await storage.getSessionChapters(req.params.sessionId);
       res.json(chapters);
     } catch (error) {
-      console.error("Error fetching chapters:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error fetching chapters:", errorMessage);
       res.status(500).json({ message: "Failed to fetch chapters" });
     }
   });
@@ -298,7 +318,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       const updatedChapter = await storage.updateChapter(req.params.id, req.body);
       res.json(updatedChapter);
     } catch (error) {
-      console.error("Error updating chapter:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error updating chapter:", errorMessage);
       res.status(500).json({ message: "Failed to update chapter" });
     }
   });
@@ -319,7 +340,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       await storage.deleteChapter(req.params.id);
       res.json({ message: "Chapter deleted successfully" });
     } catch (error) {
-      console.error("Error deleting chapter:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error deleting chapter:", errorMessage);
       res.status(500).json({ message: "Failed to delete chapter" });
     }
   });
@@ -341,11 +363,12 @@ export async function registerRoutes(app: Express): Promise<void> {
           data: event as any
         });
       }
-      
-      res.json(event);
+
+      res.status(201).json(event);
     } catch (error) {
-      console.error("Error creating chapter event:", error);
-      res.status(500).json({ message: "Failed to create chapter event" });
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("Error creating chapter event:", errorMessage);
+      res.status(500).json({ message: "Failed to create chapter event", error: errorMessage });
     }
   });
 
@@ -355,7 +378,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       const events = await storage.getChapterEvents(req.params.chapterId, limit);
       res.json(events);
     } catch (error) {
-      console.error("Error fetching chapter events:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error fetching chapter events:", errorMessage);
       res.status(500).json({ message: "Failed to fetch chapter events" });
     }
   });
@@ -365,7 +389,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       const events = await storage.getImportantChapterEvents(req.params.sessionId);
       res.json(events);
     } catch (error) {
-      console.error("Error fetching important events:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error fetching important events:", errorMessage);
       res.status(500).json({ message: "Failed to fetch important events" });
     }
   });
@@ -375,7 +400,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       const event = await storage.updateChapterEvent(req.params.id, req.body);
       res.json(event);
     } catch (error) {
-      console.error("Error updating chapter event:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error updating chapter event:", errorMessage);
       res.status(500).json({ message: "Failed to update chapter event" });
     }
   });
@@ -385,7 +411,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       await storage.deleteChapterEvent(req.params.id);
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting chapter event:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error deleting chapter event:", errorMessage);
       res.status(500).json({ message: "Failed to delete chapter event" });
     }
   });
@@ -436,10 +463,14 @@ export async function registerRoutes(app: Express): Promise<void> {
         skillsLocked: true // Lock skills immediately after creation
       });
       const character = await storage.createCharacter(characterData);
-      res.json(character);
+      res.status(201).json(character);
     } catch (error) {
-      console.error("Error creating character:", error);
-      res.status(400).json({ message: "Failed to create character" });
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("Error creating character:", errorMessage);
+      if (error instanceof Error && error.stack) {
+        console.error("Stack:", error.stack);
+      }
+      res.status(400).json({ message: "Failed to create character", error: errorMessage });
     }
   });
 
@@ -449,7 +480,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       const characters = await storage.getCharactersByUser(userId);
       res.json(characters);
     } catch (error) {
-      console.error("Error fetching characters:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error fetching characters:", errorMessage);
       res.status(500).json({ message: "Failed to fetch characters" });
     }
   });
@@ -468,7 +500,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       
       res.json({ ...character, sanityConditions, activeEffects });
     } catch (error) {
-      console.error("Error fetching character:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error fetching character:", errorMessage);
       res.status(500).json({ message: "Failed to fetch character" });
     }
   });
@@ -523,7 +556,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       
       res.json({ ...character, sanityConditions, activeEffects });
     } catch (error) {
-      console.error("Error updating character:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error updating character:", errorMessage);
       res.status(400).json({ message: "Failed to update character" });
     }
   });
@@ -555,7 +589,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       
       res.json({ notes: updatedCharacter.notes });
     } catch (error) {
-      console.error("Error updating character notes:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error updating character notes:", errorMessage);
       res.status(500).json({ message: "Failed to update notes" });
     }
   });
@@ -566,7 +601,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       const items = await storage.getCharacterInventory(req.params.id);
       res.json(items);
     } catch (error) {
-      console.error("Error fetching inventory:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error fetching inventory:", errorMessage);
       res.status(500).json({ message: "Failed to fetch inventory" });
     }
   });
@@ -595,11 +631,12 @@ export async function registerRoutes(app: Express): Promise<void> {
         ...req.body,
         characterId
       });
-      
-      res.json(item);
+
+      res.status(201).json(item);
     } catch (error) {
-      console.error("Error adding inventory item:", error);
-      res.status(500).json({ message: "Failed to add item" });
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("Error adding inventory item:", errorMessage);
+      res.status(500).json({ message: "Failed to add item", error: errorMessage });
     }
   });
   
@@ -627,7 +664,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       const updatedItem = await storage.updateInventoryItem(itemId, req.body);
       res.json(updatedItem);
     } catch (error) {
-      console.error("Error updating inventory item:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error updating inventory item:", errorMessage);
       res.status(500).json({ message: "Failed to update item" });
     }
   });
@@ -639,7 +677,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       const item = await storage.equipItem(req.params.id, isEquipped);
       res.json(item);
     } catch (error) {
-      console.error("Error toggling item equipped status:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error toggling item equipped status:", errorMessage);
       res.status(500).json({ message: "Failed to toggle equipped status" });
     }
   });
@@ -650,7 +689,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       await storage.deleteInventoryItem(req.params.id);
       res.json({ message: "Item deleted successfully" });
     } catch (error) {
-      console.error("Error deleting inventory item:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error deleting inventory item:", errorMessage);
       res.status(500).json({ message: "Failed to delete item" });
     }
   });
@@ -679,7 +719,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       const updatedItem = await storage.updateInventoryItem(itemId, { quantity });
       res.json(updatedItem);
     } catch (error) {
-      console.error("Error updating inventory quantity:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error updating inventory quantity:", errorMessage);
       res.status(500).json({ message: "Failed to update quantity" });
     }
   });
@@ -707,7 +748,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       await storage.deleteInventoryItem(itemId);
       res.json({ message: "Item deleted successfully" });
     } catch (error) {
-      console.error("Error deleting inventory item:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error deleting inventory item:", errorMessage);
       res.status(500).json({ message: "Failed to delete item" });
     }
   });
@@ -729,7 +771,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       const entries = await storage.getSessionNarrativeEntries(sessionId);
       res.json(entries);
     } catch (error) {
-      console.error("Error fetching narrative entries:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error fetching narrative entries:", errorMessage);
       res.status(500).json({ message: "Failed to fetch narrative entries" });
     }
   });
@@ -758,11 +801,12 @@ export async function registerRoutes(app: Express): Promise<void> {
         entryType: entryType || 'note',
         isAiGenerated: false,
       });
-      
-      res.json(entry);
+
+      res.status(201).json(entry);
     } catch (error) {
-      console.error("Error creating narrative entry:", error);
-      res.status(500).json({ message: "Failed to create narrative entry" });
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("Error creating narrative entry:", errorMessage);
+      res.status(500).json({ message: "Failed to create narrative entry", error: errorMessage });
     }
   });
   
@@ -782,7 +826,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       const suggestion = await generateNarrativeSuggestion(context || "");
       res.json({ suggestion });
     } catch (error) {
-      console.error("Error generating AI suggestion:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error generating AI suggestion:", errorMessage);
       res.status(500).json({ message: "Failed to generate AI suggestion" });
     }
   });
@@ -837,7 +882,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       
       res.json(entry);
     } catch (error) {
-      console.error("Error updating narrative entry:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error updating narrative entry:", errorMessage);
       res.status(500).json({ message: "Failed to update narrative entry" });
     }
   });
@@ -862,7 +908,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       await storage.deleteNarrativeEntry(id);
       res.json({ message: "Narrative entry deleted successfully" });
     } catch (error) {
-      console.error("Error deleting narrative entry:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error deleting narrative entry:", errorMessage);
       res.status(500).json({ message: "Failed to delete narrative entry" });
     }
   });
@@ -886,7 +933,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       const { url } = await generateSceneImage(prompt);
       res.json({ imageUrl: url });
     } catch (error) {
-      console.error("Error generating scene:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error generating scene:", errorMessage);
       res.status(500).json({ message: "Failed to generate scene" });
     }
   });
@@ -905,7 +953,8 @@ export async function registerRoutes(app: Express): Promise<void> {
 
       res.json({ avatarUrl: url });
     } catch (error) {
-      console.error("Error generating avatar:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error generating avatar:", errorMessage);
       res.status(500).json({ message: "Failed to generate avatar" });
     }
   });
@@ -979,7 +1028,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       });
       
     } catch (error) {
-      console.error("Error generating avatar:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error generating avatar:", errorMessage);
       res.status(500).json({ message: "Failed to generate avatar" });
     }
   });
@@ -1077,11 +1127,12 @@ export async function registerRoutes(app: Express): Promise<void> {
           await new Promise(resolve => setTimeout(resolve, 1000));
           
         } catch (error) {
-          console.error(`Failed to generate avatar for ${character.name}:`, error);
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          console.error(`Failed to generate avatar for ${character.name}:`, errorMessage);
           errors.push({
             characterId: character.id,
             characterName: character.name,
-            error: "Failed to generate avatar"
+            error: errorMessage
           });
         }
       }
@@ -1095,7 +1146,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       });
       
     } catch (error) {
-      console.error("Error generating avatars:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error generating avatars:", errorMessage);
       res.status(500).json({ message: "Failed to generate avatars" });
     }
   });
@@ -1115,7 +1167,8 @@ export async function registerRoutes(app: Express): Promise<void> {
         ...result
       });
     } catch (error) {
-      console.error("Error during avatar migration:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error during avatar migration:", errorMessage);
       res.status(500).json({ message: "Failed to migrate avatars" });
     }
   });
@@ -1139,9 +1192,10 @@ export async function registerRoutes(app: Express): Promise<void> {
         ...conditionData,
         description
       });
-      res.json(condition);
+      res.status(201).json(condition);
     } catch (error) {
-      console.error("Error adding sanity condition:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error adding sanity condition:", errorMessage);
       res.status(400).json({ message: "Failed to add sanity condition" });
     }
   });
@@ -1173,7 +1227,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       
       res.json({ message: "Character removed from session successfully" });
     } catch (error) {
-      console.error("Error removing character from session:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error removing character from session:", errorMessage);
       res.status(500).json({ message: "Failed to remove character from session" });
     }
   });
@@ -1212,7 +1267,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       
       res.json(charactersWithSessionInfo);
     } catch (error) {
-      console.error("Error fetching importable characters:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error fetching importable characters:", errorMessage);
       res.status(500).json({ message: "Failed to fetch importable characters" });
     }
   });
@@ -1370,7 +1426,8 @@ export async function registerRoutes(app: Express): Promise<void> {
         resetState
       });
     } catch (error) {
-      console.error("Error importing character:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error importing character:", errorMessage);
       res.status(500).json({ message: "Failed to import character" });
     }
   });
@@ -1405,7 +1462,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       
       res.json(updatedCharacter);
     } catch (error) {
-      console.error("Error granting skill points:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error granting skill points:", errorMessage);
       res.status(500).json({ message: "Failed to grant skill points" });
     }
   });
@@ -1461,7 +1519,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       
       res.json(updatedCharacter);
     } catch (error) {
-      console.error("Error distributing skill points:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error distributing skill points:", errorMessage);
       res.status(500).json({ message: "Failed to distribute skill points" });
     }
   });
@@ -1553,7 +1612,7 @@ export async function registerRoutes(app: Express): Promise<void> {
             // Generic buff - just record the effect
             const addedEffect = await storage.addActiveEffect(effectData);
             console.log(`Applied generic buff: ${effectData.name} to ${character.name}`);
-            res.json(addedEffect);
+            res.status(201).json(addedEffect);
             return;
           }
         }
@@ -1578,11 +1637,12 @@ export async function registerRoutes(app: Express): Promise<void> {
           });
         }
       }
-      
-      res.json(effect);
+
+      res.status(201).json(effect);
     } catch (error) {
-      console.error("Error adding effect:", error);
-      res.status(400).json({ message: "Failed to add effect" });
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error adding effect:", errorMessage);
+      res.status(400).json({ message: "Failed to add effect", error: errorMessage });
     }
   });
 
@@ -1592,7 +1652,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       const effect = await storage.updateActiveEffect(req.params.id, updateData);
       res.json(effect);
     } catch (error) {
-      console.error("Error updating effect:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error updating effect:", errorMessage);
       res.status(400).json({ message: "Failed to update effect" });
     }
   });
@@ -1614,11 +1675,12 @@ export async function registerRoutes(app: Express): Promise<void> {
           data: roll
         });
       }
-      
-      res.json(roll);
+
+      res.status(201).json(roll);
     } catch (error) {
-      console.error("Error recording roll:", error);
-      res.status(400).json({ message: "Failed to record roll" });
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error recording roll:", errorMessage);
+      res.status(400).json({ message: "Failed to record roll", error: errorMessage });
     }
   });
 
@@ -1628,7 +1690,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       const rolls = await storage.getSessionRollHistory(req.params.id, limit);
       res.json(rolls);
     } catch (error) {
-      console.error("Error fetching session rolls:", error);
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error fetching session rolls:", errorMessage);
       res.status(500).json({ message: "Failed to fetch session rolls" });
     }
   });
