@@ -1,0 +1,1757 @@
+{
+    "openapi": "3.0.0",
+    "paths": {
+        "/api/health": {
+            "get": {
+                "operationId": "HealthController_check",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Service is healthy"
+                    }
+                },
+                "summary": "Health check endpoint",
+                "tags": [
+                    "Health Check"
+                ]
+            }
+        },
+        "/api/auth/signup": {
+            "post": {
+                "operationId": "AuthController_signup",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SignupDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User registered successfully"
+                    },
+                    "400": {
+                        "description": "Invalid input data"
+                    }
+                },
+                "summary": "Register a new user",
+                "tags": [
+                    "Authentication"
+                ]
+            }
+        },
+        "/api/auth/login": {
+            "post": {
+                "operationId": "AuthController_login",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful, returns JWT token"
+                    },
+                    "401": {
+                        "description": "Invalid credentials"
+                    }
+                },
+                "summary": "Login with email and password",
+                "tags": [
+                    "Authentication"
+                ]
+            }
+        },
+        "/api/auth/refresh": {
+            "post": {
+                "operationId": "AuthController_refresh",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Token refreshed successfully"
+                    },
+                    "401": {
+                        "description": "Invalid or expired refresh token"
+                    }
+                },
+                "summary": "Refresh JWT token",
+                "tags": [
+                    "Authentication"
+                ]
+            }
+        },
+        "/api/characters": {
+            "get": {
+                "operationId": "CharactersController_findAll",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "required": false,
+                        "in": "query",
+                        "description": "Filter by user ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of characters retrieved"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get all characters",
+                "tags": [
+                    "Characters"
+                ]
+            },
+            "post": {
+                "operationId": "CharactersController_create",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateCharacterDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Character created successfully"
+                    },
+                    "400": {
+                        "description": "Invalid character data"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create a new character",
+                "tags": [
+                    "Characters"
+                ]
+            }
+        },
+        "/api/characters/{id}": {
+            "get": {
+                "operationId": "CharactersController_findOne",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Character ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Character retrieved"
+                    },
+                    "404": {
+                        "description": "Character not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get character by ID",
+                "tags": [
+                    "Characters"
+                ]
+            },
+            "patch": {
+                "operationId": "CharactersController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Character ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateCharacterDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Character updated successfully"
+                    },
+                    "404": {
+                        "description": "Character not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update character",
+                "tags": [
+                    "Characters"
+                ]
+            },
+            "delete": {
+                "operationId": "CharactersController_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Character ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Character deleted successfully"
+                    },
+                    "404": {
+                        "description": "Character not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete character",
+                "tags": [
+                    "Characters"
+                ]
+            }
+        },
+        "/api/sessions": {
+            "get": {
+                "operationId": "SessionsController_findAll",
+                "parameters": [
+                    {
+                        "name": "gmId",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of sessions"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get all sessions",
+                "tags": [
+                    "Sessions"
+                ]
+            },
+            "post": {
+                "operationId": "SessionsController_create",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateSessionDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Session created"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create new session",
+                "tags": [
+                    "Sessions"
+                ]
+            }
+        },
+        "/api/sessions/{id}": {
+            "get": {
+                "operationId": "SessionsController_findOne",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session details"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get session by ID",
+                "tags": [
+                    "Sessions"
+                ]
+            },
+            "patch": {
+                "operationId": "SessionsController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateSessionDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Session updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update session",
+                "tags": [
+                    "Sessions"
+                ]
+            },
+            "delete": {
+                "operationId": "SessionsController_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session deleted"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete session",
+                "tags": [
+                    "Sessions"
+                ]
+            }
+        },
+        "/api/inventory": {
+            "get": {
+                "operationId": "InventoryController_findByCharacter",
+                "parameters": [
+                    {
+                        "name": "characterId",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Character inventory"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get inventory for character",
+                "tags": [
+                    "Inventory"
+                ]
+            },
+            "post": {
+                "operationId": "InventoryController_create",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateInventoryDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Inventory item created"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create inventory item",
+                "tags": [
+                    "Inventory"
+                ]
+            }
+        },
+        "/api/inventory/{id}": {
+            "patch": {
+                "operationId": "InventoryController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateInventoryDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Inventory item updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update inventory item",
+                "tags": [
+                    "Inventory"
+                ]
+            },
+            "delete": {
+                "operationId": "InventoryController_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Inventory item deleted"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete inventory item",
+                "tags": [
+                    "Inventory"
+                ]
+            }
+        },
+        "/api/chapters": {
+            "get": {
+                "operationId": "ChaptersController_findBySession",
+                "parameters": [
+                    {
+                        "name": "sessionId",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of chapters"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get chapters for session",
+                "tags": [
+                    "Chapters"
+                ]
+            },
+            "post": {
+                "operationId": "ChaptersController_create",
+                "parameters": [],
+                "responses": {
+                    "201": {
+                        "description": "Chapter created"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create new chapter",
+                "tags": [
+                    "Chapters"
+                ]
+            }
+        },
+        "/api/chapters/{id}": {
+            "get": {
+                "operationId": "ChaptersController_findOne",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chapter details"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get chapter by ID",
+                "tags": [
+                    "Chapters"
+                ]
+            },
+            "patch": {
+                "operationId": "ChaptersController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chapter updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update chapter",
+                "tags": [
+                    "Chapters"
+                ]
+            },
+            "delete": {
+                "operationId": "ChaptersController_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chapter deleted"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete chapter",
+                "tags": [
+                    "Chapters"
+                ]
+            }
+        },
+        "/api/chapter-events": {
+            "get": {
+                "operationId": "ChapterEventsController_find",
+                "parameters": [
+                    {
+                        "name": "chapterId",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sessionId",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of chapter events"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get chapter events",
+                "tags": [
+                    "Chapter Events"
+                ]
+            },
+            "post": {
+                "operationId": "ChapterEventsController_create",
+                "parameters": [],
+                "responses": {
+                    "201": {
+                        "description": "Chapter event created"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create new chapter event",
+                "tags": [
+                    "Chapter Events"
+                ]
+            }
+        },
+        "/api/chapter-events/{id}": {
+            "get": {
+                "operationId": "ChapterEventsController_findOne",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chapter event details"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get chapter event by ID",
+                "tags": [
+                    "Chapter Events"
+                ]
+            },
+            "patch": {
+                "operationId": "ChapterEventsController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chapter event updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update chapter event",
+                "tags": [
+                    "Chapter Events"
+                ]
+            },
+            "delete": {
+                "operationId": "ChapterEventsController_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chapter event deleted"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete chapter event",
+                "tags": [
+                    "Chapter Events"
+                ]
+            }
+        },
+        "/api/narrative": {
+            "get": {
+                "operationId": "NarrativeController_findBySession",
+                "parameters": [
+                    {
+                        "name": "sessionId",
+                        "required": true,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Narrative elements"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get narrative elements for session",
+                "tags": [
+                    "Narrative"
+                ]
+            },
+            "post": {
+                "operationId": "NarrativeController_create",
+                "parameters": [],
+                "responses": {
+                    "201": {
+                        "description": "Narrative element created"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create narrative element",
+                "tags": [
+                    "Narrative"
+                ]
+            }
+        },
+        "/api/narrative/{id}": {
+            "patch": {
+                "operationId": "NarrativeController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Narrative element updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update narrative element",
+                "tags": [
+                    "Narrative"
+                ]
+            },
+            "delete": {
+                "operationId": "NarrativeController_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Narrative element deleted"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete narrative element",
+                "tags": [
+                    "Narrative"
+                ]
+            }
+        },
+        "/api/ai/generate-avatar": {
+            "post": {
+                "description": "Uses AI to generate a character portrait based on physical description and attributes",
+                "operationId": "AiController_generateAvatar",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GenerateAvatarDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "summary": "Generate an AI avatar image for a character",
+                "tags": [
+                    "ai"
+                ]
+            }
+        },
+        "/api/ai/generate-scene": {
+            "post": {
+                "description": "Creates an atmospheric scene image based on description, location, and mood",
+                "operationId": "AiController_generateScene",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GenerateSceneDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "summary": "Generate an AI scene image",
+                "tags": [
+                    "ai"
+                ]
+            }
+        },
+        "/api/ai/suggest-narrative": {
+            "post": {
+                "description": "Generates narrative suggestions based on current game context and recent events",
+                "operationId": "AiController_suggestNarrative",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SuggestNarrativeDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "summary": "Get AI narrative suggestions",
+                "tags": [
+                    "ai"
+                ]
+            }
+        },
+        "/api/gameboards/{sessionId}": {
+            "get": {
+                "description": "Retrieves the complete gameboard state including characters, chapters, and events",
+                "operationId": "GameboardController_getGameboard",
+                "parameters": [
+                    {
+                        "name": "sessionId",
+                        "required": true,
+                        "in": "path",
+                        "description": "Game session ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "summary": "Get gameboard for a session",
+                "tags": [
+                    "gameboards"
+                ]
+            }
+        },
+        "/api/gameboards": {
+            "post": {
+                "description": "Initializes a gameboard for a game session",
+                "operationId": "GameboardController_create",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateGameboardDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "summary": "Create a new gameboard",
+                "tags": [
+                    "gameboards"
+                ]
+            }
+        },
+        "/api/gameboards/{id}": {
+            "patch": {
+                "description": "Updates the gameboard configuration or state",
+                "operationId": "GameboardController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Gameboard ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateGameboardDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "summary": "Update gameboard state",
+                "tags": [
+                    "gameboards"
+                ]
+            }
+        },
+        "/api/sanity": {
+            "get": {
+                "operationId": "SanityController_findByCharacter",
+                "parameters": [
+                    {
+                        "name": "characterId",
+                        "required": true,
+                        "in": "query",
+                        "description": "Character ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "summary": "Get all sanity conditions for a character",
+                "tags": [
+                    "sanity"
+                ]
+            },
+            "post": {
+                "operationId": "SanityController_create",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateSanityConditionDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "summary": "Create a new sanity condition",
+                "tags": [
+                    "sanity"
+                ]
+            }
+        },
+        "/api/sanity/{id}": {
+            "patch": {
+                "operationId": "SanityController_update",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Sanity condition ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateSanityConditionDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "summary": "Update a sanity condition",
+                "tags": [
+                    "sanity"
+                ]
+            },
+            "delete": {
+                "operationId": "SanityController_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Sanity condition ID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "summary": "Delete a sanity condition",
+                "tags": [
+                    "sanity"
+                ]
+            }
+        },
+        "/api/dice/roll": {
+            "post": {
+                "operationId": "DiceController_roll",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DiceRollDto"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Dice roll result"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Roll dice",
+                "tags": [
+                    "Dice"
+                ]
+            }
+        }
+    },
+    "info": {
+        "title": "Game-Plug API",
+        "description": "Call of Cthulhu 7e RPG Platform API - Complete backend specification with NestJS and OpenAPI 3.0",
+        "version": "1.0.0",
+        "contact": {
+            "name": "Game-Plug Team",
+            "url": "https://github.com/robinswood",
+            "email": "contact@game-plug.dev"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        }
+    },
+    "tags": [],
+    "servers": [
+        {
+            "url": "http://localhost:4000",
+            "description": "Development"
+        },
+        {
+            "url": "http://localhost:4000",
+            "description": "Production"
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "bearer": {
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "type": "http"
+            }
+        },
+        "schemas": {
+            "SignupDto": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "example": "user@example.com",
+                        "description": "User email address (must be unique)"
+                    },
+                    "password": {
+                        "type": "string",
+                        "example": "SecurePassword123!",
+                        "description": "Password (8-128 chars, 1 uppercase, 1 digit, 1 special char)"
+                    },
+                    "firstName": {
+                        "type": "string",
+                        "example": "Jean",
+                        "description": "First name (2-50 characters)"
+                    },
+                    "lastName": {
+                        "type": "string",
+                        "example": "Dupont",
+                        "description": "Last name (2-50 characters)"
+                    }
+                },
+                "required": [
+                    "email",
+                    "password",
+                    "firstName",
+                    "lastName"
+                ]
+            },
+            "LoginDto": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "example": "user@example.com",
+                        "description": "User email address"
+                    },
+                    "password": {
+                        "type": "string",
+                        "example": "SecurePassword123!",
+                        "description": "User password"
+                    }
+                },
+                "required": [
+                    "email",
+                    "password"
+                ]
+            },
+            "CreateCharacterDto": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Professor John Arcane",
+                        "description": "Character name"
+                    },
+                    "sessionId": {
+                        "type": "string",
+                        "example": "sess_123",
+                        "description": "Session ID"
+                    },
+                    "occupation": {
+                        "type": "string",
+                        "example": "Archaeologist",
+                        "description": "Character occupation"
+                    },
+                    "strength": {
+                        "type": "number",
+                        "example": 75,
+                        "description": "Strength (1-99)"
+                    },
+                    "constitution": {
+                        "type": "number",
+                        "example": 70,
+                        "description": "Constitution (1-99)"
+                    },
+                    "size": {
+                        "type": "number",
+                        "example": 60,
+                        "description": "Size (1-99)"
+                    },
+                    "dexterity": {
+                        "type": "number",
+                        "example": 72,
+                        "description": "Dexterity (1-99)"
+                    },
+                    "appearance": {
+                        "type": "number",
+                        "example": 65,
+                        "description": "Appearance (1-99)"
+                    },
+                    "intelligence": {
+                        "type": "number",
+                        "example": 85,
+                        "description": "Intelligence (1-99)"
+                    },
+                    "power": {
+                        "type": "number",
+                        "example": 55,
+                        "description": "Power (1-99)"
+                    },
+                    "education": {
+                        "type": "number",
+                        "example": 80,
+                        "description": "Education (1-99)"
+                    },
+                    "luck": {
+                        "type": "number",
+                        "example": 50,
+                        "description": "Luck (1-99)"
+                    },
+                    "hitPoints": {
+                        "type": "number",
+                        "example": 10,
+                        "description": "Hit points"
+                    },
+                    "maxHitPoints": {
+                        "type": "number",
+                        "example": 12,
+                        "description": "Maximum hit points"
+                    },
+                    "sanity": {
+                        "type": "number",
+                        "example": 75,
+                        "description": "Sanity (0-99)"
+                    },
+                    "maxSanity": {
+                        "type": "number",
+                        "example": 99,
+                        "description": "Maximum sanity (0-99)"
+                    },
+                    "magicPoints": {
+                        "type": "number",
+                        "example": 5,
+                        "description": "Magic points"
+                    },
+                    "maxMagicPoints": {
+                        "type": "number",
+                        "example": 10,
+                        "description": "Maximum magic points"
+                    },
+                    "age": {
+                        "type": "number",
+                        "example": 45,
+                        "description": "Character age"
+                    },
+                    "birthplace": {
+                        "type": "string",
+                        "example": "Cairo",
+                        "description": "Birthplace"
+                    },
+                    "residence": {
+                        "type": "string",
+                        "example": "London",
+                        "description": "Current residence"
+                    },
+                    "gender": {
+                        "type": "string",
+                        "example": "Male",
+                        "description": "Gender"
+                    },
+                    "height": {
+                        "type": "string",
+                        "example": "5'10\"",
+                        "description": "Height"
+                    },
+                    "build": {
+                        "type": "string",
+                        "example": "Athletic",
+                        "description": "Build"
+                    },
+                    "hairColor": {
+                        "type": "string",
+                        "example": "Brown",
+                        "description": "Hair color"
+                    },
+                    "eyeColor": {
+                        "type": "string",
+                        "example": "Blue",
+                        "description": "Eye color"
+                    },
+                    "avatarUrl": {
+                        "type": "string",
+                        "example": "https://avatar.url/prof.jpg",
+                        "description": "Avatar URL"
+                    },
+                    "avatarPrompt": {
+                        "type": "string",
+                        "example": "Wise academic in 1920s attire",
+                        "description": "Prompt for AI avatar generation"
+                    },
+                    "skills": {
+                        "type": "object",
+                        "example": {
+                            "Archaeology": 70,
+                            "Library Use": 60
+                        },
+                        "description": "Character skills (key-value pairs)"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Expert in ancient texts",
+                        "description": "Player notes"
+                    },
+                    "money": {
+                        "type": "string",
+                        "example": "500.50",
+                        "description": "Starting money"
+                    },
+                    "userId": {
+                        "type": "string",
+                        "example": "user_456",
+                        "description": "User ID (owner)"
+                    }
+                },
+                "required": [
+                    "name",
+                    "sessionId",
+                    "occupation",
+                    "strength",
+                    "constitution",
+                    "size",
+                    "dexterity",
+                    "appearance",
+                    "intelligence",
+                    "power",
+                    "education",
+                    "luck",
+                    "hitPoints",
+                    "maxHitPoints",
+                    "sanity",
+                    "maxSanity",
+                    "magicPoints",
+                    "maxMagicPoints"
+                ]
+            },
+            "UpdateCharacterDto": {
+                "type": "object",
+                "properties": {}
+            },
+            "CreateSessionDto": {
+                "type": "object",
+                "properties": {}
+            },
+            "UpdateSessionDto": {
+                "type": "object",
+                "properties": {}
+            },
+            "CreateInventoryDto": {
+                "type": "object",
+                "properties": {}
+            },
+            "UpdateInventoryDto": {
+                "type": "object",
+                "properties": {}
+            },
+            "GenerateAvatarDto": {
+                "type": "object",
+                "properties": {
+                    "characterName": {
+                        "type": "string",
+                        "description": "Character name"
+                    },
+                    "occupation": {
+                        "type": "string",
+                        "description": "Character occupation"
+                    },
+                    "physicalDescription": {
+                        "type": "string",
+                        "description": "Physical description (height, build, hair, eyes, etc.)"
+                    },
+                    "age": {
+                        "type": "string",
+                        "description": "Character age"
+                    },
+                    "gender": {
+                        "type": "string",
+                        "description": "Character gender"
+                    },
+                    "styleHints": {
+                        "type": "string",
+                        "description": "Additional style instructions for the AI"
+                    }
+                },
+                "required": [
+                    "characterName",
+                    "occupation"
+                ]
+            },
+            "GenerateSceneDto": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "description": "Scene title or theme"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Scene description or context"
+                    },
+                    "location": {
+                        "type": "string",
+                        "description": "Location of the scene"
+                    },
+                    "timePeriod": {
+                        "type": "string",
+                        "description": "Time period (e.g., 1920s, modern, Victorian)"
+                    },
+                    "mood": {
+                        "type": "string",
+                        "description": "Mood or atmosphere (e.g., tense, mysterious, calm)"
+                    },
+                    "characters": {
+                        "description": "Characters present in the scene",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "title",
+                    "description"
+                ]
+            },
+            "SuggestNarrativeDto": {
+                "type": "object",
+                "properties": {
+                    "sessionId": {
+                        "type": "string",
+                        "description": "Session ID for context"
+                    },
+                    "context": {
+                        "type": "string",
+                        "description": "Current situation or context"
+                    },
+                    "recentEvents": {
+                        "description": "Recent events or actions taken",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "characters": {
+                        "description": "Character names involved",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "tone": {
+                        "type": "string",
+                        "description": "Desired tone (horror, mystery, action, etc.)"
+                    },
+                    "suggestionCount": {
+                        "type": "string",
+                        "description": "Number of suggestions to generate"
+                    }
+                },
+                "required": [
+                    "sessionId",
+                    "context"
+                ]
+            },
+            "CreateGameboardDto": {
+                "type": "object",
+                "properties": {
+                    "sessionId": {
+                        "type": "string",
+                        "description": "Session ID for the gameboard"
+                    },
+                    "title": {
+                        "type": "string",
+                        "description": "Gameboard title"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Gameboard description"
+                    },
+                    "characterIds": {
+                        "description": "Character IDs to include",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "state": {
+                        "type": "object",
+                        "description": "Initial state or configuration (JSON)"
+                    }
+                },
+                "required": [
+                    "sessionId",
+                    "title"
+                ]
+            },
+            "UpdateGameboardDto": {
+                "type": "object",
+                "properties": {
+                    "sessionId": {
+                        "type": "string",
+                        "description": "Session ID for the gameboard"
+                    },
+                    "title": {
+                        "type": "string",
+                        "description": "Gameboard title"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Gameboard description"
+                    },
+                    "characterIds": {
+                        "description": "Character IDs to include",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "state": {
+                        "type": "object",
+                        "description": "Initial state or configuration (JSON)"
+                    }
+                }
+            },
+            "CreateSanityConditionDto": {
+                "type": "object",
+                "properties": {
+                    "characterId": {
+                        "type": "string",
+                        "description": "Character ID associated with this condition"
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "Type of sanity condition",
+                        "enum": [
+                            "phobia",
+                            "mania",
+                            "temporary_insanity",
+                            "indefinite_insanity"
+                        ]
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the sanity condition"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Detailed description of the condition"
+                    },
+                    "duration": {
+                        "type": "string",
+                        "description": "Duration type",
+                        "enum": [
+                            "temporary",
+                            "indefinite",
+                            "permanent"
+                        ]
+                    },
+                    "isActive": {
+                        "type": "boolean",
+                        "description": "Whether the condition is currently active"
+                    }
+                },
+                "required": [
+                    "characterId",
+                    "type",
+                    "name"
+                ]
+            },
+            "UpdateSanityConditionDto": {
+                "type": "object",
+                "properties": {
+                    "characterId": {
+                        "type": "string",
+                        "description": "Character ID associated with this condition"
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "Type of sanity condition",
+                        "enum": [
+                            "phobia",
+                            "mania",
+                            "temporary_insanity",
+                            "indefinite_insanity"
+                        ]
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the sanity condition"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Detailed description of the condition"
+                    },
+                    "duration": {
+                        "type": "string",
+                        "description": "Duration type",
+                        "enum": [
+                            "temporary",
+                            "indefinite",
+                            "permanent"
+                        ]
+                    },
+                    "isActive": {
+                        "type": "boolean",
+                        "description": "Whether the condition is currently active"
+                    }
+                }
+            },
+            "DiceRollDto": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    }
+}
