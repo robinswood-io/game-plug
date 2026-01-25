@@ -16,19 +16,25 @@ async function bootstrap() {
       whitelist: true,
       transform: true,
       forbidNonWhitelisted: true,
+      exceptionFactory: (errors) => {
+        const result = errors.map((error) => ({
+          property: error.property,
+          message: error.constraints ? Object.values(error.constraints)[0] : 'Validation failed',
+        }));
+        console.error('Validation Errors:', JSON.stringify(result, null, 2));
+        return new Error('Validation failed: ' + JSON.stringify(result));
+      },
     }),
   );
 
   // Configure Swagger
   const config = new DocumentBuilder()
     .setTitle('Game-Plug API')
-    .setDescription('Call of Cthulhu 7e RPG Platform API - Complete backend specification with NestJS and OpenAPI 3.0')
+    .setDescription('Call of Cthulhu 7e RPG Platform API')
     .setVersion('1.0.0')
     .addBearerAuth()
     .addServer('http://localhost:4000', 'Development')
     .addServer(`${process.env.API_URL || 'http://localhost:4000'}`, 'Production')
-    .setContact('Game-Plug Team', 'https://github.com/robinswood', 'contact@game-plug.dev')
-    .setLicense('MIT', 'https://opensource.org/licenses/MIT')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -36,19 +42,6 @@ async function bootstrap() {
 
   const port = process.env.PORT || 4000;
   await app.listen(port, '0.0.0.0');
-
-  console.log(`
-🚀 Game Plug Backend (NestJS) is running!
-
-  - API Server: http://localhost:${port}
-  - Health Check: http://localhost:${port}/api/health
-  - Swagger UI: http://localhost:${port}/api/docs
-  - OpenAPI JSON: http://localhost:${port}/api/docs-json
-
-Environment: ${process.env.NODE_ENV || 'development'}
-NestJS Version: 11.x
-Swagger Version: @nestjs/swagger
-  `);
 }
 
 bootstrap().catch((err) => {

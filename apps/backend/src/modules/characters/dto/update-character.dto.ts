@@ -18,59 +18,59 @@ export class UpdateCharacterDto {
   @IsString()
   occupation?: string;
 
-  // Core characteristics (1-99 scale for CoC 7e)
+  // Core characteristics (1-200 scale for CoC 7e with bonuses/magic)
   @IsOptional()
   @IsNumber()
   @Min(1)
-  @Max(99)
+  @Max(200)
   strength?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(1)
-  @Max(99)
+  @Max(200)
   constitution?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(1)
-  @Max(99)
+  @Max(200)
   size?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(1)
-  @Max(99)
+  @Max(200)
   dexterity?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(1)
-  @Max(99)
+  @Max(200)
   appearance?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(1)
-  @Max(99)
+  @Max(200)
   intelligence?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(1)
-  @Max(99)
+  @Max(200)
   power?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(1)
-  @Max(99)
+  @Max(200)
   education?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(1)
-  @Max(99)
+  @Max(200)
   luck?: number;
 
   // Derived stats
@@ -87,13 +87,13 @@ export class UpdateCharacterDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  @Max(99)
+  @Max(150)
   sanity?: number;
 
   @IsOptional()
   @IsNumber()
   @Min(0)
-  @Max(99)
+  @Max(150)
   maxSanity?: number;
 
   @IsOptional()

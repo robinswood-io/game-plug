@@ -1,0 +1,198 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Source+Sans+Pro:wght@300;400;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Enhanced Lovecraftian color palette */
+    --cosmic-void: hsl(0, 0%, 6.7%);
+    --deep-black: hsl(0, 0%, 3.9%);
+    --blood-burgundy: hsl(0, 100%, 27.3%);
+    --dark-crimson: hsl(0, 71.4%, 15.3%);
+    --aged-gold: hsl(43, 74.4%, 49.0%);
+    --eldritch-green: hsl(120, 25.0%, 25.1%);
+    --bone-white: hsl(60, 29.4%, 96.1%);
+    --aged-parchment: hsl(45, 37.5%, 86.3%);
+    --charcoal: hsl(0, 0%, 10.9%);
+    --dark-stone: hsl(0, 0%, 17.3%);
+    
+    /* Additional accent colors */
+    --mystic-purple: hsl(280, 39.5%, 25.1%);
+    --shadow-blue: hsl(220, 20%, 15%);
+    --ember-orange: hsl(15, 85%, 45%);
+    --ghost-silver: hsl(210, 15%, 85%);
+    --void-gradient: linear-gradient(135deg, var(--deep-black) 0%, var(--cosmic-void) 25%, var(--shadow-blue) 50%, var(--cosmic-void) 75%, var(--deep-black) 100%);
+    --gold-gradient: linear-gradient(135deg, var(--aged-gold) 0%, var(--ember-orange) 50%, var(--aged-gold) 100%);
+    --crimson-gradient: linear-gradient(135deg, var(--blood-burgundy) 0%, var(--dark-crimson) 100%);
+
+    /* Shadcn compatible colors */
+    --background: hsl(0, 0%, 3.9%);
+    --foreground: hsl(60, 29.4%, 96.1%);
+    --card: hsl(0, 0%, 10.9%);
+    --card-foreground: hsl(60, 29.4%, 96.1%);
+    --popover: hsl(0, 0%, 10.9%);
+    --popover-foreground: hsl(60, 29.4%, 96.1%);
+    --primary: hsl(43, 74.4%, 49.0%);
+    --primary-foreground: hsl(0, 0%, 3.9%);
+    --secondary: hsl(0, 0%, 17.3%);
+    --secondary-foreground: hsl(60, 29.4%, 96.1%);
+    --muted: hsl(0, 0%, 17.3%);
+    --muted-foreground: hsl(45, 37.5%, 86.3%);
+    --accent: hsl(0, 0%, 17.3%);
+    --accent-foreground: hsl(60, 29.4%, 96.1%);
+    --destructive: hsl(0, 100%, 27.3%);
+    --destructive-foreground: hsl(60, 29.4%, 96.1%);
+    --border: hsl(43, 74.4%, 49.0%);
+    --input: hsl(0, 0%, 10.9%);
+    --ring: hsl(43, 74.4%, 49.0%);
+    --chart-1: hsl(43, 74.4%, 49.0%);
+    --chart-2: hsl(120, 25.0%, 25.1%);
+    --chart-3: hsl(0, 100%, 27.3%);
+    --chart-4: hsl(0, 71.4%, 15.3%);
+    --chart-5: hsl(0, 0%, 6.7%);
+
+    /* Typography */
+    --font-cinzel: 'Cinzel', serif;
+    --font-crimson: 'Crimson Text', serif;
+    --font-source: 'Source Sans Pro', sans-serif;
+    
+    /* Border radius */
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: hsl(0, 0%, 3.9%);
+    --foreground: hsl(60, 29.4%, 96.1%);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-crimson antialiased;
+    font-family: var(--font-crimson);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-cinzel);
+  }
+
+  .font-cinzel {
+    font-family: var(--font-cinzel);
+  }
+
+  .font-crimson {
+    font-family: var(--font-crimson);
+  }
+
+  .font-source {
+    font-family: var(--font-source);
+  }
+}
+
+@layer components {
+  /* Enhanced glassmorphism effects */
+  .glass-card {
+    background: linear-gradient(135deg, rgba(17, 25, 40, 0.75) 0%, rgba(12, 17, 29, 0.9) 100%);
+    backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(218, 165, 32, 0.125);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 0 0 1px rgba(218, 165, 32, 0.1);
+  }
+
+  /* Enhanced Gothic border effect */
+  .gothic-border {
+    border-image: linear-gradient(45deg, var(--aged-gold), var(--blood-burgundy), var(--mystic-purple), var(--aged-gold)) 1;
+    border-width: 2px;
+    border-style: solid;
+    position: relative;
+  }
+  
+  /* Enhanced parchment background */
+  .parchment-bg {
+    background: var(--void-gradient);
+    position: relative;
+  }
+  
+  .parchment-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(circle at 20% 20%, rgba(218, 165, 32, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(139, 0, 0, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(47, 79, 79, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  /* Custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: var(--cosmic-void);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--aged-gold);
+    border-radius: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--blood-burgundy);
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .animate-dice-roll {
+    animation: diceRoll 1s ease-in-out;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .text-shadow-sm {
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  }
+
+  .text-shadow-md {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  .text-shadow-lg {
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes diceRoll {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.2); filter: brightness(1.4); }
+  100% { transform: rotate(360deg) scale(1); }
+}

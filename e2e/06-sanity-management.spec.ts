@@ -1,30 +1,51 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Sanity Management System', () => {
-  const testEmail = `gm-sanity-test-${Date.now()}@test.com`;
   const testPassword = 'SecurePassword123!';
   const characterName = `Test Investigator ${Date.now()}`;
+  let sessionId: string;
+  let characterId: string;
 
   test.beforeEach(async ({ page }) => {
-    // Create account, login, and create character
+    // Generate unique email for each test
+    const testEmail = `gm-sanity-test-${Date.now()}-${Math.random().toString(36).substring(7)}@test.com`;
+
+    // Create account, login
     await page.goto('/gm-signup');
     await page.locator('input[name="firstName"]').fill('Test');
     await page.locator('input[name="lastName"]').fill('User');
     await page.locator('input[name="email"]').fill(testEmail);
     await page.locator('input[name="password"]').fill(testPassword);
     await page.getByRole('button', { name: /créer.*compte|inscription|sign.*up/i }).click();
-    await page.waitForURL(/^http:\/\/localhost:5002\/?(home|session-manager|sessions)?$/, { timeout: 10000 });
+    await page.waitForURL(/^http:\/\/game-plug.rbw.ovh\/?(home|session-manager|sessions)?$/, { timeout: 10000 });
 
-    // Create character
+    // Create a session to get session ID
+    await page.goto('/session-manager');
+    await page.getByTestId('button-create-session').click();
+    await page.getByTestId('input-session-name').fill(`Sanity Test ${Date.now()}`);
+    await page.getByTestId('button-confirm-create').click();
+
+    // Wait for redirect and extract session ID
+    await page.waitForURL(/\/gm\//, { timeout: 10000 });
+    const currentUrl = page.url();
+    const match = currentUrl.match(/\/gm\/(.+)/);
+    sessionId = match?.[1] || '';
+
+    // Create character using proper testids
     await page.goto('/character-creation');
-    await page.getByLabel(/nom.*personnage|character.*name/i).fill(characterName);
-    const generateButton = page.getByRole('button', { name: /générer|generat|aléatoire|random/i });
+    await page.getByTestId('input-character-name').fill(characterName);
+    const generateButton = page.getByTestId('button-roll-characteristics');
     if (await generateButton.isVisible()) {
       await generateButton.click();
       await page.waitForTimeout(1000);
     }
-    await page.getByRole('button', { name: /suivant|next|continue|sauvegarder|save|créer|create/i }).click();
+    await page.getByTestId('button-save-character').click();
     await page.waitForTimeout(2000);
+
+    // Extract character ID from URL if redirected to character sheet
+    const charUrl = page.url();
+    const charMatch = charUrl.match(/\/character-sheet\/(.+)/);
+    characterId = charMatch?.[1] || '';
   });
 
   test('should display character sanity points', async ({ page }) => {

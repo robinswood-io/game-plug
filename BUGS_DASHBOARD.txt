@@ -1,0 +1,192 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                    GAME-PLUG - BUGS DASHBOARD                             ║
+║                         2026-01-24                                        ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  📊 STATUT GLOBAL                                                        │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  Total Bugs Identifiés:    17                                            │
+│  Bugs Fixés:                2  ✅                                        │
+│  Bugs Restants:            15  ❌                                        │
+│                                                                           │
+│  ╔═══════════════════════════════════════════════════════════════════╗  │
+│  ║  ⛔ CRITIQUES (P0):     5 bugs  |  █████░░░░░░░░░░░  29%          ║  │
+│  ║  ⚠️  MAJEURS (P1):      8 bugs  |  ████████░░░░░░░  47%          ║  │
+│  ║  🐛 MINEURS (P2-P3):   4 bugs  |  ████░░░░░░░░░░░  24%          ║  │
+│  ╚═══════════════════════════════════════════════════════════════════╝  │
+│                                                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  🔥 TOP 5 BUGS CRITIQUES (P0)                                            │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  1. BUG-001  POST /api/sessions - Missing gmId                           │
+│     └─ ERROR: null value in column "gm_id"                               │
+│     └─ Impact: ⛔ US-MJ01 BLOQUÉE (Créer session)                       │
+│     └─ Fix: 2h (Extract gmId from JWT)                                   │
+│                                                                           │
+│  2. BUG-002  POST /api/sessions - DTO validation mismatch                │
+│     └─ ERROR: property "title" should not exist                          │
+│     └─ Impact: ⛔ US-MJ01 BLOQUÉE                                       │
+│     └─ Fix: 1h (Standardize DTO)                                         │
+│                                                                           │
+│  3. BUG-003  POST /api/chapters - Missing name field                     │
+│     └─ ERROR: null value in column "name"                                │
+│     └─ Impact: ⛔ US-MJ07 BLOQUÉE (Créer chapitre)                      │
+│     └─ Fix: 2h (Add validation)                                          │
+│                                                                           │
+│  4. BUG-004  POST /api/chapter-events - Missing eventType                │
+│     └─ ERROR: null value in column "event_type"                          │
+│     └─ Impact: ⛔ US-MJ09 BLOQUÉE (Événements)                          │
+│     └─ Fix: 1h (Add validation)                                          │
+│                                                                           │
+│  5. BUG-005  POST /api/characters/{id}/effects - Invalid FK              │
+│     └─ ERROR: violates foreign key constraint                            │
+│     └─ Impact: ⚠️ US-MJ12 DÉGRADÉE (Buffs/debuffs)                      │
+│     └─ Fix: 2h (Validate character exists)                               │
+│                                                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  📈 IMPACT USER STORIES                                                  │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  Total User Stories:       75                                            │
+│                                                                           │
+│  ⛔ BLOQUÉES:              7  (9.3%)   ████░░░░░░░░░░░░░░░░░░░░         │
+│  ⚠️  DÉGRADÉES:           14  (18.7%)  ████████░░░░░░░░░░░░░░░░         │
+│  ✅ FONCTIONNELLES:       54  (72.0%)  ██████████████████░░░░░░         │
+│                                                                           │
+│  Stories Bloquées:                                                        │
+│    • US-MJ01: Créer session                                              │
+│    • US-MJ07: Créer chapitre                                             │
+│    • US-MJ09: Marquer événements                                         │
+│    • US-J36:  Notes personnelles                                         │
+│                                                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  ⏱️  ESTIMATIONS TEMPS                                                   │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  Bugs P0 (Critiques):        8h  développement                           │
+│  Bugs P1 (Majeurs):         15h  développement                           │
+│  Bugs P2-P3 (Mineurs):       8h  développement                           │
+│  ─────────────────────────────────────────────────                       │
+│  TOTAL DÉVELOPPEMENT:       31h  (~4 jours)                              │
+│  Tests & Validation:        10h  (~1.5 jours)                            │
+│  ─────────────────────────────────────────────────                       │
+│  TOTAL PROJET:              41h  (~5 jours / 1 sprint)                   │
+│                                                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  🎯 PLAN D'ACTION                                                        │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  SEMAINE 1 - Bugs Critiques (P0)                                         │
+│  ├─ Jour 1-2: BUG-001, BUG-002, BUG-003  (5h)                            │
+│  ├─ Jour 3:   BUG-004, BUG-005           (3h)                            │
+│  └─ Validation: Tests E2E API 100%                                       │
+│                                                                           │
+│  SEMAINE 2 - Bugs Majeurs (P1)                                           │
+│  ├─ Jour 1:   BUG-006, BUG-007, BUG-010  (4h)                            │
+│  ├─ Jour 2:   BUG-008, BUG-011           (5h)                            │
+│  ├─ Jour 3:   BUG-009, BUG-012, BUG-013  (6h)                            │
+│  └─ Validation: Tests Playwright 100%                                    │
+│                                                                           │
+│  SEMAINE 3 - Bugs Mineurs (P2-P3) [Optionnel]                            │
+│  └─ BUG-014 à BUG-017  (8h)                                              │
+│                                                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  ✅ CRITÈRES VALIDATION                                                  │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  [ ] Tous bugs P0 fixés et testés                                        │
+│  [ ] TypeScript compile sans erreur (npx tsc --noEmit)                   │
+│  [ ] Tests backend passent 100% (npm test)                               │
+│  [ ] Tests E2E API passent 100% (36/36 endpoints)                        │
+│  [ ] Tests Playwright passent 100% (101 tests)                           │
+│  [ ] Logs backend sans ERROR sur scénarios standards                     │
+│  [ ] Documentation API Swagger mise à jour                               │
+│  [ ] Migration database appliquée (si nécessaire)                        │
+│                                                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  🚀 DÉPLOIEMENT                                                          │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  État Actuel:  ❌ NON PRÊT pour production                               │
+│                                                                           │
+│  Raisons:                                                                 │
+│    • 7 user stories critiques bloquées (9.3%)                            │
+│    • US-MJ01 (créer session) ne fonctionne pas                           │
+│    • 5 bugs P0 doivent être corrigés AVANT déploiement                   │
+│                                                                           │
+│  Prochaines étapes:                                                       │
+│    1. Fixer bugs P0 (8h estimation)                                      │
+│    2. Valider tests E2E API (36 endpoints)                               │
+│    3. Re-évaluer statut déploiement                                      │
+│                                                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  📚 DOCUMENTATION                                                        │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  Fichier                        Taille    Lignes   Utilisation           │
+│  ──────────────────────────────────────────────────────────────────────  │
+│  BUGS_REPORT.md                  27KB      939     Rapport complet       │
+│  BUGS_QUICK_REFERENCE.md         7.5KB     269     Référence rapide      │
+│  BUGS_INDEX.md                   7.9KB     308     Navigation            │
+│  BUGS_README.md                  12KB      407     Guide utilisation     │
+│  BUGS_TRACKING.csv               3.2KB      20     Suivi Excel           │
+│  BUGS_DASHBOARD.txt              Ce fichier       Vue terminale         │
+│  ──────────────────────────────────────────────────────────────────────  │
+│  TOTAL                           57.6KB   1,943    6 fichiers            │
+│                                                                           │
+│  📖 Commencer par: BUGS_INDEX.md ou BUGS_README.md                       │
+│                                                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  🔧 COMMANDES RAPIDES                                                    │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  # Voir logs erreurs backend                                             │
+│  docker logs game-plug-backend --tail 200 | grep -i error                │
+│                                                                           │
+│  # Exécuter tests API                                                    │
+│  npx playwright test e2e/07-api-routes.spec.ts                           │
+│                                                                           │
+│  # Vérifier TypeScript                                                   │
+│  cd apps/backend && npx tsc --noEmit                                     │
+│                                                                           │
+│  # Voir statut containers                                                │
+│  docker ps | grep game-plug                                              │
+│                                                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│  📞 SUPPORT                                                              │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  Questions ?          → Consulter BUGS_README.md                         │
+│  Détails bug ?        → Consulter BUGS_REPORT.md                         │
+│  Vue d'ensemble ?     → Consulter BUGS_QUICK_REFERENCE.md                │
+│  Suivi progression ?  → Ouvrir BUGS_TRACKING.csv dans Excel              │
+│                                                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════
+  Créé par: Claude Code (Sonnet 4.5)
+  Date: 2026-01-24 22:20
+  Version: 1.0
+  Status: Ready for Review
+═══════════════════════════════════════════════════════════════════════════

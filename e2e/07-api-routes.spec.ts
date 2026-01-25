@@ -14,7 +14,7 @@ test.describe('API Routes Test Suite', () => {
 
   test.beforeAll(async ({ playwright }) => {
     apiContext = await playwright.request.newContext({
-      baseURL: 'http://localhost:5002',
+      baseURL: 'http://game-plug.rbw.ovh',
     });
   });
 

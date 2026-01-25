@@ -1,0 +1,219 @@
+{
+  "testSuite": "OpenAI Integration Testing",
+  "date": "2026-01-24T22:10:00Z",
+  "application": "game-plug",
+  "serverStatus": {
+    "backend": "running",
+    "database": "healthy",
+    "docker_containers": 2
+  },
+  "configuration": {
+    "openaiApiKey": {
+      "status": "NOT_CONFIGURED",
+      "location": "docker-compose.apps.yml",
+      "action_required": true,
+      "severity": "CRITICAL"
+    },
+    "localEnv": {
+      "status": "PLACEHOLDER",
+      "value": "sk-placeholder-replace-with-real-key",
+      "location": "/srv/workspace/game-plug/.env"
+    }
+  },
+  "authentication": {
+    "devLogin": {
+      "status": "SUCCESS",
+      "endpoint": "POST /api/auth/dev-login",
+      "email": "gm@example.com",
+      "userId": "95d2b2eb-eb63-40f5-9c96-c4f68a970e7b",
+      "tokenValid": true
+    }
+  },
+  "endpoints": {
+    "generateAvatar": {
+      "endpoint": "POST /api/ai/generate-avatar",
+      "status": "FUNCTIONAL",
+      "httpStatus": 200,
+      "dtoValidation": "PASS",
+      "promptGeneration": "PASS",
+      "imageGeneration": "NOT_IMPLEMENTED",
+      "imageUrl": null,
+      "requiresAuth": true,
+      "requiresOpenai": true
+    },
+    "generateScene": {
+      "endpoint": "POST /api/ai/generate-scene",
+      "status": "FUNCTIONAL",
+      "httpStatus": 200,
+      "dtoValidation": "PASS",
+      "promptGeneration": "PASS",
+      "imageGeneration": "NOT_IMPLEMENTED",
+      "imageUrl": null,
+      "imageFormat": "1792x1024",
+      "imageQuality": "hd",
+      "requiresAuth": true,
+      "requiresOpenai": true
+    },
+    "suggestNarrative": {
+      "endpoint": "POST /api/ai/suggest-narrative",
+      "status": "FUNCTIONAL",
+      "httpStatus": 200,
+      "dtoValidation": "PASS",
+      "promptGeneration": "PASS",
+      "suggestions": [],
+      "requiresAuth": true,
+      "requiresOpenai": true,
+      "supportsFrench": true
+    },
+    "generateCharacterAvatar": {
+      "endpoint": "POST /api/ai/characters/{characterId}/generate-avatar",
+      "status": "ERROR",
+      "httpStatus": 500,
+      "error": "character_no_session_id",
+      "testableWithCurrentData": false,
+      "action_required": "Ensure test characters have session_id"
+    },
+    "generateSessionAvatars": {
+      "endpoint": "POST /api/ai/sessions/{sessionId}/generate-all-avatars",
+      "status": "ERROR",
+      "httpStatus": 500,
+      "error": "session_empty",
+      "testableWithCurrentData": false,
+      "action_required": "Ensure test session has characters"
+    }
+  },
+  "codeAnalysis": {
+    "existingOpenaiCode": {
+      "location": "/srv/workspace/game-plug/server-legacy-archive-final/openai.ts",
+      "status": "COMPLETE_AND_READY",
+      "functions": [
+        "generateSceneImage",
+        "generateCharacterAvatar",
+        "generatePhobiaDescription",
+        "generateManiaDescription",
+        "generateNarrativeSuggestion"
+      ],
+      "integrated": false
+    },
+    "currentAiService": {
+      "location": "/srv/workspace/game-plug/apps/backend/src/modules/ai/ai.service.ts",
+      "status": "MOCK_IMPLEMENTATION",
+      "todoCount": 3,
+      "promptsCorrect": true,
+      "callsOpenai": false
+    }
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "CRITICAL",
+      "title": "Missing OPENAI_API_KEY in docker-compose",
+      "impact": "Cannot use OpenAI services",
+      "status": "OPEN"
+    },
+    {
+      "id": "F2",
+      "severity": "HIGH",
+      "title": "Service returns mock responses",
+      "impact": "imageUrl always null",
+      "status": "OPEN"
+    },
+    {
+      "id": "F3",
+      "severity": "MEDIUM",
+      "title": "Test data lacks session associations",
+      "impact": "Batch endpoints not testable",
+      "status": "OPEN"
+    },
+    {
+      "id": "F4",
+      "severity": "LOW",
+      "title": "Code in legacy archive not integrated",
+      "impact": "Harder to discover and maintain",
+      "status": "OPEN"
+    }
+  ],
+  "recommendations": {
+    "critical": [
+      "Configure OPENAI_API_KEY in docker-compose.apps.yml",
+      "Integrate existing openai.ts code into ai.service.ts"
+    ],
+    "high": [
+      "Fix test data (add session_id to characters)",
+      "Add retry logic and rate limiting"
+    ],
+    "medium": [
+      "Implement local image storage",
+      "Add API cost monitoring"
+    ]
+  },
+  "costEstimates": {
+    "currency": "USD",
+    "period": "monthly",
+    "breakdown": [
+      {
+        "service": "DALL-E 3 (Avatar generation)",
+        "pricePerImage": 0.010,
+        "estimatedUsagePerMonth": 300,
+        "totalCost": 3.00
+      },
+      {
+        "service": "DALL-E 3 (Scene generation)",
+        "pricePerImage": 0.025,
+        "estimatedUsagePerMonth": 150,
+        "totalCost": 3.75
+      },
+      {
+        "service": "GPT-4o (Narrative suggestions)",
+        "pricePerToken": 0.000005,
+        "estimatedTokensPerMonth": 600000,
+        "totalCost": 3.00
+      }
+    ],
+    "totalEstimate": 9.75,
+    "recommendedBudget": 20.00
+  },
+  "testResults": {
+    "totalTests": 6,
+    "passed": 4,
+    "failed": 2,
+    "passRate": 0.67,
+    "summary": "Endpoints are architecturally sound but lack OpenAI integration"
+  },
+  "nextSteps": [
+    {
+      "step": 1,
+      "title": "Get OpenAI API Key",
+      "duration": "10 minutes",
+      "url": "https://platform.openai.com/api-keys"
+    },
+    {
+      "step": 2,
+      "title": "Configure docker-compose",
+      "duration": "5 minutes",
+      "files": ["/srv/workspace/docker-compose.apps.yml"]
+    },
+    {
+      "step": 3,
+      "title": "Integrate OpenAI code",
+      "duration": "120 minutes",
+      "files": [
+        "/srv/workspace/game-plug/apps/backend/src/modules/ai/ai-openai.service.ts",
+        "/srv/workspace/game-plug/apps/backend/src/modules/ai/ai.service.ts"
+      ]
+    },
+    {
+      "step": 4,
+      "title": "Test and validate",
+      "duration": "30 minutes",
+      "files": []
+    }
+  ],
+  "documentation": [
+    "/srv/workspace/game-plug/OPENAI_INTEGRATION_TEST_REPORT.md",
+    "/srv/workspace/game-plug/OPENAI_INTEGRATION_TECHNICAL_GUIDE.md",
+    "/srv/workspace/game-plug/OPENAI_TEST_RESULTS.md"
+  ],
+  "generatedBy": "Claude Code",
+  "reportVersion": "1.0"
+}

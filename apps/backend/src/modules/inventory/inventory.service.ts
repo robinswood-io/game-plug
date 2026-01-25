@@ -1,11 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { inventory } from '@shared/schema';
 import { eq } from 'drizzle-orm';
+import { CharactersService } from '../characters/characters.service';
 
 @Injectable()
 export class InventoryService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    @Inject(forwardRef(() => CharactersService))
+    private readonly charactersService: CharactersService,
+  ) {}
 
   async findByCharacter(characterId: string) {
     return this.db.db.query.inventory.findMany({
@@ -25,6 +30,9 @@ export class InventoryService {
   }
 
   async create(data: any) {
+    // Validate character exists before creating inventory item (BUG-009 fix)
+    await this.charactersService.findOne(data.characterId);
+
     const [item] = await this.db.db
       .insert(inventory)
       .values(data)
@@ -35,7 +43,7 @@ export class InventoryService {
   async update(id: string, data: any) {
     const [updated] = await this.db.db
       .update(inventory)
-      .set({ ...data, updatedAt: new Date() })
+      .set(data as any)
       .where(eq(inventory.id, id))
       .returning();
     if (!updated) {
@@ -52,5 +60,19 @@ export class InventoryService {
     if (result.length === 0) {
       throw new NotFoundException(`Inventory item ${id} not found`);
     }
+  }
+
+  async toggleEquipped(id: string) {
+    const item = await this.findOne(id);
+
+    const [updated] = await this.db.db
+      .update(inventory)
+      .set({
+        isEquipped: !item.isEquipped,
+      } as any)
+      .where(eq(inventory.id, id))
+      .returning();
+
+    return updated;
   }
 }

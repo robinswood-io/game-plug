@@ -1,0 +1,261 @@
+name: Dependency Management
+
+on:
+  schedule:
+    # Check dependencies weekly on Monday at 2 AM UTC
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'apps/*/package.json'
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  dependency-audit:
+    name: Audit Dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline
+
+      - name: Run npm audit
+        id: audit
+        continue-on-error: true
+        run: |
+          npm audit --json > audit.json || true
+
+          CRITICAL=$(jq '.metadata.vulnerabilities.critical // 0' audit.json)
+          HIGH=$(jq '.metadata.vulnerabilities.high // 0' audit.json)
+          MODERATE=$(jq '.metadata.vulnerabilities.moderate // 0' audit.json)
+          LOW=$(jq '.metadata.vulnerabilities.low // 0' audit.json)
+
+          echo "CRITICAL=$CRITICAL" >> $GITHUB_OUTPUT
+          echo "HIGH=$HIGH" >> $GITHUB_OUTPUT
+          echo "MODERATE=$MODERATE" >> $GITHUB_OUTPUT
+          echo "LOW=$LOW" >> $GITHUB_OUTPUT
+
+          echo "Vulnerability Report:"
+          echo "Critical: $CRITICAL"
+          echo "High: $HIGH"
+          echo "Moderate: $MODERATE"
+          echo "Low: $LOW"
+
+      - name: Create audit report
+        run: |
+          cat > audit-report.md << 'EOF'
+          # NPM Audit Report
+
+          ## Vulnerability Summary
+          - Critical: ${{ steps.audit.outputs.CRITICAL }}
+          - High: ${{ steps.audit.outputs.HIGH }}
+          - Moderate: ${{ steps.audit.outputs.MODERATE }}
+          - Low: ${{ steps.audit.outputs.LOW }}
+
+          ## Recommendations
+          - Run `npm audit fix` to fix vulnerable dependencies
+          - Review high/critical vulnerabilities and update packages
+          - Consider using `npm audit fix --audit-level=moderate`
+
+          For more details, see the audit JSON report attached to artifacts.
+          EOF
+          cat audit-report.md
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report
+          path: |
+            audit.json
+            audit-report.md
+          retention-days: 30
+
+      - name: Comment PR with audit results
+        if: github.event_name == 'pull_request' && steps.audit.outputs.CRITICAL != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `⚠️ **Security Alert: Critical vulnerabilities detected**\n\n- Critical: ${{ steps.audit.outputs.CRITICAL }}\n- High: ${{ steps.audit.outputs.HIGH }}\n\nPlease review and update dependencies.`
+            });
+
+  update-check:
+    name: Check for Updates
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline
+
+      - name: Check for outdated packages
+        id: outdated
+        continue-on-error: true
+        run: |
+          npm outdated --json > outdated.json || true
+
+          OUTDATED_COUNT=$(jq 'length' outdated.json)
+          echo "OUTDATED_COUNT=$OUTDATED_COUNT" >> $GITHUB_OUTPUT
+
+          if [ "$OUTDATED_COUNT" -gt 0 ]; then
+            echo "### Outdated Packages ($OUTDATED_COUNT total)"
+            jq -r 'to_entries[] | "\(.key): \(.value.current) -> \(.value.latest)"' outdated.json
+          fi
+
+      - name: Create update report
+        if: steps.outdated.outputs.OUTDATED_COUNT != '0'
+        run: |
+          npm outdated > outdated-report.txt || true
+
+          cat > update-report.md << 'EOF'
+          # Dependency Update Report
+
+          ## Summary
+          Found ${{ steps.outdated.outputs.OUTDATED_COUNT }} packages with updates available.
+
+          ## Recommendations
+          1. Review each dependency update for breaking changes
+          2. Test thoroughly after updates
+          3. Consider security updates as high priority
+          4. For major version updates, check changelog and migration guides
+
+          ## Command to Update
+          ```bash
+          npm update
+          # or for interactive selection:
+          npm outdated
+          npm install <package>@latest
+          ```
+
+          See attached artifact for detailed list.
+          EOF
+
+      - name: Upload update report
+        if: steps.outdated.outputs.OUTDATED_COUNT != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-update-report
+          path: |
+            outdated.json
+            outdated-report.txt
+            update-report.md
+          retention-days: 30
+
+  validate-lock-file:
+    name: Validate Lock File
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Verify package-lock.json
+        run: |
+          echo "Checking package-lock.json consistency..."
+
+          # Check if lock file is in sync with package.json
+          npm ci --audit=false > /dev/null 2>&1
+
+          # Verify no changes to lock file
+          if git diff --quiet package-lock.json; then
+            echo "✓ package-lock.json is consistent with package.json"
+          else
+            echo "⚠ package-lock.json is out of sync"
+            echo "Run 'npm install' to update lock file"
+          fi
+
+      - name: Check Node version compatibility
+        run: |
+          NODE_VERSION=$(jq -r '.engines.node // ">=18"' package.json)
+          echo "Required Node version: $NODE_VERSION"
+          echo "Current Node version: $(node --version)"
+
+  security-check:
+    name: Security Dependencies Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline
+
+      - name: Check for known security issues
+        run: |
+          echo "Checking for known security patterns..."
+
+          # Check for unencrypted secrets in package.json
+          if grep -E "secret|password|key|token" package.json | grep -v "\"SECRET\"\|\"PASSWORD\""; then
+            echo "⚠ Possible hardcoded secrets found in package.json"
+          fi
+
+          # Check for dev dependencies in production code
+          echo "Checking for dev dependencies..."
+          if grep -r "require.*node_modules.*dev" apps/backend/src apps/frontend/src 2>/dev/null; then
+            echo "⚠ Dev dependencies imported in production code"
+          else
+            echo "✓ No dev dependencies in production code"
+          fi
+
+  report-summary:
+    name: Generate Summary
+    runs-on: ubuntu-latest
+    needs: [dependency-audit, update-check, validate-lock-file, security-check]
+    if: always()
+
+    steps:
+      - name: Create job summary
+        run: |
+          echo "## Dependency Management Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Jobs Status" >> $GITHUB_STEP_SUMMARY
+          echo "- Audit: ${{ needs.dependency-audit.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Updates: ${{ needs.update-check.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Lock File: ${{ needs.validate-lock-file.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Security: ${{ needs.security-check.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Action Items" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Review audit report artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Check for critical/high vulnerabilities" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Plan dependency updates" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Test after updates" >> $GITHUB_STEP_SUMMARY

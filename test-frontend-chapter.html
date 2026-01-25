@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Création Chapitre - Frontend</title>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #00ff00; }
+    .log { margin: 5px 0; }
+    .success { color: #00ff00; }
+    .error { color: #ff0000; }
+    .info { color: #00aaff; }
+  </style>
+</head>
+<body>
+  <h1>Test Création de Chapitre</h1>
+  <div id="logs"></div>
+
+  <script>
+    const BACKEND_URL = '';  // Même domaine (Next.js proxy)
+    const SESSION_ID = '75a80b4d-6847-4546-857c-4eb070c83d1b';
+
+    function log(message, type = 'info') {
+      const div = document.createElement('div');
+      div.className = `log ${type}`;
+      div.textContent = `[${new Date().toISOString()}] ${message}`;
+      document.getElementById('logs').appendChild(div);
+      console.log(message);
+    }
+
+    async function testChapterCreation() {
+      try {
+        log('=== Début du test ===', 'info');
+
+        // 1. Vérifier si un token existe
+        log('1. Vérification du token localStorage...', 'info');
+        let token = localStorage.getItem('auth_token');
+
+        if (!token) {
+          log('Token non trouvé, authentification...', 'info');
+
+          // Authentification
+          const loginResponse = await fetch(`${BACKEND_URL}/api/auth/dev-login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: 'admin@test.com' }),
+            credentials: 'include'
+          });
+
+          if (!loginResponse.ok) {
+            throw new Error(`Login failed: ${loginResponse.statusText}`);
+          }
+
+          const loginData = await loginResponse.json();
+          token = loginData.access_token;
+          localStorage.setItem('auth_token', token);
+          log(`✓ Token sauvegardé: ${token.substring(0, 20)}...`, 'success');
+        } else {
+          log(`✓ Token trouvé: ${token.substring(0, 20)}...`, 'success');
+        }
+
+        // 2. Créer un chapitre
+        log('2. Création du chapitre...', 'info');
+        const chapterData = {
+          name: `Test Frontend ${Date.now()}`,
+          description: 'Test de création depuis le frontend',
+          status: 'planned',
+          orderIndex: 2
+        };
+
+        const createResponse = await fetch(`${BACKEND_URL}/api/sessions/${SESSION_ID}/chapters`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(chapterData),
+          credentials: 'include'
+        });
+
+        if (!createResponse.ok) {
+          const errorText = await createResponse.text();
+          throw new Error(`Create failed (${createResponse.status}): ${errorText}`);
+        }
+
+        const chapter = await createResponse.json();
+        log(`✓ Chapitre créé: ${chapter.name} (ID: ${chapter.id})`, 'success');
+
+        // 3. Vérifier la liste
+        log('3. Récupération de la liste...', 'info');
+        const listResponse = await fetch(`${BACKEND_URL}/api/sessions/${SESSION_ID}/chapters`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          credentials: 'include'
+        });
+
+        if (!listResponse.ok) {
+          throw new Error(`List failed: ${listResponse.statusText}`);
+        }
+
+        const chapters = await listResponse.json();
+        log(`✓ ${chapters.length} chapitre(s) dans la session`, 'success');
+        chapters.forEach(ch => {
+          log(`  - ${ch.name} (${ch.status})`, 'info');
+        });
+
+        log('=== Test réussi ===', 'success');
+
+      } catch (error) {
+        log(`✗ ERREUR: ${error.message}`, 'error');
+        console.error('Stack:', error);
+      }
+    }
+
+    // Lancer le test au chargement
+    testChapterCreation();
+  </script>
+</body>
+</html>

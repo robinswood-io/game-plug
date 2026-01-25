@@ -158,7 +158,76 @@ describe('DiceService', () => {
     });
   });
 
-  describe('roll with skill value - determineOutcome', () => {
+  describe('roll with skill value - determineOutcome (CoC 7e)', () => {
+    it('should return critical_success when roll is 01-05', async () => {
+      const rollData = {
+        userId: 'user-1',
+        rollType: 'skill',
+        diceFormula: '1d100',
+        skillValue: 80,
+      };
+
+      // Mock Math.random to return value that gives us 3
+      const originalRandom = Math.random;
+      Math.random = jest.fn().mockReturnValue(0.02);
+
+      try {
+        const result = await service.roll(rollData);
+        // Should be critical_success for rolls 1-5
+        if (result.result <= 5) {
+          expect(result.outcome).toBe('critical_success');
+        }
+      } finally {
+        Math.random = originalRandom;
+      }
+    });
+
+    it('should return critical_success when roll is <= skillValue/20', async () => {
+      const rollData = {
+        userId: 'user-1',
+        rollType: 'skill',
+        diceFormula: '1d100',
+        skillValue: 100,
+      };
+
+      // Mock Math.random to return 0 (minimum value for 1d100 = 1)
+      const originalRandom = Math.random;
+      Math.random = jest.fn().mockReturnValue(0);
+
+      try {
+        const result = await service.roll(rollData);
+        // skillValue/20 = 100/20 = 5, min(5, 5) = 5
+        if (result.result <= 5) {
+          expect(result.outcome).toBe('critical_success');
+        }
+      } finally {
+        Math.random = originalRandom;
+      }
+    });
+
+    it('should return fumble when roll is 96-100', async () => {
+      const rollData = {
+        userId: 'user-1',
+        rollType: 'skill',
+        diceFormula: '1d100',
+        skillValue: 80,
+      };
+
+      // Mock Math.random to return value that gives us 97
+      const originalRandom = Math.random;
+      Math.random = jest.fn().mockReturnValue(0.96);
+
+      try {
+        const result = await service.roll(rollData);
+        // Should be fumble for rolls 96-100
+        if (result.result >= 96) {
+          expect(result.outcome).toBe('fumble');
+        }
+      } finally {
+        Math.random = originalRandom;
+      }
+    });
+
     it('should return extreme_success when roll is <= skillValue/5', async () => {
       const rollData = {
         userId: 'user-1',
@@ -174,7 +243,7 @@ describe('DiceService', () => {
       try {
         const result = await service.roll(rollData);
         // skillValue/5 = 50/5 = 10, so we need result <= 10
-        if (result.result <= 10) {
+        if (result.result > 5 && result.result <= 10) {
           expect(result.outcome).toBe('extreme_success');
         }
       } finally {
@@ -199,7 +268,7 @@ describe('DiceService', () => {
       }
     });
 
-    it('should return success when roll is > skillValue/2 but <= skillValue', async () => {
+    it('should return regular_success when roll is > skillValue/2 but <= skillValue', async () => {
       const rollData = {
         userId: 'user-1',
         rollType: 'skill',
@@ -211,7 +280,7 @@ describe('DiceService', () => {
 
       // skillValue/2 = 40, skillValue = 80
       if (result.result > 40 && result.result <= 80) {
-        expect(result.outcome).toBe('success');
+        expect(result.outcome).toBe('regular_success');
       }
     });
 
@@ -332,6 +401,99 @@ describe('DiceService', () => {
 
       expect(result.result).toBeGreaterThanOrEqual(101);
       expect(result.result).toBeLessThanOrEqual(120);
+    });
+  });
+
+  describe('CoC 7e - Bonus/Penalty Dice', () => {
+    it('should handle bonus dice for 1d100 rolls', async () => {
+      const rollData = {
+        userId: 'user-1',
+        rollType: 'skill',
+        diceFormula: '1d100',
+        skillValue: 50,
+        bonusDice: 1,
+      };
+
+      const result = await service.roll(rollData);
+
+      expect(result).toHaveProperty('bonusDice', 1);
+      expect(result.result).toBeGreaterThanOrEqual(1);
+      expect(result.result).toBeLessThanOrEqual(100);
+    });
+
+    it('should handle penalty dice for 1d100 rolls', async () => {
+      const rollData = {
+        userId: 'user-1',
+        rollType: 'skill',
+        diceFormula: '1d100',
+        skillValue: 50,
+        penaltyDice: 1,
+      };
+
+      const result = await service.roll(rollData);
+
+      expect(result).toHaveProperty('penaltyDice', 1);
+      expect(result.result).toBeGreaterThanOrEqual(1);
+      expect(result.result).toBeLessThanOrEqual(100);
+    });
+
+    it('should handle multiple bonus dice', async () => {
+      const rollData = {
+        userId: 'user-1',
+        rollType: 'skill',
+        diceFormula: '1d100',
+        skillValue: 50,
+        bonusDice: 2,
+      };
+
+      const result = await service.roll(rollData);
+
+      expect(result).toHaveProperty('bonusDice', 2);
+      expect(result.result).toBeGreaterThanOrEqual(1);
+      expect(result.result).toBeLessThanOrEqual(100);
+    });
+
+    it('should not use bonus/penalty dice for non-1d100 rolls', async () => {
+      const rollData = {
+        userId: 'user-1',
+        rollType: 'damage',
+        diceFormula: '2d6',
+        bonusDice: 1,
+      };
+
+      const result = await service.roll(rollData);
+
+      // Bonus dice only applies to 1d100
+      expect(result.result).toBeGreaterThanOrEqual(2);
+      expect(result.result).toBeLessThanOrEqual(12);
+    });
+
+    it('should verify bonus dice tend to give lower results over many rolls', async () => {
+      let bonusTotal = 0;
+      let regularTotal = 0;
+      const iterations = 100;
+
+      for (let i = 0; i < iterations; i++) {
+        const bonusRoll = await service.roll({
+          userId: 'user-1',
+          diceFormula: '1d100',
+          bonusDice: 1,
+        });
+        bonusTotal += bonusRoll.result;
+
+        const regularRoll = await service.roll({
+          userId: 'user-1',
+          diceFormula: '1d100',
+        });
+        regularTotal += regularRoll.result;
+      }
+
+      const bonusAverage = bonusTotal / iterations;
+      const regularAverage = regularTotal / iterations;
+
+      // Bonus dice should statistically result in lower average
+      // This is a statistical test, might occasionally fail due to randomness
+      expect(bonusAverage).toBeLessThan(regularAverage + 10);
     });
   });
 

@@ -37,4 +37,12 @@ export class DiceRollDto {
   @IsOptional()
   @IsBoolean()
   isGmRoll?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  bonusDice?: number;
+
+  @IsOptional()
+  @IsNumber()
+  penaltyDice?: number;
 }

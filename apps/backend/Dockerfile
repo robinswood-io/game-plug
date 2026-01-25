@@ -1,85 +1,99 @@
 # =============================================================================
-# Multi-stage Dockerfile for NestJS Backend
+# Multi-stage Dockerfile for NestJS Backend (Node.js Production)
 # =============================================================================
+# IMPORTANT: Build context must be /srv/workspace/game-plug (project root)
+# Usage: docker build -f apps/backend/Dockerfile -t game-plug-backend .
+#
 # This Dockerfile uses a multi-stage approach to minimize the final image size
-# Stage 1: Dependencies - Install all dependencies
-# Stage 2: Build - Compile TypeScript
-# Stage 3: Production - Minimal runtime image
+# Stage 1: Dependencies - Install production dependencies only
+# Stage 2: Build - Compile TypeScript with all dependencies
+# Stage 3: Production - Minimal runtime image with Node.js
 
 # =============================================================================
-# Stage 1: Dependencies
+# Stage 1: Production Dependencies
 # =============================================================================
-FROM oven/bun:1.3.6-alpine AS deps
+FROM node:24-alpine AS deps
+WORKDIR /app/backend
+
+# Copy backend package files
+COPY apps/backend/package.json apps/backend/package-lock.json* ./
+
+# Install production dependencies only (use install instead of ci due to lock file sync issues)
+RUN npm install --legacy-peer-deps --omit=dev && \
+    npm cache clean --force
+
+# =============================================================================
+# Stage 2: Builder
+# =============================================================================
+FROM node:24-alpine AS builder
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json* bun.lockb* ./
+# Copy backend package files
+COPY apps/backend/package.json apps/backend/package-lock.json* ./backend/
 
-# Install all dependencies (including devDependencies for build)
-RUN bun install --frozen-lockfile || npm ci
+# Install all dependencies (including dev dependencies for build)
+WORKDIR /app/backend
+RUN npm install --legacy-peer-deps && \
+    npm cache clean --force
 
-# =============================================================================
-# Stage 2: Build
-# =============================================================================
-FROM oven/bun:1.3.6-alpine AS builder
+# Copy shared schema (required for TypeScript compilation)
 WORKDIR /app
+COPY shared ./shared
 
-# Copy dependencies from deps stage
-COPY --from=deps /app/node_modules ./node_modules
+# Copy backend source code and build configuration
+COPY apps/backend ./backend
 
-# Copy source code and build configuration
-COPY . .
+# Create symlink for node_modules so shared schema can find dependencies
+RUN ln -s /app/backend/node_modules /app/node_modules
 
-# Build the NestJS application
-RUN bun run build || npm run build
+# Build the NestJS application (with webpack to avoid some TypeScript strict issues)
+WORKDIR /app/backend
+RUN npm run build:webpack || npm run build
 
 # =============================================================================
 # Stage 3: Production Runtime
 # =============================================================================
-FROM oven/bun:1.3.6-alpine
+FROM node:24-alpine AS runner
 
 WORKDIR /app
 
-# Install production dependencies only
+# Set production environment
+ENV NODE_ENV=production
+
+# Install runtime utilities
 RUN apk add --no-cache \
     dumb-init \
-    wget \
+    curl \
     && rm -rf /var/cache/apk/*
 
 # Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nestjs
 
-# Copy dependencies from deps stage (production-only)
-COPY --from=deps /app/node_modules ./node_modules
+# Copy production dependencies from deps stage
+COPY --from=deps /app/backend/node_modules ./node_modules
 
 # Copy built application from builder stage
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/backend/dist ./dist
 
-# Copy configuration files
-COPY --chown=nodejs:nodejs package.json ./
-COPY --chown=nodejs:nodejs bun.lockb* package-lock.json* ./
+# Copy package.json for runtime
+COPY --from=builder /app/backend/package.json ./package.json
 
-# Copy shared schemas and migrations
+# Copy shared schema (required at runtime for drizzle-orm)
 COPY --from=builder /app/shared ./shared
-COPY --from=builder /app/drizzle.config.ts* ./
-
-# Create directories with correct permissions
-RUN mkdir -p /app/public/avatars && \
-    chown -R nodejs:nodejs /app
 
 # Switch to non-root user
-USER nodejs
+USER nestjs
 
 # Expose application port
-EXPOSE 5002
+EXPOSE 4000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:5002/api/health || exit 1
+  CMD node -e "require('http').get('http://localhost:4000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # Use dumb-init to properly handle signals
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start application with Bun
-CMD ["bun", "run", "start"]
+# Start application with Node.js
+CMD ["node", "dist/backend/src/main.js"]

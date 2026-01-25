@@ -23,7 +23,8 @@
     "resolveJsonModule": true,
     "paths": {
       "@/*": ["src/*"],
-      "@shared/*": ["../../shared/*"],
+      "@shared/*": ["../../shared/*", "../shared/*"],
+      "@shared/schema": ["../../shared/schema.ts", "../shared/schema.ts"],
       "@modules/*": ["src/modules/*"],
       "@common/*": ["src/common/*"]
     }

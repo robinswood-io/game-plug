@@ -38,6 +38,15 @@ export class AuthService {
     };
   }
 
+  async devLogin(email: string) {
+    const user = await this.db.db.query.users.findFirst({
+      where: eq(users.email, email),
+    });
+    if (!user) throw new UnauthorizedException('User not found');
+    const { passwordHash, ...result } = user;
+    return this.login(result);
+  }
+
   async signup(data: { email: string; password: string; firstName?: string; lastName?: string; isGM?: boolean }) {
     const passwordHash = await bcrypt.hash(data.password, 10);
     const [user] = await this.db.db
@@ -66,5 +75,18 @@ export class AuthService {
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
+  }
+
+  async findById(userId: string) {
+    const user = await this.db.db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const { passwordHash, ...result } = user;
+    return result;
   }
 }

@@ -1,71 +1,195 @@
 # =============================================================================
-# DÉVELOPPEMENT LOCAL UNIQUEMENT - NE PAS UTILISER POUR PRODUCTION
+# Docker Compose Configuration for Game-Plug
 # =============================================================================
-# Pour déployer game-plug en production/staging, utilisez:
-#   cd /srv/workspace && docker compose -f docker-compose.apps.yml up -d game-plug
-#
-# Ce fichier est pour développement isolé uniquement.
+# Production-ready configuration with health checks and restart policies
+# For development, use: docker compose up -d
+# For production, use central deployment: docker compose -f docker-compose.apps.yml up -d game-plug
 # =============================================================================
 
+version: '3.8'
+
 services:
-  # PostgreSQL database
+  # ==========================================================================
+  # PostgreSQL 16 - Database Service
+  # ==========================================================================
   postgres:
     image: postgres:16-alpine
-    container_name: role-plug-db
+    container_name: game-plug-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: roleplug
-      POSTGRES_USER: roleplug
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-roleplug_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-game_plug}
+      POSTGRES_USER: ${POSTGRES_USER:-game_plug}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-game_plug_dev_password}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
-      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"  # localhost uniquement
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"  # localhost only
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U roleplug"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-game_plug} -d ${POSTGRES_DB:-game_plug}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
+    networks:
+      - game-plug-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-  # Application service
-  app:
+  # ==========================================================================
+  # Redis 7 - Cache & Session Store
+  # ==========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: game-plug-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_dev_password}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"  # localhost only
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_dev_password}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - game-plug-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ==========================================================================
+  # NestJS Backend Service
+  # ==========================================================================
+  backend:
     build:
-      context: .
+      context: ./apps/backend
       dockerfile: Dockerfile
-    container_name: role-plug-app
+    container_name: game-plug-backend
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
-      NODE_ENV: production
-      PORT: 5000
-      DATABASE_URL: postgresql://roleplug:${POSTGRES_PASSWORD:-roleplug_dev_password}@postgres:5432/roleplug
-      SESSION_SECRET: ${SESSION_SECRET:-change-this-in-production}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      # Replit-specific variables (not used in Docker but required by code)
-      REPLIT_DOMAINS: ${REPLIT_DOMAINS:-localhost}
-      REPL_ID: ${REPL_ID:-docker-deployment}
+      # Application
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 5002
+
+      # Database
+      DATABASE_URL: postgresql://${POSTGRES_USER:-game_plug}:${POSTGRES_PASSWORD:-game_plug_dev_password}@postgres:5432/${POSTGRES_DB:-game_plug}
+
+      # Redis
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_dev_password}@redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_dev_password}
+
+      # Security
+      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400}
+
+      # API
+      API_HOST: ${API_HOST:-0.0.0.0}
+      API_PORT: 5002
+      API_PREFIX: ${API_PREFIX:-/api}
+
+      # CORS
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173,http://localhost:3000}
+
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+
     volumes:
-      # Persist generated avatars
-      - avatars_data:/app/public/avatars
-    # Pas de ports exposés - utiliser Traefik pour le routing
-    # ports:
-    #   - "${APP_PORT:-5002}:5000"
+      # Persist application data
+      - ./apps/backend/src:/app/src:ro
+      - ./apps/backend/dist:/app/dist
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-5002}:5002"
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5002/api/health"]
       interval: 30s
       timeout: 10s
       start_period: 40s
       retries: 3
+    networks:
+      - game-plug-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
 
+  # ==========================================================================
+  # Next.js 16 Frontend Service
+  # ==========================================================================
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:5002}
+    container_name: game-plug-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      # Application
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+
+      # API Configuration
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://backend:5002}
+
+      # Build-time variables
+      NEXT_TELEMETRY_DISABLED: 1
+
+    volumes:
+      - ./apps/frontend/.next:/app/.next
+      - ./apps/frontend/public:/app/public:ro
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-5173}:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+    networks:
+      - game-plug-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# =============================================================================
+# Volumes
+# =============================================================================
 volumes:
   postgres_data:
-    name: role-plug-postgres
-  avatars_data:
-    name: role-plug-avatars
+    name: game-plug-postgres-data
+    driver: local
+  redis_data:
+    name: game-plug-redis-data
+    driver: local
 
+# =============================================================================
+# Networks
+# =============================================================================
 networks:
-  default:
-    name: role-plug-network
+  game-plug-network:
+    name: game-plug-network
+    driver: bridge

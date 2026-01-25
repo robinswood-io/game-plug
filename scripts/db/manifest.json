@@ -1,0 +1,254 @@
+{
+  "name": "Drizzle Database Migration Scripts",
+  "version": "1.0.0",
+  "description": "Scripts de gestion des migrations de base de données Drizzle ORM pour GamePlug",
+  "author": "GamePlug Team",
+  "created": "2026-01-23",
+  "repository": "https://github.com/robinswood-ai/game-plug",
+  "scripts": {
+    "generate-migration": {
+      "file": "generate-migration.sh",
+      "executable": true,
+      "description": "Génère une nouvelle migration Drizzle depuis le schema TypeScript",
+      "usage": "bash scripts/db/generate-migration.sh",
+      "environment": ["DATABASE_URL"],
+      "output_directory": "./migrations",
+      "dependencies": ["drizzle-kit", "shared/schema.ts"],
+      "frequency": "Chaque modification du schéma",
+      "environments": ["dev", "prod"],
+      "idempotent": true
+    },
+    "apply-migrations": {
+      "file": "apply-migrations.sh",
+      "executable": true,
+      "description": "Applique toutes les migrations pendantes à la base de données",
+      "usage": "bash scripts/db/apply-migrations.sh",
+      "environment": ["DATABASE_URL"],
+      "dependencies": ["drizzle-kit", "./migrations"],
+      "frequency": "Avant chaque déploiement",
+      "environments": ["dev", "prod"],
+      "idempotent": true,
+      "destructive": false
+    },
+    "run-seed": {
+      "file": "run-seed.sh",
+      "executable": true,
+      "description": "Exécute le script de seed pour créer des données de test",
+      "usage": "bash scripts/db/run-seed.sh",
+      "environment": ["DATABASE_URL"],
+      "dependencies": ["tsx", "seed.ts", "drizzle-orm", "bcryptjs"],
+      "frequency": "Setup initial développement",
+      "environments": ["dev"],
+      "idempotent": false,
+      "destructive": false,
+      "creates": [
+        "1 utilisateur GM (gm@example.com)",
+        "1 session de test",
+        "1 personnage de test",
+        "1 chapitre",
+        "1 arme d'inventaire",
+        "1 entrée narrative",
+        "1 événement de chapitre"
+      ]
+    },
+    "seed": {
+      "file": "seed.ts",
+      "executable": false,
+      "language": "typescript",
+      "description": "Logique TypeScript du seed - à exécuter via run-seed.sh",
+      "usage": "npx tsx scripts/db/seed.ts (via run-seed.sh)",
+      "environment": ["DATABASE_URL"],
+      "dependencies": ["drizzle-orm", "postgres", "bcryptjs"],
+      "creates": [
+        "users (GM)",
+        "gameSessions",
+        "characters",
+        "chapters",
+        "inventory",
+        "narrativeEntries",
+        "chapterEvents"
+      ]
+    },
+    "reset-db": {
+      "file": "reset-db.sh",
+      "executable": true,
+      "description": "Réinitialise complètement la base de données (destructif)",
+      "usage": "bash scripts/db/reset-db.sh",
+      "environment": ["DATABASE_URL"],
+      "dependencies": ["psql"],
+      "frequency": "Occasionnel (debug en dev)",
+      "environments": ["dev"],
+      "idempotent": true,
+      "destructive": true,
+      "warning": "DANGER: Supprime TOUTES les données. A ne jamais utiliser en production",
+      "requires_confirmation": true
+    },
+    "test": {
+      "file": "test.sh",
+      "executable": true,
+      "description": "Valide l'intégrité de tous les scripts de migration",
+      "usage": "bash scripts/db/test.sh",
+      "environment": [],
+      "dependencies": ["bash", "npm"],
+      "checks": [
+        "Existence des fichiers",
+        "Permissions d'exécution",
+        "Syntaxe Bash",
+        "Syntaxe TypeScript",
+        "Dépendances npm",
+        "Contenu des scripts",
+        "Documentation"
+      ],
+      "exit_code_0": "Tous les tests réussis",
+      "exit_code_1": "Au moins un test a échoué"
+    }
+  },
+  "documentation": {
+    "README": {
+      "file": "README.md",
+      "description": "Documentation complète avec workflows, dépannage et FAQ",
+      "sections": [
+        "Configuration préalable",
+        "Utilisation détaillée",
+        "Workflows courants",
+        "Sécurité et bonnes pratiques",
+        "Dépannage",
+        "Structure des migrations",
+        "Questions fréquentes"
+      ]
+    },
+    "INDEX": {
+      "file": "INDEX.md",
+      "description": "Vue d'ensemble des fichiers et commandes courantes"
+    },
+    "QUICKSTART": {
+      "file": "QUICKSTART.md",
+      "description": "Démarrage rapide en 30 secondes"
+    },
+    "MANIFEST": {
+      "file": "manifest.json",
+      "description": "Ce fichier - métadonnées de tous les scripts"
+    }
+  },
+  "database": {
+    "type": "PostgreSQL",
+    "version": "16+",
+    "orm": "Drizzle ORM",
+    "schema_file": "shared/schema.ts",
+    "migrations_directory": "./migrations"
+  },
+  "dependencies": {
+    "runtime": [
+      "Node.js 18+",
+      "PostgreSQL 16+",
+      "bash"
+    ],
+    "npm": [
+      "drizzle-orm @0.39.3+",
+      "drizzle-kit @0.30.4+",
+      "postgres @3.4.8+",
+      "bcryptjs @3.0.2+",
+      "tsx @4.19.1+"
+    ]
+  },
+  "requirements": {
+    "environment_variables": {
+      "DATABASE_URL": {
+        "description": "Connection string PostgreSQL",
+        "example": "postgresql://user:password@localhost:5432/gameplug",
+        "required": true
+      }
+    },
+    "files": {
+      ".env": {
+        "description": "Fichier de configuration d'environnement",
+        "required": true
+      },
+      "shared/schema.ts": {
+        "description": "Schéma TypeScript Drizzle",
+        "required": true
+      }
+    },
+    "services": {
+      "PostgreSQL": {
+        "description": "Base de données relationnelle",
+        "port": 5432,
+        "required": true
+      }
+    }
+  },
+  "workflows": {
+    "initial_setup": {
+      "name": "Configuration initiale",
+      "steps": [
+        "bash scripts/db/apply-migrations.sh",
+        "bash scripts/db/run-seed.sh",
+        "npm run dev"
+      ]
+    },
+    "add_schema_column": {
+      "name": "Ajouter une colonne au schéma",
+      "steps": [
+        "Modifier shared/schema.ts",
+        "bash scripts/db/generate-migration.sh",
+        "Examiner ./migrations/*.sql",
+        "bash scripts/db/apply-migrations.sh",
+        "npm run dev (tester)"
+      ]
+    },
+    "reset_and_reseed": {
+      "name": "Réinitialiser et remplir",
+      "steps": [
+        "bash scripts/db/reset-db.sh",
+        "bash scripts/db/apply-migrations.sh",
+        "bash scripts/db/run-seed.sh"
+      ],
+      "danger": true
+    },
+    "deploy_to_production": {
+      "name": "Déployer en production",
+      "steps": [
+        "bash scripts/db/test.sh (vérifier)",
+        "Sauvegarder la DB",
+        "bash scripts/db/generate-migration.sh (si changements)",
+        "Examiner les migrations",
+        "bash scripts/db/apply-migrations.sh"
+      ]
+    }
+  },
+  "troubleshooting": {
+    "DATABASE_URL_not_defined": {
+      "error": "DATABASE_URL non défini",
+      "solution": "cp .env.example .env && nano .env"
+    },
+    "connection_refused": {
+      "error": "Connection refused",
+      "solution": "docker-compose restart postgres"
+    },
+    "relation_already_exists": {
+      "error": "relation already exists",
+      "solution": "Les migrations sont déjà appliquées. Relancer sans danger."
+    }
+  },
+  "file_structure": {
+    "scripts/db": {
+      "generate-migration.sh": "Script bash - génère migration",
+      "apply-migrations.sh": "Script bash - applique migrations",
+      "reset-db.sh": "Script bash - réinitialise DB (DEV)",
+      "run-seed.sh": "Script bash - exécute seed",
+      "seed.ts": "Script TypeScript - logique seed",
+      "test.sh": "Script bash - valide scripts",
+      "README.md": "Documentation complète",
+      "INDEX.md": "Index des fichiers",
+      "QUICKSTART.md": "Démarrage rapide",
+      "manifest.json": "Ce fichier"
+    }
+  },
+  "metadata": {
+    "total_scripts": 7,
+    "total_documentation_files": 4,
+    "executable_files": 5,
+    "total_lines_of_code": 865,
+    "languages": ["bash", "typescript", "markdown", "json"]
+  }
+}

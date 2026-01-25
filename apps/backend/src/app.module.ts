@@ -15,6 +15,7 @@ import { AiModule } from './modules/ai/ai.module';
 import { GameboardModule } from './modules/gameboard/gameboard.module';
 import { SanityModule } from './modules/sanity/sanity.module';
 import { DiceModule } from './modules/dice/dice.module';
+import { EffectsModule } from './modules/effects/effects.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { DiceModule } from './modules/dice/dice.module';
     GameboardModule,
     SanityModule,
     DiceModule,
+    EffectsModule,
   ],
   controllers: [],
   providers: [],

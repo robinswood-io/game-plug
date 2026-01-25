@@ -1,0 +1,152 @@
+{
+  "project": "game-plug",
+  "analysis_date": "2026-01-22",
+  "frontend": {
+    "framework": "Vite + React",
+    "vite_version": "5.4.19",
+    "react": "18.3.1",
+    "turbopack": false,
+    "notes": "Currently using Vite with React SPA, NOT Next.js"
+  },
+  "backend": {
+    "primary_framework": "NestJS",
+    "nestjs_version": "11.0.0",
+    "secondary_framework": "Express (legacy)",
+    "express_version": "4.21.2",
+    "decorators": true,
+    "modules_count": 9,
+    "modules_using_nestjs": [
+      "auth.module.ts",
+      "websockets.module.ts",
+      "chapters.module.ts",
+      "inventory.module.ts",
+      "database.module.ts",
+      "cache.module.ts",
+      "chapter-events.module.ts",
+      "narrative.module.ts",
+      "trpc.module.ts"
+    ]
+  },
+  "validation": {
+    "primary_library": "class-validator",
+    "class_validator_version": "0.14.1",
+    "secondary_library": "Zod",
+    "zod_version_main_package": "3.24.2",
+    "zod_version_backend": "3.24.0",
+    "is_v4": false,
+    "usage_pattern": "Hybrid - class-validator for DTO decorators, Zod for schema validation"
+  },
+  "api": {
+    "type": "tRPC with OpenAPI",
+    "trpc_version": "11.0.0",
+    "trpc_openapi_version": "1.2.0",
+    "swagger": true,
+    "swagger_version": "8.0.0",
+    "swagger_endpoint": "/api/docs",
+    "implementation": "tRPC routers exposed as REST via trpc-openapi with Swagger documentation"
+  },
+  "typescript": "5.6.3",
+  "structure": {
+    "layout": "Monorepo",
+    "directories": {
+      "root_package": "Express + React/Vite (legacy)",
+      "apps/backend": "NestJS 11 full backend",
+      "client": "React/Vite SPA frontend",
+      "server": "Legacy Express routes (routes.ts, 66KB)"
+    },
+    "dual_backend_problem": true,
+    "description": "Project has TWO backends running simultaneously: legacy Express server and new NestJS backend"
+  },
+  "current_state": {
+    "status": "Mid-migration",
+    "phase": "Phase 1 - Backend Migration (In Progress)",
+    "legacy_code": {
+      "exists": true,
+      "location": "/srv/workspace/game-plug/server/",
+      "express_routes_file": "routes.ts (66KB, complex routing logic)",
+      "auth_system": "Express session + Passport (local + OpenID)",
+      "storage": "in-memory MemoryStore (session), file storage (avatars)"
+    },
+    "new_nestjs_code": {
+      "exists": true,
+      "location": "/srv/workspace/game-plug/apps/backend/src/",
+      "modules": "Modular NestJS with decorators",
+      "api_pattern": "tRPC routers with OpenAPI",
+      "integration": "Partial - running alongside Express"
+    }
+  },
+  "dependencies_summary": {
+    "database": {
+      "orm": "Drizzle ORM 0.39.1",
+      "driver": "PostgreSQL (postgres driver 3.4.0, @neondatabase/serverless 0.10.4)"
+    },
+    "realtime": {
+      "websocket": "Socket.io 4.7.0",
+      "legacy": "ws (8.18.0) - still present"
+    },
+    "authentication": {
+      "session": "express-session 1.18.1",
+      "session_store": "MemoryStore (memorystore 1.6.7) - NO Redis yet",
+      "auth_providers": "Passport 0.7.0, passport-jwt 4.0.1, passport-local 1.0.0, openid-client 6.7.1"
+    },
+    "cache": {
+      "framework": "@nestjs/cache-manager 3.0.0",
+      "stores": "cache-manager 6.1.0, cache-manager-redis-yet 5.1.0 (optional)",
+      "redis": "redis 4.6.0 (dependency present but not configured)"
+    },
+    "ui": {
+      "component_library": "Radix UI (28+ components)",
+      "styling": "Tailwind CSS 3.4.17, class-variance-authority",
+      "forms": "React Hook Form 7.55.0, @hookform/resolvers 3.10.0"
+    },
+    "ai_integration": {
+      "openai": "5.15.0",
+      "note": "Used in legacy Express backend, also in NestJS modules"
+    }
+  },
+  "migrations_needed": [
+    "CRITICAL: Consolidate dual backend architecture - choose NestJS primary or finish Express migration",
+    "MEDIUM: Migrate frontend from Vite to Next.js 16 with Turbopack",
+    "MEDIUM: Upgrade Zod from v3 to v4 (currently v3.24.2/3.24.0)",
+    "MEDIUM: Migrate session store from MemoryStore to Redis (infrastructure ready)",
+    "MEDIUM: Fully implement OpenAPI/Swagger documentation across all tRPC endpoints",
+    "LOW: Consolidate validation logic (currently using class-validator + Zod mix)",
+    "LOW: Remove legacy Express ws dependency, standardize on Socket.io",
+    "LOW: Standardize error handling across legacy Express and new NestJS code",
+    "LOW: Migrate all legacy Express routes.ts endpoints to NestJS controllers/routers"
+  ],
+  "architecture_notes": {
+    "current": "Transitional - Express/React/Vite with parallel NestJS backend",
+    "target": "NestJS 11 (backend) + Next.js 16 with Turbopack (frontend) + tRPC + OpenAPI",
+    "blockers": [
+      "Legacy Express backend (routes.ts) handles critical game logic and still receives requests",
+      "React/Vite frontend not yet migrated to Next.js",
+      "Session store remains in-memory (MemoryStore) - not production-ready for horizontal scaling",
+      "No clear migration completion date specified in MIGRATION_PLAN.md"
+    ],
+    "next_steps": [
+      "Decide: Shut down legacy Express or continue parallel operation?",
+      "If continuing NestJS: Move all routes from Express to NestJS modules",
+      "If moving to Next.js: Set up Turbopack, migrate all client code, implement Server Actions",
+      "Priority: Implement Redis for session management before production deployment"
+    ]
+  },
+  "version_compliance": {
+    "next_js_16": "NOT IMPLEMENTED - currently using Vite 5.4.19",
+    "nestjs_latest": "YES - using 11.0.0",
+    "zod_v4": "NO - using v3.24.x",
+    "openapi": "PARTIAL - via trpc-openapi 1.2.0 + @nestjs/swagger 8.0.0",
+    "typescript_strict": "YES - strict: true in tsconfig.json"
+  },
+  "file_locations": {
+    "package_json_root": "/srv/workspace/game-plug/package.json",
+    "package_json_backend": "/srv/workspace/game-plug/apps/backend/package.json",
+    "vite_config": "/srv/workspace/game-plug/vite.config.ts",
+    "tsconfig": "/srv/workspace/game-plug/tsconfig.json",
+    "legacy_backend": "/srv/workspace/game-plug/server/",
+    "nestjs_backend": "/srv/workspace/game-plug/apps/backend/src/",
+    "frontend": "/srv/workspace/game-plug/client/src/",
+    "migration_plan": "/srv/workspace/game-plug/MIGRATION_PLAN.md",
+    "rules": "/srv/workspace/game-plug/.claude-rules.md"
+  }
+}

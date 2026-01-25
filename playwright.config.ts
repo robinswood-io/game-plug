@@ -7,13 +7,14 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: 1,
   reporter: [
-    ['html'],
+    ['html', { outputFolder: 'playwright-report' }],
     ['list']
   ],
   use: {
-    baseURL: 'http://localhost:5002',
+    baseURL: 'https://game-plug.rbw.ovh',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    ignoreHTTPSErrors: true,
   },
   projects: [
     {
@@ -21,14 +22,4 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5002',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-    env: {
-      NODE_ENV: 'development',
-      PORT: '5002',
-    },
-  },
 });

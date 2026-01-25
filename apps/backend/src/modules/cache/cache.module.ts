@@ -17,10 +17,15 @@ import { redisStore } from 'cache-manager-redis-yet';
             ttl: 3600000,
           });
           logger.log('Redis cache connected successfully');
-          return { store };
+          return {
+            store,
+            ttl: 3600000,
+          };
         } catch (error) {
           logger.warn(`Redis connection failed: ${error.message}. Using in-memory cache fallback.`);
-          return { ttl: 3600000 };
+          return {
+            ttl: 3600000,
+          };
         }
       },
     }),

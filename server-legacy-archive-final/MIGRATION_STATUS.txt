@@ -1,0 +1,53 @@
+================================================================================
+                   EXPRESS BACKEND - ARCHIVED
+================================================================================
+
+Date d'archivage: 2026-01-24
+Raison: Migration complète vers NestJS (98.1% coverage)
+
+================================================================================
+                         CONTENU ARCHIVE
+================================================================================
+
+routes.ts           - 53 endpoints Express
+index.ts           - Configuration serveur Express + WebSockets
+auth.ts            - Middleware Passport (authentification)
+ARCHIVE_INFO.txt   - Métadonnées
+MIGRATION_STATUS.txt - Ce fichier
+
+================================================================================
+                      BACKEND DE REMPLACEMENT
+================================================================================
+
+Localisation: /srv/workspace/game-plug/apps/backend/
+Framework: NestJS 11
+Endpoints: 71 (134% vs Express)
+Coverage: 98.1% (52/53 endpoints migrés)
+
+================================================================================
+                         RESTAURATION
+================================================================================
+
+Si besoin de rollback:
+
+1. Copier les fichiers vers /srv/workspace/game-plug/server/
+2. Réinstaller dépendances Express:
+   npm install express express-session connect-pg-simple memorystore
+   npm install -D @types/express @types/express-session
+3. Redémarrer: docker compose -f docker-compose.apps.yml restart game-plug
+
+Temps estimé: 5-10 minutes
+
+================================================================================
+                      MIGRATION DOCUMENTATION
+================================================================================
+
+Documentation complète disponible dans:
+- /srv/workspace/game-plug/README_MIGRATION.md
+- /srv/workspace/game-plug/MIGRATION_INDEX.md
+
+================================================================================
+
+NE PAS SUPPRIMER CET ARCHIVE AVANT VALIDATION PRODUCTION (7+ jours)
+
+================================================================================

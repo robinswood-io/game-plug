@@ -56,7 +56,7 @@ export const gameSessions = pgTable("game_sessions", {
 export const characters = pgTable("characters", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id), // Can be null for player characters without accounts
-  sessionId: varchar("session_id").notNull().references(() => gameSessions.id),
+  sessionId: varchar("session_id").references(() => gameSessions.id),
   name: varchar("name").notNull(),
   occupation: varchar("occupation").notNull(),
   age: integer("age"),
@@ -155,7 +155,7 @@ export const inventory = pgTable("inventory", {
 // Chapters - subdivisions of game sessions
 export const chapters = pgTable("chapters", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  sessionId: varchar("session_id").notNull().references(() => gameSessions.id),
+  sessionId: varchar("session_id").references(() => gameSessions.id),
   name: varchar("name").notNull(),
   description: text("description"),
   orderIndex: integer("order_index").notNull().default(0),
@@ -169,7 +169,7 @@ export const chapters = pgTable("chapters", {
 export const chapterEvents = pgTable("chapter_events", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   chapterId: varchar("chapter_id").notNull().references(() => chapters.id),
-  sessionId: varchar("session_id").notNull().references(() => gameSessions.id),
+  sessionId: varchar("session_id").references(() => gameSessions.id),
   eventType: varchar("event_type").notNull(), // 'roll', 'narration', 'decision', 'sanity', 'combat', 'discovery', 'milestone'
   title: varchar("title").notNull(),
   description: text("description"),
@@ -199,7 +199,7 @@ export const rollHistory = pgTable("roll_history", {
 // Narrative entries - GM's narrative journal for session
 export const narrativeEntries = pgTable("narrative_entries", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  sessionId: varchar("session_id").notNull().references(() => gameSessions.id),
+  sessionId: varchar("session_id").references(() => gameSessions.id),
   gmId: varchar("gm_id").notNull().references(() => users.id),
   content: text("content").notNull(),
   entryType: varchar("entry_type").default('note'), // 'note', 'event', 'npc', 'location', 'clue'
@@ -319,61 +319,138 @@ export const narrativeEntriesRelations = relations(narrativeEntries, ({ one }) =
   }),
 }));
 
-// Insert schemas
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+// Insert schemas - Note: Use typeof table.$inferInsert directly instead of Zod schemas
+// to avoid drizzle-zod v0.7.x typing issues with .omit()
+export const insertUserSchema = z.object({
+  email: z.string().email().optional(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  profileImageUrl: z.string().optional(),
+  passwordHash: z.string().optional(),
+  authType: z.string().optional(),
+  isGM: z.boolean().optional(),
 });
 
-export const insertGameSessionSchema = createInsertSchema(gameSessions).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const insertGameSessionSchema = z.object({
+  name: z.string(),
+  code: z.string().length(6).optional(),
+  gmId: z.string(),
+  status: z.string().optional(),
+  isActive: z.boolean().optional(),
 });
 
-export const insertCharacterSchema = createInsertSchema(characters).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const insertCharacterSchema = z.object({
+  userId: z.string().optional(),
+  sessionId: z.string().optional(),
+  name: z.string(),
+  occupation: z.string(),
+  age: z.number().optional(),
+  birthplace: z.string().optional(),
+  residence: z.string().optional(),
+  gender: z.string().optional(),
+  height: z.string().optional(),
+  build: z.string().optional(),
+  hairColor: z.string().optional(),
+  eyeColor: z.string().optional(),
+  strength: z.number(),
+  constitution: z.number(),
+  size: z.number(),
+  dexterity: z.number(),
+  appearance: z.number(),
+  intelligence: z.number(),
+  power: z.number(),
+  education: z.number(),
+  luck: z.number(),
+  hitPoints: z.number(),
+  maxHitPoints: z.number(),
+  sanity: z.number(),
+  maxSanity: z.number(),
+  magicPoints: z.number(),
+  maxMagicPoints: z.number(),
+  avatarUrl: z.string().optional(),
+  avatarPrompt: z.string().optional(),
+  skills: z.record(z.string(), z.number()).optional(),
+  skillsLocked: z.boolean().optional(),
+  availableSkillPoints: z.number().optional(),
+  notes: z.string().optional(),
+  money: z.string().optional(),
+  isActive: z.boolean().optional(),
 });
 
-export const insertSanityConditionSchema = createInsertSchema(sanityConditions).omit({
-  id: true,
-  createdAt: true,
+export const insertSanityConditionSchema = z.object({
+  characterId: z.string(),
+  type: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  isActive: z.boolean().optional(),
+  duration: z.string().optional(),
 });
 
-export const insertActiveEffectSchema = createInsertSchema(activeEffects).omit({
-  id: true,
-  createdAt: true,
+export const insertActiveEffectSchema = z.object({
+  characterId: z.string(),
+  appliedBy: z.string().optional(),
+  type: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  value: z.string().optional(),
+  isActive: z.boolean().optional(),
+  duration: z.number().optional(),
 });
 
-export const insertRollHistorySchema = createInsertSchema(rollHistory).omit({
-  id: true,
-  createdAt: true,
+export const insertRollHistorySchema = z.object({
+  userId: z.string(),
+  characterId: z.string().optional(),
+  sessionId: z.string().optional(),
+  rollType: z.string(),
+  skillName: z.string().optional(),
+  skillValue: z.number().optional(),
+  diceFormula: z.string(),
+  result: z.number(),
+  outcome: z.string().optional(),
+  isGmRoll: z.boolean().optional(),
 });
 
-export const insertChapterSchema = createInsertSchema(chapters).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const insertChapterSchema = z.object({
+  sessionId: z.string().optional(),
+  name: z.string(),
+  description: z.string().optional(),
+  orderIndex: z.number().optional(),
+  status: z.string().optional(),
+  notes: z.string().optional(),
 });
 
-export const insertChapterEventSchema = createInsertSchema(chapterEvents).omit({
-  id: true,
-  createdAt: true,
+export const insertChapterEventSchema = z.object({
+  chapterId: z.string(),
+  sessionId: z.string().optional(),
+  eventType: z.string(),
+  title: z.string(),
+  description: z.string().optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
+  characterId: z.string().optional(),
+  userId: z.string().optional(),
+  isImportant: z.boolean().optional(),
 });
 
-export const insertInventorySchema = createInsertSchema(inventory).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const insertInventorySchema = z.object({
+  characterId: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  category: z.string(),
+  quantity: z.number().optional(),
+  weight: z.number().optional(),
+  isEquipped: z.boolean().optional(),
+  damage: z.string().optional(),
+  armor: z.number().optional(),
+  properties: z.record(z.string(), z.any()).optional(),
 });
 
-export const insertNarrativeEntrySchema = createInsertSchema(narrativeEntries).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const insertNarrativeEntrySchema = z.object({
+  sessionId: z.string().optional(),
+  gmId: z.string(),
+  content: z.string(),
+  entryType: z.string().optional(),
+  isAiGenerated: z.boolean().optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 // Local signup schema for GMs

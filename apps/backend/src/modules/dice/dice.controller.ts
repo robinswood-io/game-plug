@@ -1,4 +1,13 @@
-import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { DiceService } from './dice.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -19,5 +28,19 @@ export class DiceController {
       ...data,
       userId: req.user?.id || req.user?.sub,
     });
+  }
+
+  @Get('sessions/:sessionId/rolls')
+  @ApiOperation({ summary: 'Get roll history for session' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of dice rolls for the session',
+  })
+  async getSessionRolls(
+    @Param('sessionId') sessionId: string,
+    @Query('limit') limit?: string,
+  ) {
+    const limitNumber = limit ? parseInt(limit, 10) : 50;
+    return this.diceService.getSessionRollHistory(sessionId, limitNumber);
   }
 }

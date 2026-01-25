@@ -1,0 +1,245 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - navigation [ref=e3]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - link "Rôle Plug" [ref=e7] [cursor=pointer]:
+            - /url: /
+            - heading "Rôle Plug" [level=1] [ref=e8]
+          - generic [ref=e9]:
+            - link "Joueur" [ref=e10] [cursor=pointer]:
+              - /url: /
+              - button "Joueur" [ref=e11]:
+                - img
+                - text: Joueur
+            - link "Sessions" [ref=e12] [cursor=pointer]:
+              - /url: /sessions
+              - button "Sessions" [ref=e13]:
+                - img
+                - text: Sessions
+            - button "Maître de Jeu" [disabled]:
+              - img
+              - text: Maître de Jeu
+        - generic [ref=e17]: En ligne
+    - main [ref=e18]:
+      - generic [ref=e19]:
+        - generic [ref=e20]:
+          - heading "Création d'Investigateur" [level=1] [ref=e21]
+          - paragraph [ref=e22]: Donnez naissance à celui qui défiera les ténèbres cosmiques
+        - generic [ref=e23]:
+          - generic [ref=e24]:
+            - generic [ref=e26]: Informations de Base
+            - generic [ref=e27]:
+              - generic [ref=e28]:
+                - generic [ref=e29]:
+                  - text: Nom du Personnage
+                  - textbox "Nom du Personnage" [ref=e30]:
+                    - /placeholder: Dr. Marcus Whitmore
+                    - text: Investigator 1769330680951
+                - generic [ref=e31]:
+                  - text: Occupation
+                  - combobox "Occupation" [ref=e32] [cursor=pointer]:
+                    - generic: Sélectionnez une occupation
+                    - img [ref=e33]
+                  - combobox [ref=e35]
+              - generic [ref=e36]:
+                - generic [ref=e37]:
+                  - text: Âge
+                  - spinbutton "Âge" [ref=e38]: "25"
+                - generic [ref=e39]:
+                  - text: Lieu de naissance
+                  - textbox "Lieu de naissance" [ref=e40]:
+                    - /placeholder: Boston, MA
+                - generic [ref=e41]:
+                  - text: Résidence
+                  - textbox "Résidence" [ref=e42]:
+                    - /placeholder: Arkham, MA
+          - generic [ref=e43]:
+            - generic [ref=e45]:
+              - text: Caractéristiques
+              - button "Relancer" [ref=e46] [cursor=pointer]:
+                - img
+                - text: Relancer
+            - generic [ref=e48]:
+              - generic [ref=e49]:
+                - generic [ref=e50]: Force (FOR)
+                - generic [ref=e51]:
+                  - generic [ref=e52]: "45"
+                  - generic [ref=e53]: 3d6×5
+              - generic [ref=e54]:
+                - generic [ref=e55]: Constitution (CON)
+                - generic [ref=e56]:
+                  - generic [ref=e57]: "40"
+                  - generic [ref=e58]: 3d6×5
+              - generic [ref=e59]:
+                - generic [ref=e60]: Taille (TAI)
+                - generic [ref=e61]:
+                  - generic [ref=e62]: "70"
+                  - generic [ref=e63]: (2d6+6)×5
+              - generic [ref=e64]:
+                - generic [ref=e65]: Dextérité (DEX)
+                - generic [ref=e66]:
+                  - generic [ref=e67]: "70"
+                  - generic [ref=e68]: 3d6×5
+              - generic [ref=e69]:
+                - generic [ref=e70]: Apparence (APP)
+                - generic [ref=e71]:
+                  - generic [ref=e72]: "20"
+                  - generic [ref=e73]: 3d6×5
+              - generic [ref=e74]:
+                - generic [ref=e75]: Intelligence (INT)
+                - generic [ref=e76]:
+                  - generic [ref=e77]: "70"
+                  - generic [ref=e78]: (2d6+6)×5
+              - generic [ref=e79]:
+                - generic [ref=e80]: Pouvoir (POU)
+                - generic [ref=e81]:
+                  - generic [ref=e82]: "55"
+                  - generic [ref=e83]: 3d6×5
+              - generic [ref=e84]:
+                - generic [ref=e85]: Éducation (EDU)
+                - generic [ref=e86]:
+                  - generic [ref=e87]: "50"
+                  - generic [ref=e88]: (2d6+6)×5
+              - generic [ref=e89]:
+                - generic [ref=e90]: Chance (CHA)
+                - generic [ref=e91]:
+                  - generic [ref=e92]: "65"
+                  - generic [ref=e93]: 3d6×5
+          - generic [ref=e94]:
+            - generic [ref=e97]:
+              - text: Compétences
+              - generic [ref=e98]: Sélectionnez une occupation d'abord
+            - alert [ref=e100]:
+              - img [ref=e101]
+              - generic [ref=e103]:
+                - strong [ref=e104]: "Étape requise:"
+                - text: Sélectionnez une occupation pour débloquer la répartition des compétences.
+          - generic [ref=e105]:
+            - generic [ref=e107]: Portrait du Personnage
+            - generic [ref=e109]:
+              - tablist [ref=e110]:
+                - tab "Sélecteurs Intuitifs" [selected] [ref=e111] [cursor=pointer]
+                - tab "Description Libre" [ref=e112] [cursor=pointer]
+              - tabpanel "Sélecteurs Intuitifs" [ref=e113]:
+                - generic [ref=e114]:
+                  - generic [ref=e115]:
+                    - generic [ref=e116]:
+                      - heading "Caractéristiques Physiques" [level=4] [ref=e117]
+                      - generic [ref=e118]:
+                        - generic [ref=e119]:
+                          - text: Taille
+                          - combobox [ref=e120] [cursor=pointer]:
+                            - generic: Choisir
+                            - img [ref=e121]
+                          - combobox [ref=e123]
+                        - generic [ref=e124]:
+                          - text: Corpulence
+                          - combobox [ref=e125] [cursor=pointer]:
+                            - generic: Choisir
+                            - img [ref=e126]
+                          - combobox [ref=e128]
+                      - generic [ref=e129]:
+                        - generic [ref=e130]:
+                          - text: Cheveux
+                          - combobox [ref=e131] [cursor=pointer]:
+                            - generic: Couleur
+                            - img [ref=e132]
+                          - combobox [ref=e134]
+                        - generic [ref=e135]:
+                          - text: Yeux
+                          - combobox [ref=e136] [cursor=pointer]:
+                            - generic: Couleur
+                            - img [ref=e137]
+                          - combobox [ref=e139]
+                    - generic [ref=e140]:
+                      - heading "Style Vestimentaire (Années 1920)" [level=4] [ref=e141]
+                      - combobox [ref=e142] [cursor=pointer]:
+                        - generic: Choisir un style d'époque
+                        - img [ref=e143]
+                      - combobox [ref=e145]
+                    - generic [ref=e146]:
+                      - heading "Signes Distinctifs" [level=4] [ref=e147]
+                      - generic [ref=e148]:
+                        - generic [ref=e149]:
+                          - checkbox "Cicatrice visible" [ref=e150] [cursor=pointer]
+                          - checkbox
+                          - generic [ref=e151] [cursor=pointer]: Cicatrice visible
+                        - generic [ref=e152]:
+                          - checkbox "Lunettes" [ref=e153] [cursor=pointer]
+                          - checkbox
+                          - generic [ref=e154] [cursor=pointer]: Lunettes
+                        - generic [ref=e155]:
+                          - checkbox "Moustache" [ref=e156] [cursor=pointer]
+                          - checkbox
+                          - generic [ref=e157] [cursor=pointer]: Moustache
+                        - generic [ref=e158]:
+                          - checkbox "Barbe" [ref=e159] [cursor=pointer]
+                          - checkbox
+                          - generic [ref=e160] [cursor=pointer]: Barbe
+                        - generic [ref=e161]:
+                          - checkbox "Tatouage" [ref=e162] [cursor=pointer]
+                          - checkbox
+                          - generic [ref=e163] [cursor=pointer]: Tatouage
+                        - generic [ref=e164]:
+                          - checkbox "Canne de marche" [ref=e165] [cursor=pointer]
+                          - checkbox
+                          - generic [ref=e166] [cursor=pointer]: Canne de marche
+                        - generic [ref=e167]:
+                          - checkbox "Bijoux voyants" [ref=e168] [cursor=pointer]
+                          - checkbox
+                          - generic [ref=e169] [cursor=pointer]: Bijoux voyants
+                        - generic [ref=e170]:
+                          - checkbox "Regard perçant" [ref=e171] [cursor=pointer]
+                          - checkbox
+                          - generic [ref=e172] [cursor=pointer]: Regard perçant
+                        - generic [ref=e173]:
+                          - checkbox "Sourire énigmatique" [ref=e174] [cursor=pointer]
+                          - checkbox
+                          - generic [ref=e175] [cursor=pointer]: Sourire énigmatique
+                        - generic [ref=e176]:
+                          - checkbox "Tic nerveux" [ref=e177] [cursor=pointer]
+                          - checkbox
+                          - generic [ref=e178] [cursor=pointer]: Tic nerveux
+                        - generic [ref=e179]:
+                          - checkbox "Démarche particulière" [ref=e180] [cursor=pointer]
+                          - checkbox
+                          - generic [ref=e181] [cursor=pointer]: Démarche particulière
+                  - generic [ref=e184]:
+                    - img [ref=e185]
+                    - paragraph [ref=e188]: Portrait à générer
+                - button "Générer le Portrait IA" [ref=e189] [cursor=pointer]:
+                  - img
+                  - text: Générer le Portrait IA
+          - alert [ref=e190]:
+            - img [ref=e191]
+            - generic [ref=e193]:
+              - strong [ref=e194]: "Rappel:"
+              - text: Les compétences seront verrouillées après la création du personnage et ne pourront plus être modifiées.
+          - generic [ref=e195]:
+            - button "Annuler" [ref=e196] [cursor=pointer]:
+              - img
+              - text: Annuler
+            - button "Sauvegarder le Personnage" [active] [ref=e197] [cursor=pointer]:
+              - img
+              - text: Sauvegarder le Personnage
+  - generic [ref=e198]:
+    - img [ref=e200]
+    - button "Open Tanstack query devtools" [ref=e248] [cursor=pointer]:
+      - img [ref=e249]
+  - generic [ref=e301] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e302]:
+      - img [ref=e303]
+    - generic [ref=e306]:
+      - button "Open issues overlay" [ref=e307]:
+        - generic [ref=e308]:
+          - generic [ref=e309]: "0"
+          - generic [ref=e310]: "1"
+        - generic [ref=e311]: Issue
+      - button "Collapse issues badge" [ref=e312]:
+        - img [ref=e313]
+  - alert [ref=e315]
+```

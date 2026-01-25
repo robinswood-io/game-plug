@@ -1,0 +1,227 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                USER STORIES JOUEUR - GAME PLUG (RPG CoC 7e)                   ║
+║                    SYNTHÈSE VISUELLE COMPLÈTE v1.0                            ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STATISTIQUES GLOBALES                                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Total User Stories:        45 stories exhaustives                           │
+│ Statut Implémentation:     28 ✅ Done | 8 ⚠️ Partial | 9 ❌ Pending        │
+│ Progression:               62% fonctionnel | 18% en cours | 20% à faire    │
+│ Couverture Backend:        14 modules NestJS (Auth, Characters, Sessions...)│
+│ Couverture Frontend:       25+ pages et composants React                   │
+│ Format Données:            Drizzle ORM + PostgreSQL 16                     │
+│ Communication:             REST API + WebSocket (Socket.io)                │
+│ Authentification:          JWT + Passport.js                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ RÉPARTITION PAR CATÉGORIE                                                   │
+├──────────────────────┬────┬──────┬─────────┬─────────┬───────────────────┤
+│ Catégorie            │ #  │ ✅   │ ⚠️      │ ❌      │ Description       │
+├──────────────────────┼────┼──────┼─────────┼─────────┼───────────────────┤
+│ Personnage/Feuille   │ 9  │ 6    │ 2       │ 1       │ Création, édition │
+│ Inventaire           │ 5  │ 5    │ -       │ -       │ CRUD objets       │
+│ Système Dés          │ 7  │ 7    │ -       │ -       │ Tous lancers      │
+│ Sanité Mentale       │ 4  │ 3    │ 1       │ -       │ Tracker + folie   │
+│ Sessions Multijoueur │ 4  │ 3    │ 1       │ -       │ Join + liste      │
+│ GameBoard            │ 4  │ 3    │ 1       │ -       │ Projection temps  │
+│ Historique/Journal   │ 3  │ 1    │ 1       │ 1       │ Archive + export  │
+│ Interaction MJ       │ 3  │ -    │ 2       │ 1       │ Chat + bulletin   │
+│ Préférences          │ 4  │ -    │ -       │ 4       │ Perso + privacy   │
+│ Statistiques         │ 2  │ -    │ -       │ 2       │ Analytics groupe  │
+├──────────────────────┼────┼──────┼─────────┼─────────┤ TOTAL             │
+│                      │45  │ 28   │ 8       │ 9       │                   │
+└──────────────────────┴────┴──────┴─────────┴─────────┴───────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ PRIORISATION (P0-P3)                                                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ P0 - CRITIQUE (Core Features):                  28 stories ✅ DONE         │
+│   └─ Création, feuille, compétences, inventaire, dés, sanité, sessions    │
+│                                                                             │
+│ P1 - IMPORTANT (Enhanced Features):              8 stories ⚠️ IN PROGRESS  │
+│   └─ Avancées, folie, invitations, historique, demandes MJ               │
+│                                                                             │
+│ P2 - CONFORT (Quality of Life):                  6 stories ❌ PENDING      │
+│   └─ Chat, bulletin board, préférences, profil, notifications            │
+│                                                                             │
+│ P3 - BONUS (Nice to Have):                       3 stories ❌ PENDING      │
+│   └─ Export PDF, statistiques, privacy GDPR                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ MODULES BACKEND NÉCESSAIRES                                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ ✅ AUTH              JWT + Sessions | Local GM accounts                     │
+│ ✅ CHARACTERS        CRUD personnages | Skills allocation                  │
+│ ✅ SESSIONS          Gestion sessions multijoueur | Join via code           │
+│ ✅ DICE              Lancers dés (1d100, custom, sanity, damage)           │
+│ ✅ SANITY            Perte sanité | Phobies/Manias | Folie                │
+│ ✅ INVENTORY         CRUD inventaire | Équipement                          │
+│ ✅ CHAPTERS          Events chapitre | Historique session                  │
+│ ✅ CHAPTER-EVENTS    Timeline événements                                   │
+│ ✅ EFFECTS           Buffs/debuffs temps réel                              │
+│ ✅ GAMEBOARD         Projection MJ synchronisée                            │
+│ ✅ NARRATIVE         Notes MJ | Journal                                     │
+│ ✅ WEBSOCKETS        Communication temps réel Socket.io                    │
+│ ✅ AI                Avatar IA (DALL-E 3) | Contenu généré                │
+│ ⚠️ CACHE             Redis optimisation | Sessions persistance             │
+│ ⚠️ DATABASE          Drizzle ORM | PostgreSQL migrations                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ PAGES FRONTEND (React/Next.js 16)                                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ PUBLIC (Sans auth):                                                         │
+│   └─ / (Home) → /join → /join/{code} (Rejoindre session)                   │
+│   └─ /gm-signup, /gm-login (Authentification)                              │
+│                                                                             │
+│ DASHBOARD (Authentifié):                                                    │
+│   └─ /dashboard (Hub central)                                              │
+│   └─ /characters/new (Création personnage)                                 │
+│   └─ /characters/{id} (Feuille personnage - LECTURE)                       │
+│   └─ /characters/{id}/edit (Feuille personnage - ÉDITION)                  │
+│   └─ /sessions (Liste sessions)                                            │
+│   └─ /sessions/{sessionId} (Session MJ)                                    │
+│   └─ /sessions/{sessionId}/gameboard (GameBoard temps réel)                │
+│   └─ /sessions/{sessionId}/select-character (Sélection perso)              │
+│   └─ /profile (Gestion profil joueur) [À CRÉER]                            │
+│   └─ /profile/preferences (Préférences) [À CRÉER]                          │
+│   └─ /profile/privacy (Privacy & GDPR) [À CRÉER]                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ COMPOSANTS CLÉS (React)                                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ ✅ CharacterCreationForm     │ Formulaire création personnage               │
+│ ✅ CharacterSheet            │ Affichage feuille personnage                 │
+│ ✅ SkillPointsDistributor    │ Allocation points compétences                │
+│ ✅ DiceRoller                │ Lanceur dés (1d100, bonus, custom)           │
+│ ✅ SanityTracker             │ Tracker sanité + conditions                  │
+│ ✅ CharacterInventoryDisplay │ Affichage inventaire                         │
+│ ✅ GameBoard                 │ Projection MJ temps réel                     │
+│ ✅ RollHistoryVisual         │ Historique dés avec stats                    │
+│ ✅ EnhancedCharacterCard     │ Card personnage optimisée                    │
+│ ⚠️ NotificationCenter        │ Notifications temps réel (partiellement)     │
+│ ❌ ChatPanel                 │ Chat texte multijoueur [À CRÉER]             │
+│ ❌ BulletinBoard             │ Tableau d'affichage MJ [À CRÉER]             │
+│ ❌ PreferencesPanel          │ Gestion préférences [À CRÉER]                │
+│ ❌ CharacterStatsPanel       │ Statistiques personnage [À CRÉER]            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ENDPOINTS API REST IMPLÉMENTÉS                                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ CHARACTERS:                                                                 │
+│   ✅ POST   /api/characters                    Créer                       │
+│   ✅ GET    /api/characters/{id}               Récupérer                   │
+│   ✅ PATCH  /api/characters/{id}               Modifier                    │
+│   ✅ GET    /api/characters/{id}/skills        Compétences                 │
+│   ✅ PATCH  /api/characters/{id}/skills        Modifier skills             │
+│   ✅ GET    /api/characters/{id}/inventory     Inventaire                  │
+│   ✅ POST   /api/characters/{id}/inventory     Ajouter objet               │
+│   ✅ PATCH  /api/characters/{id}/inventory/x   Modifier objet              │
+│                                                                             │
+│ DICE:                                                                       │
+│   ✅ POST   /api/dice/roll                     Lancer dés                  │
+│   ✅ POST   /api/dice/roll-skill               Lancer compétence           │
+│   ✅ POST   /api/dice/roll-damage              Lancer dégâts               │
+│   ✅ POST   /api/dice/roll-sanity              Lancer sanité               │
+│   ✅ POST   /api/dice/roll-custom              Lancer custom (XdY)         │
+│   ✅ GET    /api/roll-history                  Historique                  │
+│                                                                             │
+│ SANITY:                                                                     │
+│   ✅ POST   /api/sanity/conditions             Ajouter phobie/mania        │
+│   ✅ GET    /api/characters/{id}/sanity        État sanité                 │
+│   ✅ POST   /api/sanity/apply-loss             Appliquer perte             │
+│                                                                             │
+│ SESSIONS:                                                                   │
+│   ✅ POST   /api/sessions/join                 Rejoindre                   │
+│   ✅ GET    /api/sessions/{id}                 Info session                │
+│   ✅ GET    /api/sessions/{id}/players         Liste joueurs               │
+│   ✅ POST   /api/sessions/{id}/leave           Quitter                     │
+│                                                                             │
+│ EFFECTS:                                                                    │
+│   ✅ POST   /api/characters/{id}/active-effects Ajouter effet              │
+│   ✅ GET    /api/characters/{id}/active-effects Lister actifs              │
+│   ✅ DELETE /api/active-effects/{id}           Retirer effet               │
+│   ✅ POST   /api/characters/{id}/apply-damage  Appliquer dégâts            │
+│                                                                             │
+│ CHAPITRE:                                                                   │
+│   ✅ GET    /api/chapters/{id}/events          Événements chapitre         │
+│   ✅ GET    /api/sessions/{id}/events          Tous événements             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ WEBSOCKET EVENTS (Socket.io) - TEMPS RÉEL                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ ✅ join_session              Rejoindre room session                         │
+│ ✅ leave_session             Quitter room session                           │
+│ ✅ gameboard:content         Contenu GameBoard MJ                           │
+│ ✅ notification:*            Notifications joueurs                          │
+│ ✅ active-effects:*          Changements buffs/debuffs                      │
+│ ✅ character:update          Mise à jour personnage                         │
+│ ⚠️ request:roll              Demandes lancer MJ (partial)                   │
+│ ⚠️ roll:result               Résultats lancers joueurs (partial)            │
+│ ❌ chat:message              Messages texte multijoueur [À FAIRE]           │
+│ ❌ private:message           Messages privés [À FAIRE]                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ RÈGLES CALL OF CTHULHU 7e IMPLÉMENTÉES                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ ✅ Caractéristiques        STR, CON, SIZ, DEX, APP, INT, POW, EDU (3d6×5) │
+│ ✅ LUCK                    Valeur séparée (3d6×5)                          │
+│ ✅ Stats dérivées          HP, MP, Sanité (calculs auto)                   │
+│ ✅ Occupations             40+ métiers CoC avec points compétence          │
+│ ✅ Résolutions dés         1d100 vs compétence (%, succès, échecs)         │
+│ ✅ Succès critiques        ≤ (compétence/10)                              │
+│ ✅ Succès difficiles       ≤ (compétence/2)                               │
+│ ✅ Sanity checks           1d100 vs POW×5                                  │
+│ ✅ Dégâts                  Formules dés (1d6+2, 2d8, etc.)                 │
+│ ✅ Phobies/Manias          Durée temporaire ou permanente                  │
+│ ✅ Folie temporaire        Sanité = 0, durée 1d10 jours                    │
+│ ✅ Folie indéfinie         Perte contrôle personnage                       │
+│ ✅ Avancées                Succès → amélioration compétences/armes         │
+│ ⚠️ Seuils folie            Logique présente, gestion complète à finaliser  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ PROCHAINES ÉTAPES (Roadmap)                                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ SPRINT 1 (Court terme):                                                     │
+│   1. Compléter historique session (ChapterTimeline UI)                      │
+│   2. Finaliser notifications (NotificationCenter)                           │
+│   3. Implémenter chat texte (ChatPanel + WebSocket)                         │
+│   4. Export PDF/JSON personnage                                            │
+│                                                                             │
+│ SPRINT 2 (Moyen terme):                                                     │
+│   5. Bulletin board MJ                                                      │
+│   6. Système préférences (mode sombre, taille police)                       │
+│   7. Profil joueur management (email, mot de passe, 2FA)                    │
+│   8. Statistiques groupe/personnage                                         │
+│                                                                             │
+│ SPRINT 3+ (Long terme):                                                     │
+│   9. Internationalisation (i18n)                                            │
+│   10. Accessibilité (WCAG 2.1 AA)                                           │
+│   11. Mobile app (React Native)                                             │
+│   12. Intégration VTT (Foundry?)                                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ RESSOURCES DOCUMENTAIRES                                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 📄 USER_STORIES_JOUEUR.md              Document complet (45 stories détaillées)
+│ 📄 USER_STORIES_SUMMARY.md             Résumé exécutif + statut implémentation│
+│ 📄 USER_STORIES_INDEX.md               Index rapide par domaine              │
+│ 📄 FEATURE_ENDPOINT_MAPPING.md         Mapping stories → API → Components   │
+│ 📄 ARCHITECTURE.md                     Architecture globale (14 modules)    │
+│ 🔗 /opt/ia-webdev/rulebook-ai/         Rulebook Robinswood global            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║ ✅ SYNTHÈSE COMPLÈTE - USER STORIES JOUEUR EXHAUSTIVES ET VALIDÉES            ║
+║ 📅 Date: 24 Janvier 2026 | Status: Complet v1.0 | Couverture: 100%          ║
+╚════════════════════════════════════════════════════════════════════════════════╝

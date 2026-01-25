@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { chapterEvents } from '@shared/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 @Injectable()
 export class ChapterEventsService {
@@ -17,6 +17,16 @@ export class ChapterEventsService {
   async findBySession(sessionId: string) {
     return this.db.db.query.chapterEvents.findMany({
       where: eq(chapterEvents.sessionId, sessionId),
+      orderBy: (chapterEvents, { desc }) => [desc(chapterEvents.createdAt)],
+    });
+  }
+
+  async findImportantBySession(sessionId: string) {
+    return this.db.db.query.chapterEvents.findMany({
+      where: and(
+        eq(chapterEvents.sessionId, sessionId),
+        eq(chapterEvents.isImportant, true),
+      ),
       orderBy: (chapterEvents, { desc }) => [desc(chapterEvents.createdAt)],
     });
   }

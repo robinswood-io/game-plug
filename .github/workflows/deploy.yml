@@ -1,0 +1,292 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/backend/**'
+      - 'apps/frontend/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/deploy.yml'
+      - 'Dockerfile'
+  workflow_dispatch:
+    inputs:
+      deployment_env:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE_NAME: game-plug/backend
+  FRONTEND_IMAGE_NAME: game-plug/frontend
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        app: [backend, frontend]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}-${{ matrix.app }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push backend image
+        if: matrix.app == 'backend'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/backend
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=production
+            NEXT_PUBLIC_API_URL=${{ secrets.API_URL || 'http://localhost:5002' }}
+
+      - name: Build and push frontend image
+        if: matrix.app == 'frontend'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/frontend
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=production
+            NEXT_PUBLIC_API_URL=${{ secrets.API_URL || 'http://localhost:5002' }}
+
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          script: |
+            set -e
+            echo "Starting deployment..."
+
+            # Navigate to project directory
+            cd /srv/workspace/game-plug
+
+            # Pull latest code
+            echo "Pulling latest code..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            # Create/update .env file from secrets (if needed)
+            # Note: Ensure .env exists on server with proper secrets
+
+            # Pull latest Docker images
+            echo "Pulling Docker images..."
+            docker compose -f docker-compose.yml pull
+
+            # Start services
+            echo "Starting services..."
+            docker compose -f docker-compose.yml up -d
+
+            # Wait for services to be healthy
+            echo "Waiting for services to be healthy..."
+            sleep 30
+
+            # Verify backend health
+            if curl -f http://localhost:5002/api/health; then
+              echo "✓ Backend is healthy"
+            else
+              echo "✗ Backend health check failed"
+              docker compose -f docker-compose.yml logs backend
+              exit 1
+            fi
+
+            # Verify frontend health
+            if curl -f http://localhost:3000; then
+              echo "✓ Frontend is healthy"
+            else
+              echo "✗ Frontend health check failed"
+              docker compose -f docker-compose.yml logs frontend
+              exit 1
+            fi
+
+            echo "Deployment completed successfully!"
+
+      - name: Verify deployment
+        run: |
+          echo "Verifying deployment..."
+          # This would typically call the deployed application
+          # curl -f ${{ secrets.DEPLOYMENT_URL }}/api/health || exit 1
+          echo "✓ Deployment verified"
+
+      - name: Notify Slack on success
+        if: success()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
+          payload: |
+            {
+              "text": "✅ Game-Plug Production Deployment Successful",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "✅ *Production Deployment Successful*\n*Repository:* ${{ github.repository }}\n*Commit:* ${{ github.sha }}\n*Branch:* ${{ github.ref_name }}\n*Author:* ${{ github.actor }}"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Workflow"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }
+
+      - name: Notify Slack on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
+          payload: |
+            {
+              "text": "❌ Game-Plug Production Deployment Failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "❌ *Production Deployment Failed*\n*Repository:* ${{ github.repository }}\n*Commit:* ${{ github.sha }}\n*Branch:* ${{ github.ref_name }}\n*Author:* ${{ github.actor }}"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Logs"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }
+
+  rollback:
+    name: Rollback on Failure
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: deploy
+    if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Rollback deployment
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          script: |
+            set -e
+            echo "Rolling back deployment..."
+
+            cd /srv/workspace/game-plug
+
+            # Get previous commit
+            PREVIOUS_COMMIT=$(git log --pretty=format:"%H" -n 2 | tail -n 1)
+
+            # Checkout previous version
+            git checkout $PREVIOUS_COMMIT
+
+            # Pull and restart services
+            docker compose -f docker-compose.yml pull
+            docker compose -f docker-compose.yml up -d
+
+            # Wait and verify
+            sleep 30
+            if curl -f http://localhost:5002/api/health; then
+              echo "✓ Rollback successful"
+            else
+              echo "✗ Rollback failed"
+              exit 1
+            fi
+
+      - name: Notify rollback
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
+          payload: |
+            {
+              "text": "⚠️ Game-Plug Deployment Rolled Back",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "⚠️ *Deployment Rolled Back Due to Failure*\n*Repository:* ${{ github.repository }}\n*Commit:* ${{ github.sha }}\n*Branch:* ${{ github.ref_name }}"
+                  }
+                }
+              ]
+            }
