@@ -20,21 +20,23 @@ import {
 } from './dto';
 
 @ApiTags('Sessions')
-@ApiBearerAuth()
 @Controller('api/sessions')
-@UseGuards(JwtAuthGuard)
 export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all sessions' })
-  @ApiResponse({ status: 200, description: 'List of sessions' })
-  async findAll(@Query('gmId') gmId?: string) {
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all sessions for the authenticated GM' })
+  @ApiResponse({ status: 200, description: 'List of sessions belonging to the GM' })
+  async findAll(@Req() req: any) {
+    // Always filter by the authenticated user's ID for security
+    const gmId = req.user.id;
     return this.sessionsService.findAll(gmId);
   }
 
   @Get('join/:code')
-  @ApiOperation({ summary: 'Join session by code' })
+  @ApiOperation({ summary: 'Join session by code (public endpoint)' })
   @ApiParam({ name: 'code', description: 'Session join code (6 characters)' })
   @ApiResponse({ status: 200, description: 'Session found' })
   @ApiResponse({ status: 404, description: 'Session not found or inactive' })
@@ -43,6 +45,8 @@ export class SessionsController {
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get session by ID' })
   @ApiResponse({ status: 200, description: 'Session details' })
   async findOne(@Param('id') id: string) {
@@ -50,6 +54,8 @@ export class SessionsController {
   }
 
   @Get(':id/characters')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all characters in session' })
   @ApiParam({ name: 'id', description: 'Session ID' })
   @ApiResponse({ status: 200, description: 'List of characters with sanity conditions and active effects' })
@@ -59,6 +65,8 @@ export class SessionsController {
   }
 
   @Get(':sessionId/importable-characters')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get importable characters from GM\'s other sessions' })
   @ApiParam({ name: 'sessionId', description: 'Target session ID' })
   @ApiResponse({ status: 200, description: 'List of importable characters' })
@@ -72,6 +80,8 @@ export class SessionsController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create new session' })
   @ApiResponse({ status: 201, description: 'Session created' })
   async create(@Body() data: CreateSessionDto, @Req() req: any) {
@@ -80,6 +90,8 @@ export class SessionsController {
   }
 
   @Post(':sessionId/import-character')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Import character into session (creates a copy)' })
   @ApiParam({ name: 'sessionId', description: 'Target session ID' })
   @ApiResponse({ status: 200, description: 'Character imported successfully' })
@@ -101,6 +113,8 @@ export class SessionsController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Update session' })
   @ApiResponse({ status: 200, description: 'Session updated' })
   async update(
@@ -111,6 +125,8 @@ export class SessionsController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete session' })
   @ApiResponse({ status: 200, description: 'Session deleted' })
   async delete(@Param('id') id: string) {
@@ -119,6 +135,8 @@ export class SessionsController {
   }
 
   @Delete(':sessionId/characters/:characterId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Remove character from session (GM only)' })
   @ApiParam({ name: 'sessionId', description: 'Session ID' })
   @ApiParam({ name: 'characterId', description: 'Character ID to remove' })

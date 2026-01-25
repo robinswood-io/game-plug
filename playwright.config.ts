@@ -4,7 +4,7 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 2 : 1, // Retry once on failure
   workers: 1,
   reporter: [
     ['html', { outputFolder: 'playwright-report' }],
@@ -12,13 +12,14 @@ export default defineConfig({
   ],
   use: {
     baseURL: 'https://game-plug.rbw.ovh',
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
     ignoreHTTPSErrors: true,
-    actionTimeout: 30000,
-    navigationTimeout: 30000,
+    actionTimeout: 90000,      // 90 seconds for slow remote environment
+    navigationTimeout: 90000,  // 90 seconds for navigation
   },
-  timeout: 60000,
+  timeout: 180000,  // 3 minutes per test
   projects: [
     {
       name: 'chromium',

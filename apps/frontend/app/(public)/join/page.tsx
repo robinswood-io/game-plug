@@ -61,7 +61,7 @@ export default function JoinSessionPage() {
         localStorage.setItem('currentSessionName', session.name);
 
         // Redirect to character selection
-        router.push(`/session/${session.id}/select-character`);
+        router.push(`/sessions/${session.id}/select-character`);
       }
     } catch (error: any) {
       console.error("Error joining session:", error);

@@ -39,11 +39,28 @@ export class SessionsService {
   }
 
   async create(data: any) {
+    // Generate unique 6-character code for joining
+    const code = this.generateSessionCode();
+
     const [session] = await this.db.db
       .insert(gameSessions)
-      .values(data)
+      .values({
+        ...data,
+        code,
+        status: 'active', // Default status
+      })
       .returning();
     return session;
+  }
+
+  private generateSessionCode(): string {
+    // Generate random 6-character alphanumeric code
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Exclude similar chars (0,O,1,I)
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
   }
 
   async update(id: string, data: any) {
@@ -58,9 +75,10 @@ export class SessionsService {
   async delete(id: string) {
     // Soft delete: mark session as inactive instead of hard delete (BUG-010 fix)
     // This prevents cascade delete foreign key constraint errors
+    const updateData: any = { isActive: false, status: 'ended' };
     const [updated] = await this.db.db
       .update(gameSessions)
-      .set({ isActive: false, status: 'ended' })
+      .set(updateData)
       .where(eq(gameSessions.id, id))
       .returning();
 
