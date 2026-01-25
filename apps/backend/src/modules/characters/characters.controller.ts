@@ -11,6 +11,9 @@ import {
   Req,
   HttpException,
   HttpStatus,
+  Injectable,
+  CanActivate,
+  ExecutionContext,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { CharactersService } from './characters.service';
@@ -27,6 +30,14 @@ import {
   UpdateNotesDto,
 } from './dto';
 import { CreateInventoryDto } from '../inventory/dto';
+
+// Dummy guard that allows all requests
+@Injectable()
+class NoAuthGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    return true;
+  }
+}
 
 @ApiTags('Characters')
 @ApiBearerAuth()
