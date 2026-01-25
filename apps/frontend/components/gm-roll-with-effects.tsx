@@ -409,62 +409,91 @@ export default function GMRollWithEffects({
         {/* Character Selection */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <Label>Personnages cibles</Label>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={selectAllCharacters}
-              className="text-xs"
-              data-testid="button-select-all"
-            >
-              {selectedCharacters.length === characters.length ? "Désélectionner tout" : "Tout sélectionner"}
-            </Button>
+            <Label className="font-semibold">Personnages cibles ({selectedCharacters.length}/{characters.length})</Label>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedCharacters([])}
+                className="text-xs"
+                data-testid="button-deselect-all"
+                disabled={selectedCharacters.length === 0}
+              >
+                Aucun
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={selectAllCharacters}
+                className="text-xs"
+                data-testid="button-select-all"
+              >
+                Tous
+              </Button>
+            </div>
           </div>
-          
-          <ScrollArea className="h-32 border border-gray-700 rounded-lg p-2">
-            <div className="space-y-2">
+
+          <ScrollArea className="h-64 border border-aged-gold/30 rounded-lg p-3 bg-gray-900/30">
+            <div className="grid grid-cols-2 gap-2 pr-4">
               {characters.map(character => (
-                <div
+                <motion.div
                   key={character.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.15 }}
                   className={cn(
-                    "flex items-center gap-2 p-2 rounded cursor-pointer transition-colors",
+                    "flex flex-col items-center gap-2 p-3 rounded-lg cursor-pointer transition-all border-2",
                     selectedCharacters.includes(character.id)
-                      ? "bg-aged-gold/20 border border-aged-gold/50"
-                      : "bg-gray-800/30 hover:bg-gray-800/50"
+                      ? "bg-aged-gold/25 border-aged-gold/70 ring-2 ring-aged-gold/40"
+                      : "bg-gray-800/40 border-gray-700/50 hover:bg-gray-800/60 hover:border-gray-600"
                   )}
                   onClick={() => toggleCharacterSelection(character.id)}
                   data-testid={`character-select-${character.id}`}
                 >
-                  <div onClick={(e) => e.stopPropagation()}>
-                    <Checkbox
-                      checked={selectedCharacters.includes(character.id)}
-                      onCheckedChange={() => toggleCharacterSelection(character.id)}
-                    />
+                  <div className="relative w-full">
+                    {/* Avatar */}
+                    {character.avatarUrl ? (
+                      <img
+                        src={character.avatarUrl}
+                        alt={`Portrait de ${character.name}`}
+                        className="w-12 h-12 rounded-full border-2 border-aged-gold object-cover mx-auto"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full border-2 border-aged-gold bg-cosmic-void flex items-center justify-center mx-auto">
+                        <User className="h-6 w-6 text-aged-gold" />
+                      </div>
+                    )}
+                    {/* Selection Indicator */}
+                    {selectedCharacters.includes(character.id) && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="absolute -bottom-1 -right-1 bg-aged-gold text-charcoal rounded-full w-6 h-6 flex items-center justify-center border-2 border-charcoal"
+                      >
+                        <span className="text-sm font-bold">✓</span>
+                      </motion.div>
+                    )}
                   </div>
-                  {/* Avatar */}
-                  {character.avatarUrl ? (
-                    <img 
-                      src={character.avatarUrl} 
-                      alt={`Portrait de ${character.name}`}
-                      className="w-8 h-8 rounded-full border border-aged-gold object-cover"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full border border-aged-gold bg-cosmic-void flex items-center justify-center">
-                      <User className="h-4 w-4 text-aged-gold" />
+
+                  <div className="text-center w-full">
+                    <div className="text-xs font-bold truncate">{character.name}</div>
+                  </div>
+
+                  <div className="w-full space-y-1">
+                    <div className="flex items-center justify-center gap-1">
+                      <Brain className="h-3 w-3 text-purple-400" />
+                      <span className="text-xs text-purple-400">
+                        {character.sanity}/{character.maxSanity}
+                      </span>
                     </div>
-                  )}
-                  <div className="flex-1 flex items-center justify-between">
-                    <span className="text-sm font-medium">{character.name}</span>
-                    <div className="flex gap-2">
-                      <Badge variant="outline" className="text-xs">
-                        SAN: {character.sanity}/{character.maxSanity}
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        HP: {character.hitPoints}/{character.maxHitPoints}
-                      </Badge>
+                    <div className="flex items-center justify-center gap-1">
+                      <Heart className="h-3 w-3 text-red-400" />
+                      <span className="text-xs text-red-400">
+                        {character.hitPoints}/{character.maxHitPoints}
+                      </span>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </ScrollArea>
