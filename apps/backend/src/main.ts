@@ -15,7 +15,7 @@ async function bootstrap() {
     new ValidationPipe({
       whitelist: true,
       transform: true,
-      forbidNonWhitelisted: true,
+      forbidNonWhitelisted: false, // Ignorer les props supplémentaires au lieu de les rejeter
       exceptionFactory: (errors) => {
         const result = errors.map((error) => ({
           property: error.property,
