@@ -10,6 +10,7 @@ import { Logger } from '@nestjs/common';
 @WebSocketGateway({
   cors: { origin: '*', credentials: true },
   path: '/game-ws',
+  namespace: '/game',
 })
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
