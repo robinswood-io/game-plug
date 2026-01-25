@@ -209,9 +209,11 @@ export class CharactersService {
     const character = await this.findOne(characterId);
 
     // Check if user is GM or owns the character
-    const session = await this.db.db.query.gameSessions.findFirst({
-      where: eq(gameSessions.id, character.sessionId),
-    });
+    const session = character.sessionId
+      ? await this.db.db.query.gameSessions.findFirst({
+          where: eq(gameSessions.id, character.sessionId),
+        })
+      : null;
 
     const isGM = session && session.gmId === userId;
     const isOwner = character.userId === userId;

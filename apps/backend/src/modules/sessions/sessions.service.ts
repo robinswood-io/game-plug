@@ -133,6 +133,10 @@ export class SessionsService {
       throw new NotFoundException('Source character not found');
     }
 
+    if (!sourceCharacter.sessionId) {
+      throw new BadRequestException('Source character is not associated with a session');
+    }
+
     // Verify source session belongs to same GM
     const sourceSession = await this.findOne(sourceCharacter.sessionId);
     if (sourceSession.gmId !== gmId) {
