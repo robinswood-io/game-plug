@@ -13,12 +13,14 @@ export enum InventoryCategory {
   ARMOR = 'armor',
   TOOL = 'tool',
   BOOK = 'book',
+  CONSUMABLE = 'consumable',
   MISC = 'misc',
 }
 
 export class CreateInventoryDto {
+  @IsOptional()
   @IsString()
-  characterId: string;
+  characterId?: string;
 
   @IsString()
   name: string;
