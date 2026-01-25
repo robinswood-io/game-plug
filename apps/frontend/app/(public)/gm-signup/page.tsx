@@ -12,7 +12,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Sparkles, User, Mail, Lock } from "lucide-react";
 import { gmSignupSchema } from "@shared/schema";
 import { useMutation } from "@tanstack/react-query";
-import { AuthenticationService } from "@/lib/api-client";
 import type { z } from "zod";
 
 type SignupForm = z.infer<typeof gmSignupSchema>;
@@ -33,11 +32,25 @@ export default function GMSignupPage() {
   });
 
   const signupMutation = useMutation({
-    mutationFn: (data: SignupForm) => AuthenticationService.authControllerSignup(data),
+    mutationFn: async (data: SignupForm) => {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Erreur lors de l\'inscription' }));
+        throw new Error(error.message || 'Une erreur est survenue');
+      }
+
+      return response.json();
+    },
     onSuccess: async (response: any) => {
       // Store token if returned
       if (response?.access_token) {
-        localStorage.setItem('auth_token', response.access_token);
+        localStorage.setItem('access_token', response.access_token);
         // SET COOKIE for Middleware
         document.cookie = `auth-token=${response.access_token}; path=/; max-age=86400; SameSite=Strict`;
       }
@@ -75,7 +88,7 @@ export default function GMSignupPage() {
       if (!response.ok) throw new Error("Dev login failed");
 
       const data = await response.json();
-      localStorage.setItem("auth_token", data.access_token);
+      localStorage.setItem("access_token", data.access_token);
       document.cookie = `auth-token=${data.access_token}; path=/; max-age=86400; SameSite=Strict`;
 
       toast({

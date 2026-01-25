@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, LogIn, Mail, Lock } from "lucide-react";
 import { localLoginSchema } from "@shared/schema";
 import { useMutation } from "@tanstack/react-query";
-import { AuthenticationService } from "@/lib/api-client";
+import { apiRequest } from "@/lib/queryClient";
 import type { z } from "zod";
 
 type LoginForm = z.infer<typeof localLoginSchema>;
@@ -31,11 +31,25 @@ export default function GMLoginPage() {
   });
 
   const loginMutation = useMutation({
-    mutationFn: (data: LoginForm) => AuthenticationService.authControllerLogin(data),
+    mutationFn: async (data: LoginForm) => {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Erreur de connexion' }));
+        throw new Error(error.message || 'Vérifiez votre email et mot de passe');
+      }
+
+      return response.json();
+    },
     onSuccess: (response: any) => {
       // Store token if returned
       if (response?.access_token) {
-        localStorage.setItem('auth_token', response.access_token);
+        localStorage.setItem('access_token', response.access_token);
         // SET COOKIE for Middleware
         document.cookie = `auth-token=${response.access_token}; path=/; max-age=86400; SameSite=Strict`;
       }
@@ -72,7 +86,7 @@ export default function GMLoginPage() {
       if (!response.ok) throw new Error("Dev login failed");
 
       const data = await response.json();
-      localStorage.setItem("auth_token", data.access_token);
+      localStorage.setItem("access_token", data.access_token);
       document.cookie = `auth-token=${data.access_token}; path=/; max-age=86400; SameSite=Strict`;
 
       toast({
