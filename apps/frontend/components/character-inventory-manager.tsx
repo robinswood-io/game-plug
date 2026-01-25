@@ -86,12 +86,20 @@ export default function CharacterInventoryManager({ characterId, isGM = false }:
   // Fetch character data including money
   const { data: character } = useQuery<Character>({
     queryKey: ["/api/characters", characterId],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/characters/${characterId}`);
+      return res.json();
+    },
     enabled: !!characterId,
   });
 
   // Fetch inventory
   const { data: inventory = [], isLoading } = useQuery<InventoryItem[]>({
     queryKey: ["/api/characters", characterId, "inventory"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/characters/${characterId}/inventory`);
+      return res.json();
+    },
     enabled: !!characterId,
   });
 

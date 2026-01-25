@@ -23,7 +23,7 @@ import { SKILL_TRANSLATIONS } from "@/lib/cthulhu-data";
 import type { Character, SanityCondition, ActiveEffect } from "@shared/schema";
 
 interface EnhancedCharacterCardProps {
-  character: Character & { 
+  character: Character & {
     sanityConditions: SanityCondition[];
     activeEffects: ActiveEffect[];
     availableSkillPoints?: number | null;
@@ -38,6 +38,7 @@ interface EnhancedCharacterCardProps {
   onGrantSkillPoints: (points: number) => void;
   onRollSkill: (skillName: string, skillValue: number) => void;
   onRollCharacteristic: (characteristic: string, value: number) => void;
+  onUpdateMoney?: (amount: number) => void;
   isConnected: boolean;
 }
 
@@ -53,6 +54,7 @@ function EnhancedCharacterCard({
   onGrantSkillPoints,
   onRollSkill,
   onRollCharacteristic,
+  onUpdateMoney,
   isConnected
 }: EnhancedCharacterCardProps) {
   const { toast } = useToast();
@@ -267,11 +269,44 @@ function EnhancedCharacterCard({
           </div>
 
           {/* $ - Argent */}
-          <div className="text-center bg-cosmic-void rounded p-2 border border-aged-gold/30">
-            <div className="text-sm font-bold text-yellow-600">
+          <div className="bg-cosmic-void rounded border border-aged-gold/30 p-1">
+            <div className="text-xs text-aged-parchment text-center mb-1">$</div>
+            <div className="text-sm font-bold text-yellow-600 text-center mb-1">
               ${typeof character.money === 'string' ? parseFloat(character.money).toFixed(0) : (character.money || 0).toFixed(0)}
             </div>
-            <div className="text-xs text-aged-parchment">$</div>
+            {onUpdateMoney && (
+              <div className="flex gap-0.5">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    const currentMoney = typeof character.money === 'string'
+                      ? parseFloat(character.money)
+                      : (character.money || 0);
+                    const newMoney = Math.max(0, currentMoney - 1);
+                    onUpdateMoney(newMoney);
+                  }}
+                  className="h-5 px-1 flex-1 hover:bg-blood-burgundy/20 text-blood-burgundy"
+                  data-testid={`button-money-minus-${character.id}`}
+                >
+                  <Minus className="h-3 w-3" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    const currentMoney = typeof character.money === 'string'
+                      ? parseFloat(character.money)
+                      : (character.money || 0);
+                    onUpdateMoney(currentMoney + 1);
+                  }}
+                  className="h-5 px-1 flex-1 hover:bg-eldritch-green/20 text-eldritch-green"
+                  data-testid={`button-money-plus-${character.id}`}
+                >
+                  <Plus className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 

@@ -529,6 +529,17 @@ export default function GMDashboard() {
                       className: "bg-eldritch-green/20 border-eldritch-green"
                     });
                   }}
+                  onUpdateMoney={async (amount) => {
+                    await apiRequest("PATCH", `/api/characters/${character.id}`, {
+                      money: amount.toString()
+                    });
+                    queryClient.invalidateQueries({ queryKey: ["/api/sessions", sessionId, "characters"] });
+                    toast({
+                      title: "Argent mis à jour",
+                      description: `${character.name} possède maintenant $${amount}`,
+                      className: "bg-yellow-900/20 border-yellow-600"
+                    });
+                  }}
                   onRollSkill={(skillName, skillValue) => {
                     const result = Math.floor(Math.random() * 100) + 1;
                     toast({
