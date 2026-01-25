@@ -8,9 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  Heart, Brain, Shield, Dice6, Plus, Minus, 
-  Package, Edit, Trash2, Users, Eye, 
+import {
+  Heart, Brain, Shield, Dice6, Plus, Minus,
+  Package, Edit, Trash2, Users, Eye,
   Zap, Activity, Sparkles, GraduationCap,
   MoreVertical, TrendingUp, TrendingDown,
   Skull, AlertTriangle, ChevronDown, ChevronRight
@@ -20,6 +20,7 @@ import { useDiceSound } from "@/components/dice-sound-manager";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { SKILL_TRANSLATIONS } from "@/lib/cthulhu-data";
+import { apiRequest } from "@/lib/queryClient";
 import type { Character, SanityCondition, ActiveEffect } from "@shared/schema";
 
 interface EnhancedCharacterCardProps {
@@ -69,21 +70,36 @@ function EnhancedCharacterCard({
   const isCriticalCondition = character.hitPoints < character.maxHitPoints * 0.3 || 
                               character.sanity < character.maxSanity * 0.3;
 
-  const handleQuickRoll = (formula: string, label: string) => {
+  const handleQuickRoll = async (formula: string, label: string) => {
     playRoll();
     const result = rollDice(formula);
-    
+
     if (formula === "1d100") {
       if (result.total === 1) playCritical();
       else if (result.total >= 96) playFumble();
     }
-    
+
     toast({
       title: `${character.name} - ${label}`,
       description: `${formula}: ${result.total}`,
       className: "bg-cosmic-void border-aged-gold"
     });
-    
+
+    // Record the roll in database
+    try {
+      await apiRequest("POST", "/api/rolls", {
+        characterId: character.id,
+        sessionId: character.sessionId,
+        rollType: 'custom',
+        skillName: label,
+        diceFormula: formula,
+        isGmRoll: false
+      });
+    } catch (error) {
+      console.error("Failed to record roll:", error);
+      // Don't show error toast to user - roll still displayed
+    }
+
     return result.total;
   };
 

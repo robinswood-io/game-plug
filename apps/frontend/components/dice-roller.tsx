@@ -239,8 +239,6 @@ export default function DiceRoller({ character }: DiceRollerProps) {
       skillName,
       skillValue,
       diceFormula: '1d100',
-      result,
-      outcome,
       isGmRoll: false
     });
 
