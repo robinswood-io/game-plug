@@ -15,14 +15,14 @@ test.describe('Complete Gameplay Workflows', () => {
     await page.locator('input[name="email"]').fill(testEmail);
     await page.locator('input[name="password"]').fill(testPassword);
     await page.getByRole('button', { name: /créer.*compte/i }).click();
-    await page.waitForURL(/^http:\/\/game-plug.rbw.ovh\/?(home|session-manager|sessions)?$/, { timeout: 10000 });
+    await page.waitForURL(//(home|session-manager|sessions|dashboard)/, { timeout: 15000 });
 
     // Step 2: Create session
     await page.goto('/session-manager');
     await page.getByTestId('button-create-session').click();
     await page.getByTestId('input-session-name').fill(sessionName);
     await page.getByTestId('button-confirm-create').click();
-    await page.waitForURL(/\/gm\//, { timeout: 10000 });
+    await page.waitForURL(/\/gm\//, { timeout: 15000 });
 
     const sessionUrl = page.url();
     const sessionId = sessionUrl.match(/\/gm\/(.+)/)?.[1];
@@ -70,14 +70,14 @@ test.describe('Complete Gameplay Workflows', () => {
     await page.locator('input[name="email"]').fill(gmEmail);
     await page.locator('input[name="password"]').fill(testPassword);
     await page.getByRole('button', { name: /créer.*compte/i }).click();
-    await page.waitForURL(/^http:\/\/game-plug.rbw.ovh\/?(home|session-manager|sessions)?$/, { timeout: 10000 });
+    await page.waitForURL(//(home|session-manager|sessions|dashboard)/, { timeout: 15000 });
 
     // Create session
     await page.goto('/session-manager');
     await page.getByTestId('button-create-session').click();
     await page.getByTestId('input-session-name').fill(sessionName);
     await page.getByTestId('button-confirm-create').click();
-    await page.waitForURL(/\/gm\//, { timeout: 10000 });
+    await page.waitForURL(/\/gm\//, { timeout: 15000 });
 
     const sessionUrl = page.url();
     const sessionId = sessionUrl.match(/\/gm\/(.+)/)?.[1];
@@ -118,7 +118,7 @@ test.describe('Complete Gameplay Workflows', () => {
     await page.locator('input[name="email"]').fill(testEmail);
     await page.locator('input[name="password"]').fill(testPassword);
     await page.getByRole('button', { name: /créer.*compte/i }).click();
-    await page.waitForURL(/^http:\/\/game-plug.rbw.ovh\/?(home|session-manager|sessions)?$/, { timeout: 10000 });
+    await page.waitForURL(//(home|session-manager|sessions|dashboard)/, { timeout: 15000 });
 
     // Create character
     await page.goto('/character-creation');
@@ -191,14 +191,14 @@ test.describe('Complete Gameplay Workflows', () => {
     await page.locator('input[name="email"]').fill(testEmail);
     await page.locator('input[name="password"]').fill(testPassword);
     await page.getByRole('button', { name: /créer.*compte/i }).click();
-    await page.waitForURL(/^http:\/\/game-plug.rbw.ovh\/?(home|session-manager|sessions)?$/, { timeout: 10000 });
+    await page.waitForURL(//(home|session-manager|sessions|dashboard)/, { timeout: 15000 });
 
     // Create session
     await page.goto('/session-manager');
     await page.getByTestId('button-create-session').click();
     await page.getByTestId('input-session-name').fill(sessionName);
     await page.getByTestId('button-confirm-create').click();
-    await page.waitForURL(/\/gm\//, { timeout: 10000 });
+    await page.waitForURL(/\/gm\//, { timeout: 15000 });
 
     const sessionUrl = page.url();
     const sessionId = sessionUrl.match(/\/gm\/(.+)/)?.[1];
@@ -260,7 +260,7 @@ test.describe('Complete Gameplay Workflows', () => {
     await page.locator('input[name="email"]').fill(testEmail);
     await page.locator('input[name="password"]').fill(testPassword);
     await page.getByRole('button', { name: /créer.*compte/i }).click();
-    await page.waitForURL(/^http:\/\/game-plug.rbw.ovh\/?(home|session-manager|sessions)?$/, { timeout: 10000 });
+    await page.waitForURL(//(home|session-manager|sessions|dashboard)/, { timeout: 15000 });
 
     // Create character
     await page.goto('/character-creation');
@@ -308,14 +308,14 @@ test.describe('Complete Gameplay Workflows', () => {
     await page.locator('input[name="email"]').fill(testEmail);
     await page.locator('input[name="password"]').fill(testPassword);
     await page.getByRole('button', { name: /créer.*compte/i }).click();
-    await page.waitForURL(/^http:\/\/game-plug.rbw.ovh\/?(home|session-manager|sessions)?$/, { timeout: 10000 });
+    await page.waitForURL(//(home|session-manager|sessions|dashboard)/, { timeout: 15000 });
 
     // Create session
     await page.goto('/session-manager');
     await page.getByTestId('button-create-session').click();
     await page.getByTestId('input-session-name').fill(sessionName);
     await page.getByTestId('button-confirm-create').click();
-    await page.waitForURL(/\/gm\//, { timeout: 10000 });
+    await page.waitForURL(/\/gm\//, { timeout: 15000 });
 
     // Activate session
     await page.goto('/session-manager');

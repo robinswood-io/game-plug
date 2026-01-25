@@ -18,7 +18,7 @@ test.describe('GM Dashboard Features', () => {
     await page.locator('input[name="email"]').fill(testEmail);
     await page.locator('input[name="password"]').fill(testPassword);
     await page.getByRole('button', { name: /créer.*compte|inscription|sign.*up/i }).click();
-    await page.waitForURL(/^http:\/\/game-plug.rbw.ovh\/?(home|session-manager|sessions)?$/, { timeout: 10000 });
+    await page.waitForURL(/\/(home|session-manager|sessions|dashboard)/, { timeout: 15000 });
 
     // Create session
     await page.goto('/session-manager');

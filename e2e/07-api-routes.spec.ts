@@ -14,7 +14,8 @@ test.describe('API Routes Test Suite', () => {
 
   test.beforeAll(async ({ playwright }) => {
     apiContext = await playwright.request.newContext({
-      baseURL: 'http://game-plug.rbw.ovh',
+      baseURL: 'https://game-plug.rbw.ovh',
+      ignoreHTTPSErrors: true,
     });
   });
 
@@ -46,10 +47,10 @@ test.describe('API Routes Test Suite', () => {
     expect(data.user.email).toBe(testEmail);
     testUserId = data.user.id;
 
-    // Store auth cookie
-    const headers = response.headers();
-    if (headers['set-cookie']) {
-      authCookie = headers['set-cookie'];
+    // Store auth cookie - get ALL set-cookie headers
+    const setCookieHeaders = response.headersArray().filter(h => h.name.toLowerCase() === 'set-cookie');
+    if (setCookieHeaders.length > 0) {
+      authCookie = setCookieHeaders.map(h => h.value.split(';')[0]).join('; ');
     }
   });
 
@@ -76,10 +77,10 @@ test.describe('API Routes Test Suite', () => {
     expect(data.user).toBeDefined();
     expect(data.user.email).toBe(testEmail);
 
-    // Update auth cookie
-    const headers = response.headers();
-    if (headers['set-cookie']) {
-      authCookie = headers['set-cookie'];
+    // Update auth cookie - get ALL set-cookie headers
+    const setCookieHeaders = response.headersArray().filter(h => h.name.toLowerCase() === 'set-cookie');
+    if (setCookieHeaders.length > 0) {
+      authCookie = setCookieHeaders.map(h => h.value.split(';')[0]).join('; ');
     }
   });
 

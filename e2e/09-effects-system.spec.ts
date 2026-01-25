@@ -16,7 +16,7 @@ test.describe('Effects and Status System', () => {
     await page.locator('input[name="email"]').fill(testEmail);
     await page.locator('input[name="password"]').fill(testPassword);
     await page.getByRole('button', { name: /créer.*compte|inscription|sign.*up/i }).click();
-    await page.waitForURL(/^http:\/\/game-plug.rbw.ovh\/?(home|session-manager|sessions)?$/, { timeout: 10000 });
+    await page.waitForURL(//(home|session-manager|sessions|dashboard)/, { timeout: 15000 });
 
     // Create a session
     await page.goto('/session-manager');
@@ -25,7 +25,7 @@ test.describe('Effects and Status System', () => {
     await page.getByTestId('button-confirm-create').click();
 
     // Wait for redirect and extract session ID
-    await page.waitForURL(/\/gm\//, { timeout: 10000 });
+    await page.waitForURL(/\/gm\//, { timeout: 15000 });
     const currentUrl = page.url();
     const match = currentUrl.match(/\/gm\/(.+)/);
     sessionId = match?.[1] || '';

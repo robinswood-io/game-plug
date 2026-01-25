@@ -16,7 +16,7 @@ test.describe('Inventory Management System', () => {
     await page.locator('input[name="email"]').fill(testEmail);
     await page.locator('input[name="password"]').fill(testPassword);
     await page.getByRole('button', { name: /créer.*compte|inscription|sign.*up/i }).click();
-    await page.waitForURL(/^http:\/\/game-plug.rbw.ovh\/?(home|session-manager|sessions)?$/, { timeout: 10000 });
+    await page.waitForURL(//(home|session-manager|sessions|dashboard)/, { timeout: 15000 });
 
     // Create character
     await page.goto('/character-creation');

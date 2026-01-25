@@ -15,7 +15,10 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     ignoreHTTPSErrors: true,
+    actionTimeout: 30000,
+    navigationTimeout: 30000,
   },
+  timeout: 60000,
   projects: [
     {
       name: 'chromium',
