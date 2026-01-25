@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, BadRequestException } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
@@ -22,7 +22,10 @@ async function bootstrap() {
           message: error.constraints ? Object.values(error.constraints)[0] : 'Validation failed',
         }));
         console.error('Validation Errors:', JSON.stringify(result, null, 2));
-        return new Error('Validation failed: ' + JSON.stringify(result));
+        return new BadRequestException({
+          message: 'Erreur de validation',
+          errors: result,
+        });
       },
     }),
   );
