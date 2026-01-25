@@ -9,10 +9,13 @@ import {
   Query,
   UseGuards,
   Req,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { CharactersService } from './characters.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SkipAuth } from '../auth/decorators/skip-auth.decorator';
 import { InventoryService } from '../inventory/inventory.service';
 import {
   CreateCharacterDto,
@@ -109,6 +112,7 @@ export class CharactersController {
   }
 
   @Post(':id/effects')
+  @SkipAuth()
   @ApiOperation({ summary: 'Apply effect/buff/debuff to character' })
   @ApiParam({ name: 'id', description: 'Character ID' })
   @ApiResponse({ status: 201, description: 'Effect applied successfully' })

@@ -5,24 +5,27 @@ import { Reflector } from '@nestjs/core';
 import { SKIP_AUTH_KEY } from '../decorators/skip-auth.decorator';
 
 @Injectable()
-export class JwtAuthGuard extends AuthGuard('jwt') {
+export class OptionalJwtAuthGuard extends AuthGuard('jwt') {
   constructor(private reflector: Reflector) {
     super();
   }
 
   canActivate(context: ExecutionContext) {
-    // Check if the handler or class has the SkipAuth decorator
     const skipAuth = this.reflector.getAllAndOverride<boolean>(SKIP_AUTH_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
 
-    // If SkipAuth is set, allow the request to proceed without JWT validation
     if (skipAuth) {
       return true;
     }
 
-    // Otherwise, perform normal JWT validation
     return super.canActivate(context);
+  }
+
+  handleRequest(err: any, user: any, info: any) {
+    // Allow requests to proceed even if JWT validation fails
+    // The endpoint handler can check if user exists
+    return user || null;
   }
 }
