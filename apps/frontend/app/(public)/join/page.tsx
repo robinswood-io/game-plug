@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,14 +20,14 @@ const joinSessionSchema = z.object({
     .regex(/^[A-Z0-9]{6}$/, "Format invalide: lettres et chiffres uniquement (majuscules)"),
 });
 
-type JoinSessionForm = z.infer<typeof joinSessionSchema>;
+type JoinSessionFormData = z.infer<typeof joinSessionSchema>;
 
-export default function JoinSessionPage() {
+function JoinSessionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
-  const form = useForm<JoinSessionForm>({
+  const form = useForm<JoinSessionFormData>({
     resolver: zodResolver(joinSessionSchema),
     defaultValues: {
       sessionCode: "",
@@ -43,7 +43,7 @@ export default function JoinSessionPage() {
     }
   }, [searchParams, form]);
 
-  const onSubmit = async (data: JoinSessionForm) => {
+  const onSubmit = async (data: JoinSessionFormData) => {
     try {
       // Verify session exists and is active
       const response = await fetch(`/api/sessions/join/${data.sessionCode.toUpperCase()}`);
@@ -186,5 +186,22 @@ export default function JoinSessionPage() {
         </Card>
       </motion.div>
     </div>
+  );
+}
+
+export default function JoinSessionPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-deep-black flex items-center justify-center p-4">
+        <Card className="bg-charcoal border-aged-gold parchment-bg w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <Dice6 className="h-12 w-12 text-aged-gold mx-auto mb-4 animate-spin" />
+            <p className="text-aged-parchment">Chargement...</p>
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <JoinSessionContent />
+    </Suspense>
   );
 }

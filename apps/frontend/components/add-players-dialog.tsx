@@ -158,7 +158,7 @@ export default function AddPlayersDialog({
                 >
                   {copiedLink ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
-                {navigator.share && (
+                {typeof window !== 'undefined' && typeof navigator.share === 'function' && (
                   <Button
                     onClick={handleShare}
                     className="bg-aged-gold hover:bg-yellow-700 text-deep-black"
