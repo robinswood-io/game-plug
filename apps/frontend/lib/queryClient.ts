@@ -32,7 +32,18 @@ export async function apiRequest(
   });
 
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.statusText}`);
+    // Tenter de récupérer le message d'erreur du backend
+    let errorMessage = response.statusText;
+    try {
+      const errorData = await response.json();
+      errorMessage = errorData.message || errorData.error || errorMessage;
+    } catch {
+      // Si le parsing JSON échoue, garder statusText
+    }
+
+    throw new Error(
+      `API request failed: ${method} ${path} - ${response.status} ${errorMessage}`
+    );
   }
 
   return response;
