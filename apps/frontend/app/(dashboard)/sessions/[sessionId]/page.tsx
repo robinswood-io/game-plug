@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { useDiceSound } from "@/components/dice-sound-manager";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,7 @@ export default function GMDashboard() {
   const sessionId = params.sessionId as string;
   const router = useRouter();
   const { toast } = useToast();
+  const { playRoll, playCritical, playFumble } = useDiceSound();
   const queryClient = useQueryClient();
 
   // Modal states
@@ -551,19 +553,33 @@ export default function GMDashboard() {
                     });
                   }}
                   onRollSkill={(skillName, skillValue) => {
+                    playRoll();
                     const result = Math.floor(Math.random() * 100) + 1;
+
+                    // Play special sounds for critical results
+                    if (result === 1) playCritical();
+                    else if (result >= 96) playFumble();
+
+                    const isSuccess = result <= skillValue;
                     toast({
                       title: `${character.name} - ${skillName}`,
-                      description: `Jet: ${result} vs ${skillValue}% - ${result <= skillValue ? "Réussite" : "Échec"}`,
-                      className: result <= skillValue ? "bg-eldritch-green/20" : "bg-blood-burgundy/20"
+                      description: `Jet: ${result} vs ${skillValue}% - ${isSuccess ? "✅ Réussite" : "❌ Échec"}`,
+                      className: isSuccess ? "bg-eldritch-green/20 border-eldritch-green" : "bg-blood-burgundy/20 border-blood-burgundy"
                     });
                   }}
                   onRollCharacteristic={(characteristic, value) => {
+                    playRoll();
                     const result = Math.floor(Math.random() * 100) + 1;
+
+                    // Play special sounds for critical results
+                    if (result === 1) playCritical();
+                    else if (result >= 96) playFumble();
+
+                    const isSuccess = result <= value;
                     toast({
                       title: `${character.name} - ${characteristic}`,
-                      description: `Jet: ${result} vs ${value} - ${result <= value ? "Réussite" : "Échec"}`,
-                      className: result <= value ? "bg-eldritch-green/20" : "bg-blood-burgundy/20"
+                      description: `Jet: ${result} vs ${value} - ${isSuccess ? "✅ Réussite" : "❌ Échec"}`,
+                      className: isSuccess ? "bg-eldritch-green/20 border-eldritch-green" : "bg-blood-burgundy/20 border-blood-burgundy"
                     });
                   }}
                 />
