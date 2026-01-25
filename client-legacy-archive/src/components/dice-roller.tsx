@@ -193,14 +193,14 @@ export default function DiceRoller({ character }: DiceRollerProps) {
   const processRollResult = async (skillName: string, skillValue: number, result: number) => {
     let outcome: RollResult['outcome'] = 'failure';
     if (result === 1) {
-      outcome = 'extreme_success';
-      playSound('critical');
-    } else if (result >= 96) {
       outcome = 'failure';
       playSound('fumble');
+    } else if (result >= 96) {
+      outcome = 'extreme_success';
+      playSound('critical');
     } else if (result <= skillValue / 5) {
       outcome = 'extreme_success';
-      playSound('success');
+      playSound('critical');
     } else if (result <= skillValue / 2) {
       outcome = 'hard_success';
       playSound('success');

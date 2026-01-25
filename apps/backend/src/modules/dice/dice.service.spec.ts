@@ -294,8 +294,8 @@ describe('DiceService', () => {
 
       const result = await service.roll(rollData);
 
-      // If roll > skillValue (30), it should be failure
-      if (result.result > 30) {
+      // If roll > skillValue (30) and not a fumble (96-100), it should be failure
+      if (result.result > 30 && result.result < 96) {
         expect(result.outcome).toBe('failure');
       }
     });
