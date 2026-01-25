@@ -10,13 +10,12 @@ import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { motion } from "framer-motion";
 import {
   Users, Copy, QrCode, Share2, Settings, Package,
-  Plus, Monitor, Download, BookOpen, Image, Trash2
+  Plus, Monitor, BookOpen, Trash2
 } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 
@@ -25,14 +24,11 @@ import ConnectionIndicator from "@/components/connection-indicator";
 import EnhancedCharacterCard from "@/components/enhanced-character-card";
 import CharacterCardSkeleton from "@/components/character-card-skeleton";
 import CharacterInventoryManager from "@/components/character-inventory-manager";
-import GMRollWithEffects from "@/components/gm-roll-with-effects";
-import UnifiedAmbientController from "@/components/unified-ambient-controller";
-import NarrativeTools from "@/components/narrative-tools";
-import ImportCharacterDialog from "@/components/import-character-dialog";
 import VisualProjectionDialog from "@/components/visual-projection-dialog";
 import NarrativeJournal from "@/components/narrative-journal";
 import EnhancedButton from "@/components/enhanced-button";
 import AddPlayersDialog from "@/components/add-players-dialog";
+import GMToolsModal from "@/components/gm-tools-modal";
 
 // Types
 import type { Character, SanityCondition, ActiveEffect } from '@shared/schema';
@@ -64,10 +60,10 @@ export default function GMDashboard() {
   const [deleteCharacterId, setDeleteCharacterId] = useState<string | null>(null);
   const [deleteCharacterName, setDeleteCharacterName] = useState<string>("");
   const [isGeneratingAvatars, setIsGeneratingAvatars] = useState(false);
-  const [showImportDialog, setShowImportDialog] = useState(false);
   const [showProjectionDialog, setShowProjectionDialog] = useState(false);
   const [showNarrativeJournal, setShowNarrativeJournal] = useState(false);
   const [showAddPlayersDialog, setShowAddPlayersDialog] = useState(false);
+  const [showGMToolsModal, setShowGMToolsModal] = useState(false);
 
   // WebSocket connection
   const { isConnected, sendMessage, lastMessage } = useWebSocket(true);
@@ -180,6 +176,23 @@ export default function GMDashboard() {
     });
   };
 
+  const handleShare = async () => {
+    const url = `${window.location.origin}/join/${session?.code}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Rejoindre la session ${session?.name}`,
+          text: `Rejoins notre partie de l'Appel de Cthulhu avec le code: ${session?.code}`,
+          url: url,
+        });
+      } catch (error) {
+        console.log('Share cancelled');
+      }
+    } else {
+      handleCopyLink();
+    }
+  };
+
   const handleGenerateAllAvatars = async () => {
     setIsGeneratingAvatars(true);
     try {
@@ -262,24 +275,12 @@ export default function GMDashboard() {
             <EnhancedButton
               size="sm"
               variant="outline"
-              onClick={handleCopyCode}
-              className="border-aged-gold text-aged-gold hover:bg-cosmic-void"
-              icon={<Copy className="h-4 w-4" />}
-            />
-            <EnhancedButton
-              size="sm"
-              variant="outline"
-              onClick={handleCopyLink}
-              className="border-aged-gold text-aged-gold hover:bg-cosmic-void"
-              icon={<Share2 className="h-4 w-4" />}
-            />
-            <EnhancedButton
-              size="sm"
-              variant="outline"
               onClick={() => setShowQRDialog(true)}
               className="border-aged-gold text-aged-gold hover:bg-cosmic-void"
               icon={<QrCode className="h-4 w-4" />}
-            />
+            >
+              Partager (QR)
+            </EnhancedButton>
 
             {/* GameBoard Button */}
             <EnhancedButton
@@ -305,97 +306,17 @@ export default function GMDashboard() {
               Journal
             </EnhancedButton>
 
-            {/* Tools Popover */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-aged-gold text-aged-gold hover:bg-cosmic-void"
-                >
-                  <Settings className="h-4 w-4 mr-2" />
-                  Outils
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 p-4 bg-charcoal border-aged-gold">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-cinzel text-aged-gold mb-2">Jets Groupés</h3>
-                    <GMRollWithEffects
-                      characters={characters}
-                      onRoll={(result) => {
-                        if (isConnected) {
-                          sendMessage('gm_roll', {
-                            formula: result.formula,
-                            results: Array.from(result.results.entries()),
-                            isSecret: result.isSecret
-                          });
-                        }
-                      }}
-                      onApplyEffect={async (effect) => {
-                        for (const charId of effect.characterIds) {
-                          await apiRequest("POST", `/api/characters/${charId}/effects`, {
-                            type: effect.effectType,
-                            value: effect.value.toString(),
-                            description: effect.description
-                          });
-                        }
-                        queryClient.invalidateQueries({ queryKey: ["/api/sessions", sessionId, "characters"] });
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <h3 className="font-cinzel text-aged-gold mb-2">Ambiance</h3>
-                    <UnifiedAmbientController />
-                  </div>
-
-                  <div>
-                    <h3 className="font-cinzel text-aged-gold mb-2">Narration</h3>
-                    <NarrativeTools
-                      onAmbiance={(text) => {
-                        if (isConnected) {
-                          sendMessage('ambiance', { text, timestamp: new Date() });
-                        }
-                        toast({
-                          title: "Ambiance envoyée",
-                          description: text.substring(0, 50) + '...',
-                        });
-                      }}
-                      onNarration={(text) => {
-                        if (isConnected) {
-                          sendMessage('narration', { text, timestamp: new Date() });
-                        }
-                        toast({
-                          title: "Narration envoyée",
-                          description: text.substring(0, 50) + '...',
-                        });
-                      }}
-                    />
-                  </div>
-
-                  <Button
-                    onClick={handleGenerateAllAvatars}
-                    disabled={isGeneratingAvatars}
-                    className="w-full bg-eldritch-green hover:bg-green-700 text-bone-white"
-                  >
-                    <Image className="mr-2 h-4 w-4" />
-                    {isGeneratingAvatars ? "Génération..." : "Générer Portraits"}
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            <Button
+            {/* Tools Button */}
+            <EnhancedButton
               size="sm"
               variant="outline"
-              onClick={() => setShowImportDialog(true)}
-              className="border-eldritch-green text-eldritch-green hover:bg-eldritch-green hover:text-deep-black"
-              data-testid="button-import-character"
+              onClick={() => setShowGMToolsModal(true)}
+              className="border-aged-gold text-aged-gold hover:bg-cosmic-void"
+              data-testid="button-gm-tools"
+              icon={<Settings className="h-4 w-4" />}
             >
-              <Download className="mr-2 h-4 w-4" />
-              Importer
-            </Button>
+              Outils
+            </EnhancedButton>
 
             <Button
               size="sm"
@@ -680,22 +601,42 @@ export default function GMDashboard() {
 
       {/* QR Code Dialog */}
       <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>
-        <DialogContent className="bg-charcoal border-aged-gold">
+        <DialogContent className="bg-charcoal border-aged-gold max-w-md">
           <DialogHeader>
             <DialogTitle className="font-cinzel text-aged-gold">Code QR de la Session</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col items-center space-y-4 p-4">
-            <QRCodeCanvas
-              value={`${window.location.origin}/join/${session.code}`}
-              size={200}
-              bgColor="#0a0a0a"
-              fgColor="#d4af37"
-            />
+            <div className="bg-white p-4 rounded-lg">
+              <QRCodeCanvas
+                value={`${window.location.origin}/join/${session.code}`}
+                size={256}
+                level="H"
+                includeMargin
+              />
+            </div>
             <p className="text-aged-parchment text-center">
               Scannez ce code QR pour rejoindre la session
             </p>
-            <div className="text-2xl font-cinzel text-aged-gold">
+            <div className="text-2xl font-cinzel text-aged-gold text-center">
               {session.code}
+            </div>
+            <div className="w-full flex flex-col gap-2 pt-2">
+              <Button
+                onClick={handleCopyLink}
+                className="w-full bg-blood-burgundy hover:bg-dark-crimson text-bone-white"
+              >
+                <Copy className="mr-2 h-4 w-4" />
+                Copier le Lien
+              </Button>
+              {typeof window !== 'undefined' && typeof navigator.share === 'function' && (
+                <Button
+                  onClick={handleShare}
+                  className="w-full bg-aged-gold hover:bg-yellow-700 text-deep-black"
+                >
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Partager
+                </Button>
+              )}
             </div>
           </div>
         </DialogContent>
@@ -745,14 +686,6 @@ export default function GMDashboard() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Import Character Dialog */}
-      {sessionId && (
-        <ImportCharacterDialog
-          open={showImportDialog}
-          onOpenChange={setShowImportDialog}
-          sessionId={sessionId}
-        />
-      )}
 
       {/* Visual Projection Dialog */}
       {sessionId && (
@@ -786,6 +719,55 @@ export default function GMDashboard() {
           sessionId={sessionId}
           sessionCode={session.code}
           sessionName={session.name}
+        />
+      )}
+
+      {/* GM Tools Modal */}
+      {sessionId && (
+        <GMToolsModal
+          open={showGMToolsModal}
+          onOpenChange={setShowGMToolsModal}
+          characters={characters}
+          isConnected={isConnected}
+          onRoll={(result) => {
+            if (isConnected) {
+              sendMessage('gm_roll', {
+                formula: result.formula,
+                results: Array.from(result.results.entries()),
+                isSecret: result.isSecret
+              });
+            }
+          }}
+          onApplyEffect={async (effect) => {
+            for (const charId of effect.characterIds) {
+              await apiRequest("POST", `/api/characters/${charId}/effects`, {
+                type: effect.effectType,
+                value: effect.value.toString(),
+                description: effect.description
+              });
+            }
+            queryClient.invalidateQueries({ queryKey: ["/api/sessions", sessionId, "characters"] });
+          }}
+          onAmbiance={(text) => {
+            if (isConnected) {
+              sendMessage('ambiance', { text, timestamp: new Date() });
+            }
+            toast({
+              title: "Ambiance envoyée",
+              description: text.substring(0, 50) + '...',
+            });
+          }}
+          onNarration={(text) => {
+            if (isConnected) {
+              sendMessage('narration', { text, timestamp: new Date() });
+            }
+            toast({
+              title: "Narration envoyée",
+              description: text.substring(0, 50) + '...',
+            });
+          }}
+          isGeneratingAvatars={isGeneratingAvatars}
+          onGenerateAvatars={handleGenerateAllAvatars}
         />
       )}
 
