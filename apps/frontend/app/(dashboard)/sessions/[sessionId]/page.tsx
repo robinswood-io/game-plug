@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,7 @@ import ImportCharacterDialog from "@/components/import-character-dialog";
 import VisualProjectionDialog from "@/components/visual-projection-dialog";
 import NarrativeJournal from "@/components/narrative-journal";
 import EnhancedButton from "@/components/enhanced-button";
+import AddPlayersDialog from "@/components/add-players-dialog";
 
 // Types
 import type { Character, SanityCondition, ActiveEffect } from '@shared/schema';
@@ -63,6 +65,7 @@ export default function GMDashboard() {
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showProjectionDialog, setShowProjectionDialog] = useState(false);
   const [showNarrativeJournal, setShowNarrativeJournal] = useState(false);
+  const [showAddPlayersDialog, setShowAddPlayersDialog] = useState(false);
 
   // WebSocket connection
   const { isConnected, sendMessage, lastMessage } = useWebSocket(true);
@@ -113,8 +116,7 @@ export default function GMDashboard() {
   const { data: session, isLoading: isLoadingSession } = useQuery<GameSession>({
     queryKey: ["/api/sessions", sessionId],
     queryFn: async () => {
-      const res = await fetch(`/api/sessions/${sessionId}`);
-      if (!res.ok) throw new Error("Failed to fetch session");
+      const res = await apiRequest("GET", `/api/sessions/${sessionId}`);
       return res.json();
     },
     enabled: !!sessionId,
@@ -124,8 +126,7 @@ export default function GMDashboard() {
   const { data: characters = [], isLoading: isLoadingCharacters } = useQuery<CharacterWithDetails[]>({
     queryKey: ["/api/sessions", sessionId, "characters"],
     queryFn: async () => {
-      const res = await fetch(`/api/sessions/${sessionId}/characters`);
-      if (!res.ok) throw new Error("Failed to fetch characters");
+      const res = await apiRequest("GET", `/api/sessions/${sessionId}/characters`);
       return res.json();
     },
     enabled: !!sessionId,
@@ -134,10 +135,7 @@ export default function GMDashboard() {
   // Delete character mutation
   const deleteCharacterMutation = useMutation({
     mutationFn: async (characterId: string) => {
-      const response = await fetch(`/api/sessions/${sessionId}/characters/${characterId}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Failed to delete character");
+      const response = await apiRequest("DELETE", `/api/sessions/${sessionId}/characters/${characterId}`);
       return response.json();
     },
     onSuccess: () => {
@@ -180,10 +178,8 @@ export default function GMDashboard() {
   const handleGenerateAllAvatars = async () => {
     setIsGeneratingAvatars(true);
     try {
-      const response = await fetch(`/api/sessions/${sessionId}/generate-all-avatars`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ forceRegenerate: false }),
+      const response = await apiRequest("POST", `/api/sessions/${sessionId}/generate-all-avatars`, {
+        forceRegenerate: false
       });
       const data = await response.json();
 
@@ -247,6 +243,17 @@ export default function GMDashboard() {
 
           {/* Quick Actions Bar */}
           <div className="flex items-center gap-2">
+            <EnhancedButton
+              size="sm"
+              variant="default"
+              onClick={() => setShowAddPlayersDialog(true)}
+              className="bg-blood-burgundy hover:bg-dark-crimson text-bone-white"
+              data-testid="button-add-players"
+              icon={<Users className="h-4 w-4" />}
+            >
+              Inviter Joueurs
+            </EnhancedButton>
+
             <EnhancedButton
               size="sm"
               variant="outline"
@@ -322,14 +329,10 @@ export default function GMDashboard() {
                       }}
                       onApplyEffect={async (effect) => {
                         for (const charId of effect.characterIds) {
-                          await fetch(`/api/characters/${charId}/effects`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                              type: effect.effectType,
-                              value: effect.value.toString(),
-                              description: effect.description
-                            }),
+                          await apiRequest("POST", `/api/characters/${charId}/effects`, {
+                            type: effect.effectType,
+                            value: effect.value.toString(),
+                            description: effect.description
                           });
                         }
                         queryClient.invalidateQueries({ queryKey: ["/api/sessions", sessionId, "characters"] });
@@ -391,7 +394,11 @@ export default function GMDashboard() {
 
             <Button
               size="sm"
-              onClick={() => router.push(`/character-creation/${sessionId}`)}
+              onClick={() => {
+                // Store sessionId for character creation
+                localStorage.setItem('createCharacterForSession', sessionId);
+                router.push('/characters/new');
+              }}
               className="bg-eldritch-green hover:bg-green-700 text-bone-white"
               data-testid="button-create-character"
             >
@@ -421,7 +428,10 @@ export default function GMDashboard() {
                   Aucun personnage dans cette session.
                 </p>
                 <EnhancedButton
-                  onClick={() => router.push(`/character-creation/${sessionId}`)}
+                  onClick={() => {
+                    localStorage.setItem('createCharacterForSession', sessionId);
+                    router.push('/characters/new');
+                  }}
                   className="bg-eldritch-green hover:bg-green-700 text-bone-white"
                   icon={<Plus className="h-4 w-4" />}
                 >
@@ -446,7 +456,7 @@ export default function GMDashboard() {
                 <EnhancedCharacterCard
                   character={character}
                   isConnected={isConnected}
-                  onEdit={() => router.push(`/character-edit/${sessionId}/${character.id}`)}
+                  onEdit={() => router.push(`/characters/${character.id}/edit`)}
                   onDelete={() => {
                     setDeleteCharacterId(character.id);
                     setDeleteCharacterName(character.name);
@@ -456,14 +466,10 @@ export default function GMDashboard() {
                     setInventoryModalOpen(true);
                   }}
                   onApplyDamage={async (value) => {
-                    await fetch(`/api/characters/${character.id}/effects`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        name: "Dégâts",
-                        type: "damage",
-                        value: value.toString()
-                      }),
+                    await apiRequest("POST", `/api/characters/${character.id}/effects`, {
+                      name: "Dégâts",
+                      type: "damage",
+                      value: value.toString()
                     });
                     queryClient.invalidateQueries({ queryKey: ["/api/sessions", sessionId, "characters"] });
                     toast({
@@ -473,14 +479,10 @@ export default function GMDashboard() {
                     });
                   }}
                   onApplySanity={async (value) => {
-                    await fetch(`/api/characters/${character.id}/effects`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        name: "Perte de Sanité",
-                        type: "sanity_loss",
-                        value: value.toString()
-                      }),
+                    await apiRequest("POST", `/api/characters/${character.id}/effects`, {
+                      name: "Perte de Sanité",
+                      type: "sanity_loss",
+                      value: value.toString()
                     });
                     queryClient.invalidateQueries({ queryKey: ["/api/sessions", sessionId, "characters"] });
                     toast({
@@ -490,15 +492,11 @@ export default function GMDashboard() {
                     });
                   }}
                   onApplyBuff={async (name, value, duration) => {
-                    await fetch(`/api/characters/${character.id}/effects`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        name,
-                        type: "buff",
-                        value: value.toString(),
-                        duration: duration || 0
-                      }),
+                    await apiRequest("POST", `/api/characters/${character.id}/effects`, {
+                      name,
+                      type: "buff",
+                      value: value.toString(),
+                      duration: duration || 0
                     });
                     queryClient.invalidateQueries({ queryKey: ["/api/sessions", sessionId, "characters"] });
                     toast({
@@ -508,14 +506,10 @@ export default function GMDashboard() {
                     });
                   }}
                   onApplyDebuff={async (name, value) => {
-                    await fetch(`/api/characters/${character.id}/effects`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        name,
-                        type: "debuff",
-                        value: value.toString()
-                      }),
+                    await apiRequest("POST", `/api/characters/${character.id}/effects`, {
+                      name,
+                      type: "debuff",
+                      value: value.toString()
                     });
                     queryClient.invalidateQueries({ queryKey: ["/api/sessions", sessionId, "characters"] });
                     toast({
@@ -525,10 +519,8 @@ export default function GMDashboard() {
                     });
                   }}
                   onGrantSkillPoints={async (points) => {
-                    await fetch(`/api/characters/${character.id}/skill-points`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ points }),
+                    await apiRequest("POST", `/api/characters/${character.id}/skill-points`, {
+                      points
                     });
                     queryClient.invalidateQueries({ queryKey: ["/api/sessions", sessionId, "characters"] });
                     toast({
@@ -658,6 +650,17 @@ export default function GMDashboard() {
             <NarrativeJournal sessionId={sessionId} />
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Add Players Dialog */}
+      {sessionId && session && (
+        <AddPlayersDialog
+          open={showAddPlayersDialog}
+          onOpenChange={setShowAddPlayersDialog}
+          sessionId={sessionId}
+          sessionCode={session.code}
+          sessionName={session.name}
+        />
       )}
 
       {/* Floating Projection Button */}
