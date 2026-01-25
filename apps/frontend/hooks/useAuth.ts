@@ -25,6 +25,7 @@ export interface User {
   username: string;
   email?: string;
   createdAt?: string;
+  isGM?: boolean;
 }
 
 export function useAuth() {

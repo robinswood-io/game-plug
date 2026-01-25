@@ -9,11 +9,14 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { rollDice, determineSuccessLevel } from "@/lib/dice";
-import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, Dices, Target, Brain, Volume2, VolumeX } from "lucide-react";
+import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, Dices, Target, Brain, Volume2, VolumeX, Check, ChevronsUpDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { SKILL_TRANSLATIONS } from "@/lib/cthulhu-data";
 import type { Character } from "@shared/schema";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface DiceRollerProps {
   character: Character;
@@ -40,8 +43,8 @@ export default function DiceRoller({ character }: DiceRollerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [lastRoll, setLastRoll] = useState<RollResult | null>(null);
-  const [customSkill, setCustomSkill] = useState("");
-  const [customValue, setCustomValue] = useState<number>(50);
+  const [selectedSkill, setSelectedSkill] = useState<string>("");
+  const [isComboboxOpen, setIsComboboxOpen] = useState(false);
   const [isRolling, setIsRolling] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showDice, setShowDice] = useState(false);
@@ -52,6 +55,15 @@ export default function DiceRoller({ character }: DiceRollerProps) {
   const audioContext = useRef<AudioContext | null>(null);
 
   const skills = character.skills as Record<string, number> || {};
+
+  // Create a list of all skills with their translated names and values
+  const allSkills = Object.entries(skills)
+    .map(([key, value]) => ({
+      key,
+      name: SKILL_TRANSLATIONS[key] || key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' '),
+      value
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
 
   // Initialize audio context
   useEffect(() => {
@@ -359,18 +371,20 @@ export default function DiceRoller({ character }: DiceRollerProps) {
   };
 
   const performCustomRoll = () => {
-    if (!customSkill.trim()) {
+    if (!selectedSkill) {
       toast({
         title: "Erreur",
-        description: "Veuillez spécifier le nom de la compétence.",
+        description: "Veuillez sélectionner une compétence.",
         variant: "destructive",
       });
       return;
     }
 
-    performSkillRoll(customSkill, customValue);
-    setCustomSkill("");
-    setCustomValue(50);
+    const skill = allSkills.find(s => s.key === selectedSkill);
+    if (!skill) return;
+
+    performSkillRoll(skill.name, skill.value);
+    setSelectedSkill("");
   };
 
   const commonSkills = [
@@ -456,36 +470,70 @@ export default function DiceRoller({ character }: DiceRollerProps) {
           </Button>
         </div>
 
-        {/* Custom Roll */}
+        {/* Custom Roll with Combobox */}
         <div className="border border-aged-gold rounded-lg p-3 bg-cosmic-void">
           <div className="space-y-2">
-            <Input
-              value={customSkill}
-              onChange={(e) => setCustomSkill(e.target.value)}
-              placeholder="Nom de la compétence"
-              className="bg-deep-black border-aged-gold text-bone-white"
-              data-testid="input-custom-skill-name"
-            />
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                value={customValue}
-                onChange={(e) => setCustomValue(parseInt(e.target.value) || 0)}
-                placeholder="Valeur %"
-                min={1}
-                max={100}
-                className="w-20 bg-deep-black border-aged-gold text-bone-white"
-                data-testid="input-custom-skill-value"
-              />
-              <Button
-                onClick={performCustomRoll}
-                className="flex-1 bg-blood-burgundy hover:bg-dark-crimson text-bone-white transition-colors"
-                data-testid="button-custom-roll"
-              >
-                <Dice6 className="mr-2 h-4 w-4" />
-                Lancer
-              </Button>
-            </div>
+            <Popover open={isComboboxOpen} onOpenChange={setIsComboboxOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={isComboboxOpen}
+                  className="w-full justify-between bg-deep-black border-aged-gold text-bone-white hover:bg-dark-stone"
+                  data-testid="button-select-skill"
+                >
+                  {selectedSkill
+                    ? (() => {
+                        const skill = allSkills.find(s => s.key === selectedSkill);
+                        return skill ? `${skill.name} (${skill.value}%)` : "Sélectionner une compétence...";
+                      })()
+                    : "Sélectionner une compétence..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[400px] p-0 bg-charcoal border-aged-gold">
+                <Command className="bg-charcoal">
+                  <CommandInput
+                    placeholder="Rechercher une compétence..."
+                    className="bg-deep-black border-aged-gold text-bone-white"
+                  />
+                  <CommandList>
+                    <CommandEmpty className="text-aged-parchment">Aucune compétence trouvée.</CommandEmpty>
+                    <CommandGroup>
+                      {allSkills.map((skill) => (
+                        <CommandItem
+                          key={skill.key}
+                          value={skill.name}
+                          onSelect={() => {
+                            setSelectedSkill(skill.key);
+                            setIsComboboxOpen(false);
+                          }}
+                          className="text-bone-white data-[selected=true]:bg-aged-gold data-[selected=true]:text-deep-black cursor-pointer"
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              selectedSkill === skill.key ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          <span className="flex-1">{skill.name}</span>
+                          <span className="text-aged-parchment ml-2">{skill.value}%</span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            <Button
+              onClick={performCustomRoll}
+              className="w-full bg-blood-burgundy hover:bg-dark-crimson text-bone-white transition-colors"
+              data-testid="button-custom-roll"
+              disabled={!selectedSkill}
+            >
+              <Dice6 className="mr-2 h-4 w-4" />
+              Lancer
+            </Button>
           </div>
         </div>
 

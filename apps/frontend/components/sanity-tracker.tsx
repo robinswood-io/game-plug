@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { rollDice } from "@/lib/dice";
 import { Brain, AlertTriangle, Eye, Skull } from "lucide-react";
@@ -22,6 +23,7 @@ interface SanityTrackerProps {
 export default function SanityTracker({ character }: SanityTrackerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [madnessModalOpen, setMadnessModalOpen] = useState(false);
   
   const sanityPercentage = (character.sanity / character.maxSanity) * 100;
@@ -218,38 +220,40 @@ export default function SanityTracker({ character }: SanityTrackerProps) {
             </Button>
           </div>
 
-          {/* Emergency Actions for GM */}
-          <div className="border-t border-aged-gold pt-3">
-            <p className="text-xs text-aged-parchment mb-2 text-center">
-              Actions d'urgence (utilisation limitée)
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                onClick={() => {
-                  console.log('[SanityTracker] +1 Button clicked');
-                  updateSanityMutation.mutate(character.sanity + 1);
-                }}
-                disabled={character.sanity >= character.maxSanity}
-                size="sm"
-                className="bg-eldritch-green hover:bg-green-800 text-bone-white text-xs"
-                data-testid="button-gain-sanity"
-              >
-                +1 Sanité
-              </Button>
-              <Button
-                onClick={() => {
-                  console.log('[SanityTracker] -1 Button clicked');
-                  updateSanityMutation.mutate(character.sanity - 1);
-                }}
-                disabled={character.sanity <= 0}
-                size="sm"
-                className="bg-dark-crimson hover:bg-blood-burgundy text-bone-white text-xs"
-                data-testid="button-lose-sanity"
-              >
-                -1 Sanité
-              </Button>
+          {/* Emergency Actions for GM only */}
+          {user?.isGM && (
+            <div className="border-t border-aged-gold pt-3">
+              <p className="text-xs text-aged-parchment mb-2 text-center">
+                Actions d'urgence (utilisation limitée)
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  onClick={() => {
+                    console.log('[SanityTracker] +1 Button clicked');
+                    updateSanityMutation.mutate(character.sanity + 1);
+                  }}
+                  disabled={character.sanity >= character.maxSanity}
+                  size="sm"
+                  className="bg-eldritch-green hover:bg-green-800 text-bone-white text-xs"
+                  data-testid="button-gain-sanity"
+                >
+                  +1 Sanité
+                </Button>
+                <Button
+                  onClick={() => {
+                    console.log('[SanityTracker] -1 Button clicked');
+                    updateSanityMutation.mutate(character.sanity - 1);
+                  }}
+                  disabled={character.sanity <= 0}
+                  size="sm"
+                  className="bg-dark-crimson hover:bg-blood-burgundy text-bone-white text-xs"
+                  data-testid="button-lose-sanity"
+                >
+                  -1 Sanité
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 

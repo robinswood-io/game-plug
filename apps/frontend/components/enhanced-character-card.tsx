@@ -669,28 +669,66 @@ function EnhancedCharacterCard({
                   <div className="grid grid-cols-2 gap-1">
                     <Button
                       size="sm"
-                      onClick={() => onApplyBuff("Premiers Soins", 3)}
+                      onClick={() => {
+                        console.log('🏥 Soins +1d3 button clicked');
+                        const result = rollDice("1d3");
+                        console.log('🏥 Rolled 1d3:', result);
+                        onApplyBuff("Premiers Soins", result.total);
+                        toast({
+                          title: `${character.name} - Premiers Soins`,
+                          description: `1d3: ${result.total} PV récupérés`,
+                          className: "bg-eldritch-green/20 border-eldritch-green"
+                        });
+                      }}
                       className="h-7 text-xs bg-green-600 hover:bg-green-700"
                     >
                       Soins +1d3
                     </Button>
                     <Button
                       size="sm"
-                      onClick={() => onApplyBuff("Repos", 4)}
+                      onClick={() => {
+                        console.log('😴 Repos +1d4 button clicked');
+                        const result = rollDice("1d4");
+                        console.log('😴 Rolled 1d4:', result);
+                        onApplyBuff("Repos", result.total);
+                        toast({
+                          title: `${character.name} - Repos`,
+                          description: `1d4: ${result.total} PV récupérés`,
+                          className: "bg-indigo-600/20 border-indigo-600"
+                        });
+                      }}
                       className="h-7 text-xs bg-indigo-600 hover:bg-indigo-700"
                     >
                       Repos +1d4
                     </Button>
                     <Button
                       size="sm"
-                      onClick={() => onApplyBuff("Thérapie", 4)}
+                      onClick={() => {
+                        console.log('🧠 Thérapie +1d4 button clicked');
+                        const result = rollDice("1d4");
+                        console.log('🧠 Rolled 1d4:', result);
+                        onApplyBuff("Thérapie", result.total);
+                        toast({
+                          title: `${character.name} - Thérapie`,
+                          description: `1d4: ${result.total} SAN récupérés`,
+                          className: "bg-purple-600/20 border-purple-600"
+                        });
+                      }}
                       className="h-7 text-xs bg-purple-500 hover:bg-purple-600"
                     >
                       SAN +1d4
                     </Button>
                     <Button
                       size="sm"
-                      onClick={() => onApplyDebuff("Blessure Grave", 0)}
+                      onClick={() => {
+                        console.log('⚔️ Blessure Grave button clicked');
+                        onApplyDebuff("Blessure Grave", 0);
+                        toast({
+                          title: `${character.name} - Blessure Grave`,
+                          description: "Blessure appliquée",
+                          className: "bg-blood-burgundy/20 border-blood-burgundy"
+                        });
+                      }}
                       className="h-7 text-xs bg-blood-burgundy hover:bg-dark-crimson"
                     >
                       Blessure

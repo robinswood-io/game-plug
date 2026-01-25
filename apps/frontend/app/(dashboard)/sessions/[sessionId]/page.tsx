@@ -617,6 +617,30 @@ export default function GMDashboard() {
                       className: "bg-yellow-900/20 border-yellow-600"
                     });
                   }}
+                  onUpdateMagicPoints={async (amount) => {
+                    await apiRequest("PATCH", `/api/characters/${character.id}`, {
+                      magicPoints: amount
+                    });
+
+                    // Mutation optimiste : mise à jour locale sans re-fetch
+                    queryClient.setQueryData(
+                      ["/api/sessions", sessionId, "characters"],
+                      (old: CharacterWithDetails[] | undefined) => {
+                        if (!old) return old;
+                        return old.map(char =>
+                          char.id === character.id
+                            ? { ...char, magicPoints: amount }
+                            : char
+                        );
+                      }
+                    );
+
+                    toast({
+                      title: "Points de Magie mis à jour",
+                      description: `${character.name} possède maintenant ${amount}/${character.maxMagicPoints} PM`,
+                      className: "bg-cyan-900/20 border-cyan-600"
+                    });
+                  }}
                   onRollSkill={(skillName, skillValue) => {
                     playRoll();
                     const result = Math.floor(Math.random() * 100) + 1;
