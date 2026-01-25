@@ -7,6 +7,33 @@
 
 Plateforme web complète pour jouer à **Call of Cthulhu 7ème édition** avec tableaux blancs collaboratifs, système de dés avancé, gestion de personnages et outils de maître de jeu temps réel.
 
+## ⚠️ IMPORTANT: NPM Workspaces Monorepo
+
+Ce projet utilise **NPM Workspaces**. L'installation des dépendances DOIT se faire depuis la **RACINE** du projet.
+
+### 📚 Guides de Déploiement
+
+| Guide | Usage | Audience |
+|-------|-------|----------|
+| **[QUICK_START.md](./QUICK_START.md)** | 5 commandes essentielles | Déploiement rapide |
+| **[AI_AGENT_README.md](./AI_AGENT_README.md)** | Instructions pour agents automatiques | IA/Bots |
+| **[README-DEPLOY-PROD.md](./README-DEPLOY-PROD.md)** | Guide complet de déploiement | Production |
+| **[BUILD_INSTRUCTIONS_FOR_AI.md](./BUILD_INSTRUCTIONS_FOR_AI.md)** | Instructions détaillées | Agents IA |
+| **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** | Résolution de problèmes | Debug |
+
+### ⚡ Installation Rapide
+
+```bash
+# À la RACINE du projet (PAS dans apps/frontend ou apps/backend)
+npm install
+
+# Build
+cd apps/backend && npm run build && cd ../..
+cd apps/frontend && npm run build && cd ../..
+```
+
+**⚠️ NE PAS faire:** `cd apps/frontend && npm install` → Erreur garantie
+
 ## Table des Matières
 
 - [Fonctionnalités](#fonctionnalités)

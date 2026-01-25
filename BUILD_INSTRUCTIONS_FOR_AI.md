@@ -1,5 +1,28 @@
 # Instructions de Build pour IA/Agent de Déploiement
 
+## 🚨 ERREURS COMMUNES - LIRE EN PREMIER
+
+### ❌ Erreur: "Cannot find module 'tailwindcss'"
+```
+Module not found: Can't resolve 'tailwindcss'
+```
+**CAUSE:** Vous avez fait `npm install` depuis `apps/frontend/` au lieu de la racine
+**SOLUTION:** Voir section "Diagnostic Problèmes Courants" ci-dessous
+
+### ❌ Erreur: "Only 209-212 packages installed"
+```
+added 209 packages, and audited 212 packages
+```
+**CAUSE:** Installation depuis sous-dossier (apps/frontend ou apps/backend)
+**SOLUTION:** TOUJOURS installer depuis `/chemin/vers/game-plug` (racine)
+
+### ❌ Erreur: "@shared/schema not found"
+```
+Cannot find module '@shared/schema'
+```
+**CAUSE:** Dépendances non installées depuis racine
+**SOLUTION:** `cd /chemin/racine && npm install`
+
 ## ⚠️ ATTENTION: Ce projet utilise NPM WORKSPACES
 
 **NE PAS** faire `cd apps/frontend && npm install`
