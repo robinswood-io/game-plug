@@ -177,7 +177,10 @@ function EnhancedCharacterCard({
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => onApplyDamage(1)}
+                onClick={() => {
+                  const newHP = Math.max(0, character.hitPoints - 1);
+                  onApplyBuff("PV", newHP - character.hitPoints);
+                }}
                 className="h-5 px-1 flex-1 hover:bg-blood-burgundy/20 text-blood-burgundy"
                 data-testid={`button-hp-minus-${character.id}`}
               >
@@ -186,7 +189,10 @@ function EnhancedCharacterCard({
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => onApplyDamage(-1)}
+                onClick={() => {
+                  const newHP = Math.min(character.maxHitPoints, character.hitPoints + 1);
+                  onApplyBuff("PV", newHP - character.hitPoints);
+                }}
                 className="h-5 px-1 flex-1 hover:bg-eldritch-green/20 text-eldritch-green"
                 data-testid={`button-hp-plus-${character.id}`}
               >
@@ -208,7 +214,10 @@ function EnhancedCharacterCard({
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => onApplySanity(1)}
+                onClick={() => {
+                  const newSAN = Math.max(0, character.sanity - 1);
+                  onApplyBuff("SAN", newSAN - character.sanity);
+                }}
                 className="h-5 px-1 flex-1 hover:bg-purple-600/20 text-purple-600"
                 data-testid={`button-san-minus-${character.id}`}
               >
@@ -217,7 +226,10 @@ function EnhancedCharacterCard({
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => onApplySanity(-1)}
+                onClick={() => {
+                  const newSAN = Math.min(character.maxSanity, character.sanity + 1);
+                  onApplyBuff("SAN", newSAN - character.sanity);
+                }}
                 className="h-5 px-1 flex-1 hover:bg-eldritch-green/20 text-eldritch-green"
                 data-testid={`button-san-plus-${character.id}`}
               >
