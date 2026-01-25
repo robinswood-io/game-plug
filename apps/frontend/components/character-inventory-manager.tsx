@@ -150,7 +150,7 @@ export default function CharacterInventoryManager({ characterId, isGM = false }:
   const updateMoneyMutation = useMutation({
     mutationFn: async (newAmount: number) => {
       const response = await apiRequest("PATCH", `/api/characters/${characterId}`, {
-        money: newAmount
+        money: newAmount.toFixed(2)
       });
       return response.json();
     },

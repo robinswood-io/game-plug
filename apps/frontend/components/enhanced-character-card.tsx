@@ -327,7 +327,7 @@ function EnhancedCharacterCard({
           <div className="flex gap-1">
             <Input
               type="text"
-              placeholder="Dégâts"
+              placeholder="PV (+/-)"
               value={quickDamage}
               onChange={(e) => setQuickDamage(e.target.value)}
               className="h-8 text-xs bg-cosmic-void border-blood-burgundy/50"
@@ -337,24 +337,27 @@ function EnhancedCharacterCard({
               size="sm"
               onClick={() => {
                 if (quickDamage) {
-                  const damage = quickDamage.includes('d') 
-                    ? handleQuickRoll(quickDamage, "Dégâts")
-                    : parseInt(quickDamage);
-                  onApplyDamage(damage);
+                  if (quickDamage.includes('d')) {
+                    const damage = handleQuickRoll(quickDamage, "Dégâts");
+                    onApplyBuff("PV", -damage);
+                  } else {
+                    const value = parseInt(quickDamage);
+                    onApplyBuff("PV", value);
+                  }
                   setQuickDamage("");
                 }
               }}
               className="h-8 px-2 bg-blood-burgundy hover:bg-dark-crimson"
               data-testid={`button-apply-damage-${character.id}`}
             >
-              <TrendingDown className="h-3 w-3" />
+              <Heart className="h-3 w-3" />
             </Button>
           </div>
           
           <div className="flex gap-1">
             <Input
               type="text"
-              placeholder="Sanité"
+              placeholder="SAN (+/-)"
               value={quickSanity}
               onChange={(e) => setQuickSanity(e.target.value)}
               className="h-8 text-xs bg-cosmic-void border-purple-600/50"
@@ -364,10 +367,13 @@ function EnhancedCharacterCard({
               size="sm"
               onClick={() => {
                 if (quickSanity) {
-                  const sanity = quickSanity.includes('d')
-                    ? handleQuickRoll(quickSanity, "Perte SAN")
-                    : parseInt(quickSanity);
-                  onApplySanity(sanity);
+                  if (quickSanity.includes('d')) {
+                    const sanity = handleQuickRoll(quickSanity, "Perte SAN");
+                    onApplyBuff("SAN", -sanity);
+                  } else {
+                    const value = parseInt(quickSanity);
+                    onApplyBuff("SAN", value);
+                  }
                   setQuickSanity("");
                 }
               }}
