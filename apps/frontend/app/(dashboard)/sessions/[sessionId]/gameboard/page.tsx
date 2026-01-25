@@ -72,7 +72,7 @@ export default function GameBoard() {
     enabled: !!sessionId,
   });
 
-  const { data: characters = [] } = useQuery<CharacterWithDetails[]>({
+  const { data: charactersData = [] } = useQuery<CharacterWithDetails[]>({
     queryKey: ["/api/sessions", sessionId, "characters"],
     queryFn: async () => {
       const res = await apiRequest("GET", `/api/sessions/${sessionId}/characters`);
@@ -80,6 +80,9 @@ export default function GameBoard() {
     },
     enabled: !!sessionId,
   });
+
+  // Tri stable par ID pour éviter la réorganisation lors des re-fetch
+  const characters = [...charactersData].sort((a, b) => a.id.localeCompare(b.id));
 
   // WebSocket setup - join session room as gameboard
   useEffect(() => {

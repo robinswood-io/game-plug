@@ -125,7 +125,7 @@ export default function GMDashboard() {
   });
 
   // Fetch characters with details
-  const { data: characters = [], isLoading: isLoadingCharacters } = useQuery<CharacterWithDetails[]>({
+  const { data: charactersData = [], isLoading: isLoadingCharacters } = useQuery<CharacterWithDetails[]>({
     queryKey: ["/api/sessions", sessionId, "characters"],
     queryFn: async () => {
       const res = await apiRequest("GET", `/api/sessions/${sessionId}/characters`);
@@ -133,6 +133,9 @@ export default function GMDashboard() {
     },
     enabled: !!sessionId,
   });
+
+  // Tri stable par ID pour préserver l'ordre lors des mutations optimistes
+  const characters = [...charactersData].sort((a, b) => a.id.localeCompare(b.id));
 
   // Delete character mutation
   const deleteCharacterMutation = useMutation({
@@ -473,7 +476,20 @@ export default function GMDashboard() {
                       type: "damage",
                       value: value.toString()
                     });
-                    queryClient.invalidateQueries({ queryKey: ["/api/sessions", sessionId, "characters"] });
+
+                    // Mutation optimiste : mise à jour locale sans re-fetch
+                    queryClient.setQueryData(
+                      ["/api/sessions", sessionId, "characters"],
+                      (old: CharacterWithDetails[] | undefined) => {
+                        if (!old) return old;
+                        return old.map(char =>
+                          char.id === character.id
+                            ? { ...char, hitPoints: Math.max(0, char.hitPoints - value) }
+                            : char
+                        );
+                      }
+                    );
+
                     toast({
                       title: "Dégâts appliqués",
                       description: `${value} points de dégâts à ${character.name}`,
@@ -486,7 +502,20 @@ export default function GMDashboard() {
                       type: "sanity_loss",
                       value: value.toString()
                     });
-                    queryClient.invalidateQueries({ queryKey: ["/api/sessions", sessionId, "characters"] });
+
+                    // Mutation optimiste : mise à jour locale sans re-fetch
+                    queryClient.setQueryData(
+                      ["/api/sessions", sessionId, "characters"],
+                      (old: CharacterWithDetails[] | undefined) => {
+                        if (!old) return old;
+                        return old.map(char =>
+                          char.id === character.id
+                            ? { ...char, sanity: Math.max(0, char.sanity - value) }
+                            : char
+                        );
+                      }
+                    );
+
                     toast({
                       title: "Sanité perdue",
                       description: `${value} points de sanité perdus pour ${character.name}`,
@@ -510,7 +539,30 @@ export default function GMDashboard() {
                       value: Math.abs(value).toString(),
                       duration: duration || 0
                     });
-                    queryClient.invalidateQueries({ queryKey: ["/api/sessions", sessionId, "characters"] });
+
+                    // Mutation optimiste : mise à jour locale sans re-fetch
+                    queryClient.setQueryData(
+                      ["/api/sessions", sessionId, "characters"],
+                      (old: CharacterWithDetails[] | undefined) => {
+                        if (!old) return old;
+                        return old.map(char => {
+                          if (char.id !== character.id) return char;
+
+                          // Calculer les nouvelles valeurs
+                          let updatedChar = { ...char };
+                          if (name === "PV") {
+                            updatedChar.hitPoints = Math.max(0, Math.min(char.maxHitPoints, char.hitPoints + value));
+                          } else if (name === "SAN") {
+                            updatedChar.sanity = Math.max(0, Math.min(char.maxSanity, char.sanity + value));
+                          } else if (name === "PM" || name === "Points de Magie") {
+                            updatedChar.magicPoints = Math.max(0, Math.min(char.maxMagicPoints, char.magicPoints + value));
+                          }
+
+                          return updatedChar;
+                        });
+                      }
+                    );
+
                     toast({
                       title: value > 0 ? "Bonus appliqué" : "Malus appliqué",
                       description: `${name} (${value > 0 ? '+' : ''}${value}) pour ${character.name}`,
@@ -545,7 +597,20 @@ export default function GMDashboard() {
                     await apiRequest("PATCH", `/api/characters/${character.id}`, {
                       money: amount.toString()
                     });
-                    queryClient.invalidateQueries({ queryKey: ["/api/sessions", sessionId, "characters"] });
+
+                    // Mutation optimiste : mise à jour locale sans re-fetch
+                    queryClient.setQueryData(
+                      ["/api/sessions", sessionId, "characters"],
+                      (old: CharacterWithDetails[] | undefined) => {
+                        if (!old) return old;
+                        return old.map(char =>
+                          char.id === character.id
+                            ? { ...char, money: amount.toString() }
+                            : char
+                        );
+                      }
+                    );
+
                     toast({
                       title: "Argent mis à jour",
                       description: `${character.name} possède maintenant $${amount}`,
