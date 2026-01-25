@@ -26,6 +26,14 @@ export class SessionsService {
     return session;
   }
 
+  async findOneForGm(id: string, gmId: string) {
+    const session = await this.findOne(id);
+    if (session.gmId !== gmId) {
+      throw new NotFoundException(`Session ${id} not found`);
+    }
+    return session;
+  }
+
   async findByJoinCode(code: string) {
     const session = await this.db.db.query.gameSessions.findFirst({
       where: eq(gameSessions.code, code.toUpperCase()),
@@ -316,5 +324,14 @@ export class SessionsService {
     );
 
     return charactersWithDetails;
+  }
+
+  async getCharactersForGm(sessionId: string, gmId: string) {
+    // Verify GM owns this session
+    const session = await this.findOne(sessionId);
+    if (session.gmId !== gmId) {
+      throw new NotFoundException(`Session ${sessionId} not found`);
+    }
+    return this.getCharacters(sessionId);
   }
 }

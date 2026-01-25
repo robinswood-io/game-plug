@@ -149,10 +149,23 @@ export default function GameBoard() {
     return "border-eldritch-green bg-eldritch-green/10";
   };
 
+  // Show loading state
   if (!session) {
+    if (!isConnected) {
+      return (
+        <div className="min-h-screen bg-deep-black flex items-center justify-center">
+          <div className="text-aged-parchment font-cinzel text-2xl">Chargement de la session...</div>
+        </div>
+      );
+    }
+    // Show error state if session fetch failed but we're still connected
     return (
       <div className="min-h-screen bg-deep-black flex items-center justify-center">
-        <div className="text-blood-burgundy font-cinzel text-2xl">Session introuvable</div>
+        <div className="text-center">
+          <div className="text-blood-burgundy font-cinzel text-2xl mb-4">Erreur lors du chargement</div>
+          <div className="text-aged-parchment text-lg">La session demandée est introuvable ou inaccessible.</div>
+          <div className="text-aged-parchment/50 text-sm mt-2">Session ID: {sessionId}</div>
+        </div>
       </div>
     );
   }

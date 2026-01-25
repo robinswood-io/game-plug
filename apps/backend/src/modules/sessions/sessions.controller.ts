@@ -49,8 +49,10 @@ export class SessionsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get session by ID' })
   @ApiResponse({ status: 200, description: 'Session details' })
-  async findOne(@Param('id') id: string) {
-    return this.sessionsService.findOne(id);
+  @ApiResponse({ status: 404, description: 'Session not found' })
+  async findOne(@Param('id') id: string, @Req() req: any) {
+    const gmId = req.user.id;
+    return this.sessionsService.findOneForGm(id, gmId);
   }
 
   @Get(':id/characters')
@@ -60,8 +62,9 @@ export class SessionsController {
   @ApiParam({ name: 'id', description: 'Session ID' })
   @ApiResponse({ status: 200, description: 'List of characters with sanity conditions and active effects' })
   @ApiResponse({ status: 404, description: 'Session not found' })
-  async getSessionCharacters(@Param('id') id: string) {
-    return this.sessionsService.getCharacters(id);
+  async getSessionCharacters(@Param('id') id: string, @Req() req: any) {
+    const gmId = req.user.id;
+    return this.sessionsService.getCharactersForGm(id, gmId);
   }
 
   @Get(':sessionId/importable-characters')
