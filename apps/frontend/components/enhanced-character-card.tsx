@@ -602,7 +602,39 @@ function EnhancedCharacterCard({
                   </Button>
                   <Button
                     size="sm"
-                    onClick={() => handleQuickRoll("1d6", "Dégâts")}
+                    onClick={async () => {
+                      console.log('❤️ 1d6 Damage button clicked');
+                      const rollResult = rollDice("1d6");
+                      console.log('❤️ Rolled 1d6:', rollResult);
+
+                      // Play sound
+                      playRoll();
+
+                      // Show the roll result
+                      toast({
+                        title: `${character.name} - Dégâts`,
+                        description: `1d6: ${rollResult.total}`,
+                        className: "bg-blood-burgundy/20 border-blood-burgundy"
+                      });
+
+                      // Apply damage to HP (negative value reduces HP)
+                      console.log('❤️ Applying damage:', -rollResult.total);
+                      onApplyBuff("PV", -rollResult.total);
+
+                      // Record the roll in database
+                      try {
+                        await apiRequest("POST", "/api/rolls", {
+                          characterId: character.id,
+                          sessionId: character.sessionId,
+                          rollType: 'custom',
+                          skillName: 'Dégâts 1d6',
+                          diceFormula: '1d6',
+                          isGmRoll: false
+                        });
+                      } catch (error) {
+                        console.error("Failed to record roll:", error);
+                      }
+                    }}
                     className="h-8 text-xs bg-blood-burgundy hover:bg-dark-crimson"
                   >
                     <Heart className="mr-1 h-3 w-3" />
