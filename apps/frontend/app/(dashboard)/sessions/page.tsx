@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,8 +56,7 @@ export default function SessionManager() {
   const { data: sessions = [], isLoading: sessionsLoading } = useQuery<GameSession[]>({
     queryKey: ["/api/sessions"],
     queryFn: async () => {
-      const res = await fetch("/api/sessions");
-      if (!res.ok) throw new Error("Failed to fetch sessions");
+      const res = await apiRequest("GET", "/api/sessions");
       return res.json();
     },
     retry: false,
@@ -65,12 +65,9 @@ export default function SessionManager() {
   // Create session mutation
   const createSessionMutation = useMutation({
     mutationFn: async (data: CreateSessionForm) => {
-      const response = await fetch("/api/sessions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: data.sessionName }),
+      const response = await apiRequest("POST", "/api/sessions", {
+        name: data.sessionName
       });
-      if (!response.ok) throw new Error("Failed to create session");
       return response.json();
     },
     onSuccess: (newSession) => {
@@ -95,12 +92,9 @@ export default function SessionManager() {
   // Toggle session active status
   const toggleSessionMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
-      const response = await fetch(`/api/sessions/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: !isActive }),
+      const response = await apiRequest("PATCH", `/api/sessions/${id}`, {
+        isActive: !isActive
       });
-      if (!response.ok) throw new Error("Failed to update session");
       return response.json();
     },
     onSuccess: () => {
@@ -121,10 +115,7 @@ export default function SessionManager() {
   // Delete session mutation
   const deleteSessionMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/sessions/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Failed to delete session");
+      const response = await apiRequest("DELETE", `/api/sessions/${id}`);
       return response.json();
     },
     onSuccess: () => {

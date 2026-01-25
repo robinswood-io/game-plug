@@ -48,6 +48,16 @@ export default function CharacterCreationPage() {
   const { toast } = useToast();
 
   const [characteristics, setCharacteristics] = useState(rollCharacteristics());
+  const [sessionId, setSessionId] = useState<string | undefined>();
+
+  // Get sessionId from localStorage if available
+  useEffect(() => {
+    const storedSessionId = localStorage.getItem('createCharacterForSession');
+    if (storedSessionId) {
+      setSessionId(storedSessionId);
+      console.log('Creating character for session:', storedSessionId);
+    }
+  }, []);
   const [avatarUrl, setAvatarUrl] = useState<string>('');
   const [isGeneratingAvatar, setIsGeneratingAvatar] = useState(false);
   const [selectedOccupation, setSelectedOccupation] = useState<string>('');
@@ -211,6 +221,13 @@ export default function CharacterCreationPage() {
     },
   });
 
+  // Update form when sessionId is loaded from localStorage
+  useEffect(() => {
+    if (sessionId) {
+      form.setValue('sessionId', sessionId);
+    }
+  }, [sessionId, form]);
+
   const createCharacterMutation = useMutation({
     mutationFn: (data: any) => CharactersService.charactersControllerCreate(data),
     onSuccess: (character: any) => {
@@ -218,7 +235,15 @@ export default function CharacterCreationPage() {
         title: 'Personnage créé',
         description: `${character.name} a été créé avec succès.`,
       });
-      router.push(`/characters/${character.id}`);
+
+      // Clear the stored sessionId and redirect appropriately
+      const createdForSession = localStorage.getItem('createCharacterForSession');
+      if (createdForSession) {
+        localStorage.removeItem('createCharacterForSession');
+        router.push(`/sessions/${createdForSession}`);
+      } else {
+        router.push(`/characters/${character.id}`);
+      }
     },
     onError: (error: any) => {
       console.error('Character creation error:', error); 

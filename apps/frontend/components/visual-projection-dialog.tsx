@@ -30,7 +30,7 @@ export default function VisualProjectionDialog({
   sessionId 
 }: VisualProjectionDialogProps) {
   const { toast } = useToast();
-  const { isConnected, sendMessage } = useWebSocket("/game-ws");
+  const { isConnected, sendMessage } = useWebSocket(true);
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [imagePrompt, setImagePrompt] = useState("");

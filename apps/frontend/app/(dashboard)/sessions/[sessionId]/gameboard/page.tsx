@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -61,12 +62,11 @@ export default function GameBoard() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showPlayerList, setShowPlayerList] = useState(true);
 
-  // Data fetching - no auth required for gameboard (public display)
+  // Data fetching - uses apiRequest for auth
   const { data: session } = useQuery<GameSession>({
     queryKey: ["/api/sessions", sessionId],
     queryFn: async () => {
-      const res = await fetch(`/api/sessions/${sessionId}`);
-      if (!res.ok) throw new Error("Failed to fetch session");
+      const res = await apiRequest("GET", `/api/sessions/${sessionId}`);
       return res.json();
     },
     enabled: !!sessionId,
@@ -75,8 +75,7 @@ export default function GameBoard() {
   const { data: characters = [] } = useQuery<CharacterWithDetails[]>({
     queryKey: ["/api/sessions", sessionId, "characters"],
     queryFn: async () => {
-      const res = await fetch(`/api/sessions/${sessionId}/characters`);
-      if (!res.ok) throw new Error("Failed to fetch characters");
+      const res = await apiRequest("GET", `/api/sessions/${sessionId}/characters`);
       return res.json();
     },
     enabled: !!sessionId,

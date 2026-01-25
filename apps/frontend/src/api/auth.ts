@@ -186,6 +186,8 @@ export const jwtUtils = {
  * À utiliser dans un composant useEffect
  */
 export const setupAutoLogout = (callback?: () => void): (() => void) => {
+  let timeoutId: NodeJS.Timeout | null = null;
+
   const checkTokenExpiration = () => {
     const timeUntilExpiration = tokenStorage.getTimeUntilExpiration();
 
@@ -199,10 +201,12 @@ export const setupAutoLogout = (callback?: () => void): (() => void) => {
     // Configurer un timeout pour vérifier à nouveau avant l'expiration
     // Vérifier 1 minute avant l'expiration
     const warningTime = Math.max(0, timeUntilExpiration - 60000);
-    const timeoutId = setTimeout(checkTokenExpiration, warningTime);
-
-    return () => clearTimeout(timeoutId);
+    timeoutId = setTimeout(checkTokenExpiration, warningTime);
   };
 
-  return checkTokenExpiration();
+  checkTokenExpiration();
+
+  return () => {
+    if (timeoutId) clearTimeout(timeoutId);
+  };
 };

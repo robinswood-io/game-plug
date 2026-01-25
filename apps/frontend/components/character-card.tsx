@@ -143,8 +143,8 @@ function CharacterCard({ character }: CharacterCardProps) {
         </div>
         
         {/* Action Button */}
-        <Link href={`/character/${character.id}`}>
-          <Button 
+        <Link href={`/characters/${character.id}`}>
+          <Button
             className="w-full bg-blood-burgundy hover:bg-dark-crimson text-bone-white font-source transition-colors"
             data-testid={`button-view-character-${character.id}`}
           >

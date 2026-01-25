@@ -26,17 +26,17 @@ export default function LandingPage() {
       if (!response.ok) throw new Error("Dev login failed");
 
       const data = await response.json();
-      
-      localStorage.setItem("auth_token", data.access_token);
+
+      localStorage.setItem("access_token", data.access_token);
       document.cookie = `auth-token=${data.access_token}; path=/; max-age=86400; SameSite=Strict`;
-      
+
       if (role === "player") {
         localStorage.setItem("current_session_code", "TEST01");
         toast({
           title: "Infiltration réussie",
           description: "Vous avez rejoint la session TEST01",
         });
-        router.push("/play/TEST01");
+        router.push("/join/TEST01");
       } else {
         toast({
           title: "Gardien éveillé",

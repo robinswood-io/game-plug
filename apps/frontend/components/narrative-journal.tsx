@@ -36,6 +36,10 @@ export function NarrativeJournal({ sessionId }: NarrativeJournalProps) {
   
   const { data: entries = [], isLoading } = useQuery<NarrativeEntry[]>({
     queryKey: ["/api/sessions", sessionId, "narrative"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/sessions/${sessionId}/narrative`);
+      return response.json();
+    },
   });
 
   const addEntryMutation = useMutation({

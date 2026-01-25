@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -10,9 +10,10 @@ import { Dice6, Loader2 } from "lucide-react";
 export default function JoinWithCodePage({
   params
 }: {
-  params: { code: string }
+  params: Promise<{ code: string }>
 }) {
-  const sessionCode = params.code?.toUpperCase() || "";
+  const { code } = use(params);
+  const sessionCode = code?.toUpperCase() || "";
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +41,7 @@ export default function JoinWithCodePage({
           localStorage.setItem('currentSessionCode', sessionCode);
           localStorage.setItem('currentSessionName', session.name);
 
-          router.push(`/session/${session.id}/select-character`);
+          router.push(`/sessions/${session.id}/select-character`);
         }
       } catch (error: any) {
         console.error("Error joining session:", error);

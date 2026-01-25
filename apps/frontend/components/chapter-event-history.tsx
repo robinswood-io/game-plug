@@ -90,25 +90,21 @@ export default function ChapterEventHistory({ chapterId, sessionId, isGM, charac
   // Fetch chapter events
   const { data: events = [], isLoading } = useQuery<ChapterEvent[]>({
     queryKey: ['/api/chapters', chapterId, 'events'],
-    queryFn: () => fetch(`/api/chapters/${chapterId}/events?limit=50`).then(res => res.json()),
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/chapters/${chapterId}/events?limit=50`);
+      return res.json();
+    },
     enabled: !!chapterId,
   });
 
   // Create event mutation
   const createEventMutation = useMutation({
     mutationFn: async (eventData: any) => {
-      const response = await fetch('/api/chapter-events', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...eventData,
-          chapterId,
-          sessionId,
-        }),
+      const response = await apiRequest("POST", '/api/chapter-events', {
+        ...eventData,
+        chapterId,
+        sessionId,
       });
-      if (!response.ok) throw new Error('Failed to create event');
       return response.json();
     },
     onSuccess: (data) => {
@@ -143,10 +139,7 @@ export default function ChapterEventHistory({ chapterId, sessionId, isGM, charac
   // Delete event mutation
   const deleteEventMutation = useMutation({
     mutationFn: async (eventId: string) => {
-      const response = await fetch(`/api/chapter-events/${eventId}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) throw new Error('Failed to delete event');
+      const response = await apiRequest("DELETE", `/api/chapter-events/${eventId}`);
       return response.json();
     },
     onSuccess: (_, eventId) => {

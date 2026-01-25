@@ -29,19 +29,32 @@ export interface User {
 
 export function useAuth() {
   const { data: user, isLoading, error } = useQuery<User | null>({
-    queryKey: ["/api/auth/user"],
+    queryKey: ["auth", "user"],
     queryFn: async () => {
-      const backendUrl = '' || '';
-      const response = await fetch(`${backendUrl}/api/auth/user`, {
-        credentials: "include", // Include httpOnly cookies with JWT
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      // Get token from localStorage
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+
+      // If no token, return null immediately (not authenticated)
+      if (!token) {
+        return null;
+      }
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      };
+
+      const response = await fetch('/api/auth/user', {
+        credentials: "include",
+        headers,
       });
 
       if (!response.ok) {
         if (response.status === 401) {
-          // Not authenticated - return null instead of throwing
+          // Not authenticated - clear token and return null
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('access_token');
+          }
           return null;
         }
         throw new Error("Failed to fetch user");
@@ -50,9 +63,10 @@ export function useAuth() {
       return response.json();
     },
     retry: false, // Don't retry on 401 (not authenticated)
-    refetchOnWindowFocus: false, // Don't refetch on window focus (JWT doesn't expire that fast)
-    refetchOnMount: true, // Refetch when component mounts
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnMount: false, // Don't refetch on every mount - use staleTime instead
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
 
   // Development logging

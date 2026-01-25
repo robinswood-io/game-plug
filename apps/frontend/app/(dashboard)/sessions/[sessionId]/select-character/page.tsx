@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -55,8 +56,7 @@ export default function SelectCharacter() {
   const { data: session, isLoading: sessionLoading } = useQuery<GameSession>({
     queryKey: ["/api/sessions", sessionId],
     queryFn: async () => {
-      const res = await fetch(`/api/sessions/${sessionId}`);
-      if (!res.ok) throw new Error("Failed to fetch session");
+      const res = await apiRequest("GET", `/api/sessions/${sessionId}`);
       return res.json();
     },
     retry: false,
@@ -66,8 +66,7 @@ export default function SelectCharacter() {
   const { data: characters = [], isLoading: charactersLoading } = useQuery<Character[]>({
     queryKey: ["/api/sessions", sessionId, "characters"],
     queryFn: async () => {
-      const res = await fetch(`/api/sessions/${sessionId}/characters`);
-      if (!res.ok) throw new Error("Failed to fetch characters");
+      const res = await apiRequest("GET", `/api/sessions/${sessionId}/characters`);
       return res.json();
     },
     retry: false,
@@ -88,7 +87,7 @@ export default function SelectCharacter() {
       }
 
       // Navigate to character sheet
-      router.push(`/character/${selectedCharacterId}`);
+      router.push(`/characters/${selectedCharacterId}`);
     } catch (error) {
       toast({
         title: "Erreur",
@@ -103,7 +102,7 @@ export default function SelectCharacter() {
   const handleCreateCharacter = () => {
     // Store session context and redirect to character creation
     localStorage.setItem('createCharacterForSession', sessionId || '');
-    router.push('/create-character');
+    router.push('/characters/new');
   };
 
   const handleLeaveSession = () => {

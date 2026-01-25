@@ -18,7 +18,7 @@ let socket: Socket | null = null;
  */
 export function getSocket(): Socket {
   if (!socket) {
-    const backendUrl = '' || '';
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
     socket = io(`${backendUrl}/game`, {
       path: '/game-ws',

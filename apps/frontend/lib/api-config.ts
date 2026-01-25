@@ -12,18 +12,13 @@ export const configureApiClient = () => {
   OpenAPI.WITH_CREDENTIALS = true;
   OpenAPI.CREDENTIALS = 'include';
 
-  // Add Authorization header if token exists
-  OpenAPI.HEADERS = async () => {
-    const headers: Record<string, string> = {};
-
+  // Configure TOKEN resolver to get from localStorage
+  OpenAPI.TOKEN = async () => {
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('auth_token');
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
+      const token = localStorage.getItem('access_token');
+      return token || '';
     }
-
-    return headers;
+    return '';
   };
 };
 

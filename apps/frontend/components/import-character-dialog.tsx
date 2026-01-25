@@ -33,6 +33,10 @@ export default function ImportCharacterDialog({ open, onOpenChange, sessionId }:
 
   const { data: importableCharacters = [], isLoading } = useQuery<ImportableCharacter[]>({
     queryKey: ["/api/sessions", sessionId, "importable-characters"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/sessions/${sessionId}/importable-characters`);
+      return response.json();
+    },
     enabled: open && !!sessionId,
   });
 
