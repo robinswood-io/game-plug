@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { rollDice } from "@/lib/dice";
@@ -30,36 +30,65 @@ export default function SanityTracker({ character }: SanityTrackerProps) {
 
   const updateSanityMutation = useMutation({
     mutationFn: async (newSanity: number) => {
+      console.log('[SanityTracker] Mutation called with:', newSanity);
+      console.log('[SanityTracker] Character ID:', character.id);
+      const clampedSanity = Math.max(0, Math.min(character.maxSanity, newSanity));
+      console.log('[SanityTracker] Clamped sanity:', clampedSanity);
+
       const response = await apiRequest("PATCH", `/api/characters/${character.id}`, {
-        sanity: Math.max(0, Math.min(character.maxSanity, newSanity))
+        sanity: clampedSanity
       });
+      console.log('[SanityTracker] Response received:', response.status);
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/characters", character.id] });
+    onSuccess: (data) => {
+      console.log('[SanityTracker] SUCCESS! New sanity:', data.sanity);
+      queryClient.invalidateQueries({ queryKey: ['character', character.id] });
       toast({
         title: "Sanité mise à jour",
         description: "La sanité mentale a été modifiée.",
       });
     },
+    onError: (error: Error) => {
+      console.error("[SanityTracker] ERROR:", error);
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de mettre à jour la sanité.",
+        variant: "destructive",
+      });
+    },
   });
 
   const performSanityRoll = () => {
-    const roll = rollDice("1d100");
-    const result = roll.total;
-    const success = result <= character.sanity;
-    
-    toast({
-      title: `Test de Sanité: ${success ? 'Succès' : 'Échec'}`,
-      description: `Résultat: ${result} vs Sanité: ${character.sanity}`,
-      variant: success ? 'default' : 'destructive',
-    });
+    try {
+      console.log('[SanityTracker] performSanityRoll called');
+      console.log('[SanityTracker] Current sanity:', character.sanity);
 
-    if (!success) {
-      // On failure, suggest potential sanity loss
+      const roll = rollDice("1d100");
+      const result = roll.total;
+      const success = result <= character.sanity;
+
+      console.log('[SanityTracker] Roll result:', result, 'Success:', success);
+
       toast({
-        title: "Échec du test de sanité",
-        description: "Le Maître de Jeu détermine la perte de sanité mentale.",
+        title: `Test de Sanité: ${success ? 'Succès' : 'Échec'}`,
+        description: `Résultat: ${result} vs Sanité: ${character.sanity}`,
+        variant: success ? 'default' : 'destructive',
+      });
+
+      if (!success) {
+        // On failure, suggest potential sanity loss
+        toast({
+          title: "Échec du test de sanité",
+          description: "Le Maître de Jeu détermine la perte de sanité mentale.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('[SanityTracker] Error in performSanityRoll:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'effectuer le test de sanité.",
         variant: "destructive",
       });
     }
@@ -196,7 +225,10 @@ export default function SanityTracker({ character }: SanityTrackerProps) {
             </p>
             <div className="grid grid-cols-2 gap-2">
               <Button
-                onClick={() => updateSanityMutation.mutate(character.sanity + 1)}
+                onClick={() => {
+                  console.log('[SanityTracker] +1 Button clicked');
+                  updateSanityMutation.mutate(character.sanity + 1);
+                }}
                 disabled={character.sanity >= character.maxSanity}
                 size="sm"
                 className="bg-eldritch-green hover:bg-green-800 text-bone-white text-xs"
@@ -205,7 +237,10 @@ export default function SanityTracker({ character }: SanityTrackerProps) {
                 +1 Sanité
               </Button>
               <Button
-                onClick={() => updateSanityMutation.mutate(character.sanity - 1)}
+                onClick={() => {
+                  console.log('[SanityTracker] -1 Button clicked');
+                  updateSanityMutation.mutate(character.sanity - 1);
+                }}
                 disabled={character.sanity <= 0}
                 size="sm"
                 className="bg-dark-crimson hover:bg-blood-burgundy text-bone-white text-xs"
@@ -226,6 +261,9 @@ export default function SanityTracker({ character }: SanityTrackerProps) {
               <Skull className="mr-2 h-5 w-5" />
               Conditions Mentales
             </DialogTitle>
+            <DialogDescription className="text-aged-parchment">
+              Liste des phobies et manies affectant l'investigateur
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">

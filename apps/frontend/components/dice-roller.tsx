@@ -279,13 +279,37 @@ export default function DiceRoller({ character }: DiceRollerProps) {
     setManualResult(50);
   };
 
+  const updateSanityMutation = useMutation({
+    mutationFn: async (newSanity: number) => {
+      const clampedSanity = Math.max(0, Math.min(character.maxSanity, newSanity));
+      const response = await apiRequest("PATCH", `/api/characters/${character.id}`, {
+        sanity: clampedSanity
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['character', character.id] });
+      toast({
+        title: "Sanité mise à jour",
+        description: `Nouvelle sanité: ${data.sanity}`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de mettre à jour la sanité.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const performSanityCheck = () => {
     const roll = rollDice("1d100");
     const result = roll.total;
     const sanityValue = character.sanity;
-    
+
     const success = result <= sanityValue;
-    
+
     setLastRoll({
       result,
       outcome: success ? 'success' : 'failure',
@@ -305,11 +329,35 @@ export default function DiceRoller({ character }: DiceRollerProps) {
       isGmRoll: false
     });
 
-    toast({
-      title: `Test de Sanité: ${success ? 'Succès' : 'Échec'}`,
-      description: `Résultat: ${result} (sanité: ${sanityValue})`,
-      variant: success ? 'default' : 'destructive',
-    });
+    // Si échec, demander la perte de sanité
+    if (!success) {
+      const defaultLoss = Math.floor(Math.random() * 3) + 1; // 1-3 points de perte par défaut
+      const sanityLoss = prompt(`Échec du test ! Combien de points de sanité perdre ?`, defaultLoss.toString());
+
+      if (sanityLoss && !isNaN(parseInt(sanityLoss))) {
+        const loss = parseInt(sanityLoss);
+        const newSanity = Math.max(0, character.sanity - loss);
+        updateSanityMutation.mutate(newSanity);
+
+        toast({
+          title: `Test de Sanité: Échec`,
+          description: `Résultat: ${result} (sanité: ${sanityValue})\nPerte: -${loss} points → ${newSanity}`,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: `Test de Sanité: Échec`,
+          description: `Résultat: ${result} (sanité: ${sanityValue})\nLe MJ détermine la perte.`,
+          variant: 'destructive',
+        });
+      }
+    } else {
+      toast({
+        title: `Test de Sanité: Succès`,
+        description: `Résultat: ${result} (sanité: ${sanityValue})`,
+        variant: 'default',
+      });
+    }
   };
 
   const performCustomRoll = () => {
