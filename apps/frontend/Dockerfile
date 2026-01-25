@@ -1,27 +1,27 @@
 # =============================================================================
-# Multi-stage Dockerfile for Next.js 16 Frontend
+# Multi-stage Dockerfile for Next.js 16 Frontend (using Bun runtime)
 # =============================================================================
 # This Dockerfile uses a multi-stage approach to minimize the final image size
-# Stage 1: Dependencies - Install all dependencies
-# Stage 2: Build - Compile Next.js application
-# Stage 3: Production - Minimal runtime image with only production dependencies
+# Stage 1: Dependencies - Install all dependencies using bun
+# Stage 2: Build - Compile Next.js application with bun
+# Stage 3: Production - Minimal runtime image with bun runtime
 
 # =============================================================================
 # Stage 1: Dependencies
 # =============================================================================
-FROM node:20-alpine AS deps
+FROM oven/bun:1-alpine AS deps
 WORKDIR /app
 
 # Copy package files
-COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* ./
+COPY package.json package-lock.json* bun.lockb* ./
 
 # Install all dependencies (including devDependencies for build)
-RUN npm ci || npm install
+RUN bun install
 
 # =============================================================================
 # Stage 2: Builder
 # =============================================================================
-FROM node:20-alpine AS builder
+FROM oven/bun:1-alpine AS builder
 WORKDIR /app
 
 # Build arguments
@@ -39,17 +39,17 @@ ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NODE_ENV=${NODE_ENV}
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Build the Next.js application
-RUN npm run build
+# Build the Next.js application using bun
+RUN bun run build
 
 # =============================================================================
 # Stage 3: Production Runtime
 # =============================================================================
-FROM node:20-alpine
+FROM oven/bun:1-alpine
 
 WORKDIR /app
 
-# Install production dependencies only and dumb-init
+# Install dumb-init for proper signal handling
 RUN apk add --no-cache dumb-init && rm -rf /var/cache/apk/*
 
 # Create non-root user for security
@@ -75,12 +75,12 @@ EXPOSE 3000
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Health check
+# Health check using bun
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:3000 || exit 1
+  CMD bun run --no-install wget --quiet --tries=1 --spider http://localhost:3000 || exit 1
 
 # Use dumb-init to properly handle signals
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start Next.js application
-CMD ["npm", "run", "start"]
+# Start Next.js application using bun
+CMD ["bun", "run", "start"]
