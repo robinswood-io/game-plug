@@ -139,3 +139,19 @@ verify-*.sh
 bmad/
 apps/frontend/api/
 apps/frontend/public/test-*.html
+
+# Documentation et guides généraux
+*_GUIDE.md
+*DEPLOYMENT*.md
+*PRODUCTION*.md
+*READINESS*.md
+*COMPLETION*.md
+*DECISION*.md
+*INSTRUCTIONS*.md
+*ISSUES*.md
+*RESULTS*.md
+*STORIES.md
+*INDEX.md
+CORRECTED_*.md
+CRITICAL_*.md
+scripts/build-production.sh
