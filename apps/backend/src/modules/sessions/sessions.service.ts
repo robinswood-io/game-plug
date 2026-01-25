@@ -99,13 +99,14 @@ export class SessionsService {
     // Get all sessions owned by this GM
     const gmSessions = await this.findAll(gmId);
 
-    // Get all characters from GM's other sessions
+    // Get all characters from GM's other sessions, sorted by creation date
     const charactersFromOtherSessions = await Promise.all(
       gmSessions
         .filter(s => s.id !== sessionId)
         .map(async (s) => {
           const chars = await this.db.db.query.characters.findMany({
             where: eq(characters.sessionId, s.id as any),
+            orderBy: (chars, { asc }) => asc(chars.createdAt),
           });
           return chars.map(char => ({
             ...char,
@@ -288,9 +289,10 @@ export class SessionsService {
   }
 
   async getCharacters(sessionId: string) {
-    // Get all characters in the session
+    // Get all characters in the session, sorted by creation date (stable sort)
     const sessionCharacters = await this.db.db.query.characters.findMany({
       where: eq(characters.sessionId, sessionId),
+      orderBy: (chars, { asc }) => asc(chars.createdAt),
     });
 
     // Get sanity conditions and active effects for each character
