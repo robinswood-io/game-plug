@@ -10,7 +10,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiParam } from '@ne
 import { AiService } from './ai.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import {
-  GenerateAvatarDto,
+  GenerateGenericAvatarDto,
   GenerateSceneDto,
   SuggestNarrativeDto,
   GenerateCharacterAvatarDto,
@@ -33,7 +33,7 @@ export class AiController {
   @ApiResponse({ status: 201, description: 'Avatar generated successfully' })
   @ApiResponse({ status: 400, description: 'Invalid avatar generation parameters' })
   @ApiResponse({ status: 403, description: 'Permission denied or quota exceeded' })
-  async generateAvatar(@Body() dto: GenerateAvatarDto) {
+  async generateAvatar(@Body() dto: GenerateGenericAvatarDto) {
     return this.aiService.generateAvatar(dto);
   }
 

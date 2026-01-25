@@ -4,7 +4,7 @@ import { AiOpenAiService } from './services';
 import { eq } from 'drizzle-orm';
 import * as schema from '@shared/schema';
 import {
-  GenerateAvatarDto,
+  GenerateGenericAvatarDto,
   GenerateSceneDto,
   SuggestNarrativeDto,
   GenerateCharacterAvatarDto,
@@ -21,7 +21,7 @@ export class AiService {
     private readonly openAiService: AiOpenAiService,
   ) {}
 
-  async generateAvatar(dto: GenerateAvatarDto) {
+  async generateAvatar(dto: GenerateGenericAvatarDto) {
     const prompt = this.buildAvatarPrompt(dto);
 
     try {
@@ -411,7 +411,7 @@ export class AiService {
     };
   }
 
-  private buildAvatarPrompt(dto: GenerateAvatarDto): string {
+  private buildAvatarPrompt(dto: GenerateGenericAvatarDto): string {
     let prompt = `Portrait of ${dto.characterName}, a ${dto.occupation}`;
 
     if (dto.age) prompt += `, ${dto.age} years old`;
