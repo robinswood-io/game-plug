@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { motion } from "framer-motion";
 import {
-  Users, Copy, QrCode, Share2, Settings, Package,
+  Users, Copy, Share2, Settings, Package,
   Plus, Monitor, BookOpen, Trash2
 } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
@@ -270,16 +270,6 @@ export default function GMDashboard() {
               icon={<Users className="h-4 w-4" />}
             >
               Inviter Joueurs
-            </EnhancedButton>
-
-            <EnhancedButton
-              size="sm"
-              variant="outline"
-              onClick={() => setShowQRDialog(true)}
-              className="border-aged-gold text-aged-gold hover:bg-cosmic-void"
-              icon={<QrCode className="h-4 w-4" />}
-            >
-              Partager (QR)
             </EnhancedButton>
 
             {/* GameBoard Button */}
