@@ -40,6 +40,7 @@ interface EnhancedCharacterCardProps {
   onRollSkill: (skillName: string, skillValue: number) => void;
   onRollCharacteristic: (characteristic: string, value: number) => void;
   onUpdateMoney?: (amount: number) => void;
+  onUpdateMagicPoints?: (amount: number) => void;
   isConnected: boolean;
 }
 
@@ -56,6 +57,7 @@ function EnhancedCharacterCard({
   onRollSkill,
   onRollCharacteristic,
   onUpdateMoney,
+  onUpdateMagicPoints,
   isConnected
 }: EnhancedCharacterCardProps) {
   const { toast } = useToast();
@@ -71,6 +73,7 @@ function EnhancedCharacterCard({
                               character.sanity < character.maxSanity * 0.3;
 
   const handleQuickRoll = async (formula: string, label: string) => {
+    console.log('🎲 handleQuickRoll called:', { formula, label, characterId: character.id });
     playRoll();
     const result = rollDice(formula);
 
@@ -179,7 +182,7 @@ function EnhancedCharacterCard({
         </div>
 
         {/* Vital Stats Bar */}
-        <div className="grid grid-cols-5 gap-1 mb-3">
+        <div className="grid grid-cols-4 gap-1 mb-3">
           {/* PV - Points de Vie */}
           <div className="bg-cosmic-void rounded border border-aged-gold/30 p-1">
             <div className="text-xs text-aged-parchment text-center mb-1">PV</div>
@@ -265,8 +268,16 @@ function EnhancedCharacterCard({
                 size="sm"
                 variant="ghost"
                 onClick={() => {
-                  const newMP = Math.max(0, character.magicPoints - 1);
-                  onApplyBuff("Points de Magie", newMP - character.magicPoints);
+                  console.log('✨ MP minus clicked', { onUpdateMagicPoints: !!onUpdateMagicPoints, currentMP: character.magicPoints });
+                  if (onUpdateMagicPoints) {
+                    const newMP = Math.max(0, character.magicPoints - 1);
+                    console.log('✨ Calling onUpdateMagicPoints:', newMP);
+                    onUpdateMagicPoints(newMP);
+                  } else {
+                    const newMP = Math.max(0, character.magicPoints - 1);
+                    console.log('✨ Fallback: Calling onApplyBuff');
+                    onApplyBuff("Points de Magie", newMP - character.magicPoints);
+                  }
                 }}
                 className="h-5 px-1 flex-1 hover:bg-aged-gold/20 text-aged-gold"
                 data-testid={`button-mp-minus-${character.id}`}
@@ -277,8 +288,16 @@ function EnhancedCharacterCard({
                 size="sm"
                 variant="ghost"
                 onClick={() => {
-                  const newMP = Math.min(character.maxMagicPoints, character.magicPoints + 1);
-                  onApplyBuff("Points de Magie", newMP - character.magicPoints);
+                  console.log('✨ MP plus clicked', { onUpdateMagicPoints: !!onUpdateMagicPoints, currentMP: character.magicPoints });
+                  if (onUpdateMagicPoints) {
+                    const newMP = Math.min(character.maxMagicPoints, character.magicPoints + 1);
+                    console.log('✨ Calling onUpdateMagicPoints:', newMP);
+                    onUpdateMagicPoints(newMP);
+                  } else {
+                    const newMP = Math.min(character.maxMagicPoints, character.magicPoints + 1);
+                    console.log('✨ Fallback: Calling onApplyBuff');
+                    onApplyBuff("Points de Magie", newMP - character.magicPoints);
+                  }
                 }}
                 className="h-5 px-1 flex-1 hover:bg-eldritch-green/20 text-eldritch-green"
                 data-testid={`button-mp-plus-${character.id}`}
@@ -286,14 +305,6 @@ function EnhancedCharacterCard({
                 <Plus className="h-3 w-3" />
               </Button>
             </div>
-          </div>
-
-          {/* CHA - Chance */}
-          <div className="text-center bg-cosmic-void rounded p-2 border border-aged-gold/30">
-            <div className="text-sm font-bold text-bone-white">
-              {character.luck}
-            </div>
-            <div className="text-xs text-aged-parchment">CHA</div>
           </div>
 
           {/* $ - Argent */}
@@ -308,10 +319,12 @@ function EnhancedCharacterCard({
                   size="sm"
                   variant="ghost"
                   onClick={() => {
+                    console.log('💰 Money minus clicked', { currentMoney: character.money });
                     const currentMoney = typeof character.money === 'string'
                       ? parseFloat(character.money)
                       : (character.money || 0);
                     const newMoney = Math.max(0, currentMoney - 1);
+                    console.log('💰 Calling onUpdateMoney:', newMoney);
                     onUpdateMoney(newMoney);
                   }}
                   className="h-5 px-1 flex-1 hover:bg-blood-burgundy/20 text-blood-burgundy"
@@ -323,9 +336,11 @@ function EnhancedCharacterCard({
                   size="sm"
                   variant="ghost"
                   onClick={() => {
+                    console.log('💰 Money plus clicked', { currentMoney: character.money });
                     const currentMoney = typeof character.money === 'string'
                       ? parseFloat(character.money)
                       : (character.money || 0);
+                    console.log('💰 Calling onUpdateMoney:', currentMoney + 1);
                     onUpdateMoney(currentMoney + 1);
                   }}
                   className="h-5 px-1 flex-1 hover:bg-eldritch-green/20 text-eldritch-green"
@@ -445,12 +460,15 @@ function EnhancedCharacterCard({
         {/* Expanded Content */}
         {isExpanded && (
           <div className="mt-3 pt-3 border-t border-aged-gold/30">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs value={activeTab} onValueChange={(value) => {
+              console.log('📑 Tab changed:', value);
+              setActiveTab(value);
+            }} className="w-full">
               <TabsList className="grid w-full grid-cols-4 bg-cosmic-void">
                 <TabsTrigger value="stats" className="text-xs">Stats</TabsTrigger>
                 <TabsTrigger value="skills" className="text-xs">Comp.</TabsTrigger>
                 <TabsTrigger value="rolls" className="text-xs">Jets</TabsTrigger>
-                <TabsTrigger value="buffs" className="text-xs">Buffs</TabsTrigger>
+                <TabsTrigger value="buffs" className="text-xs" onClick={() => console.log('🎯 Buffs tab clicked')}>Buffs</TabsTrigger>
               </TabsList>
               
               <TabsContent value="stats" className="mt-3">
@@ -695,7 +713,6 @@ export default memo(EnhancedCharacterCard, (prevProps, nextProps) => {
     prevProps.character.hitPoints === nextProps.character.hitPoints &&
     prevProps.character.sanity === nextProps.character.sanity &&
     prevProps.character.magicPoints === nextProps.character.magicPoints &&
-    prevProps.character.luck === nextProps.character.luck &&
     prevProps.character.money === nextProps.character.money &&
     prevProps.character.sanityConditions.length === nextProps.character.sanityConditions.length &&
     prevProps.character.activeEffects.length === nextProps.character.activeEffects.length &&
