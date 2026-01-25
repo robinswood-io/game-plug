@@ -6,15 +6,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useParams, useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { CharactersService } from '@/lib/api-client';
+import { CharactersService, AiService } from '@/lib/api-client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Dice6, Wand2, Save, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Dice6, Wand2, Save, ArrowLeft, RefreshCw, Sparkles, Image } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const characterEditSchema = z.object({
@@ -58,6 +59,13 @@ export default function CharacterEditPage() {
   const [avatarUrl, setAvatarUrl] = useState<string>('');
   const [skillPoints, setSkillPoints] = useState<Record<string, number>>({});
   const [avatarDescription, setAvatarDescription] = useState('');
+  const [showAvatarDialog, setShowAvatarDialog] = useState(false);
+  const [avatarSettings, setAvatarSettings] = useState({
+    gender: 'male',
+    age: 'adult',
+    physicalDescription: '',
+    styleHints: '1920s',
+  });
 
   // Fetch character data
   const { data: character, isLoading: characterLoading } = useQuery({
@@ -113,6 +121,23 @@ export default function CharacterEditPage() {
     },
   });
 
+  // Helper function to convert age number to age category
+  const getAgeCategory = (ageNumber: number): string => {
+    if (ageNumber <= 25) return 'young';
+    if (ageNumber <= 40) return 'adult';
+    if (ageNumber <= 60) return 'middle';
+    return 'elderly';
+  };
+
+  // Helper function to convert gender string to gender category
+  const getGenderCategory = (genderStr: string | undefined | null): string => {
+    if (!genderStr) return 'male';
+    const normalized = genderStr.toLowerCase().trim();
+    if (normalized.includes('femme') || normalized.includes('female') || normalized.includes('f')) return 'female';
+    if (normalized.includes('autre') || normalized.includes('other')) return 'other';
+    return 'male';
+  };
+
   // Load character data into form
   useEffect(() => {
     if (character) {
@@ -142,6 +167,13 @@ export default function CharacterEditPage() {
       });
       setAvatarUrl(character.avatarUrl || '');
       setSkillPoints((character.skills as Record<string, number>) || {});
+
+      // Auto-populate avatar settings from character data
+      setAvatarSettings((prev) => ({
+        ...prev,
+        gender: getGenderCategory(character.gender),
+        age: getAgeCategory(character.age || 25),
+      }));
     }
   }, [character, form]);
 
@@ -161,6 +193,42 @@ export default function CharacterEditPage() {
     form.setValue('maxHitPoints', maxHP);
     form.setValue('maxSanity', maxSAN);
     form.setValue('maxMagicPoints', maxMP);
+  };
+
+  const handleGenerateAvatar = async () => {
+    try {
+      setIsGeneratingAvatar(true);
+      const characterName = form.getValues('name');
+      const occupation = form.getValues('occupation');
+
+      const response = await AiService.aiControllerGenerateAvatar({
+        characterName,
+        occupation,
+        age: avatarSettings.age,
+        gender: avatarSettings.gender,
+        physicalDescription: avatarSettings.physicalDescription || undefined,
+        styleHints: avatarSettings.styleHints || '1920s',
+      });
+
+      if (response?.imageUrl) {
+        setAvatarUrl(response.imageUrl);
+        setShowAvatarDialog(false);
+        toast({
+          title: 'Portrait généré',
+          description: 'Le portrait AI de votre personnage a été créé avec succès.',
+        });
+      } else {
+        throw new Error('No image URL returned');
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Erreur de génération',
+        description: error.message || 'Impossible de générer le portrait AI.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGeneratingAvatar(false);
+    }
   };
 
   const onSubmit = (data: CharacterEditForm) => {
@@ -400,19 +468,17 @@ export default function CharacterEditPage() {
                   )}
 
                   <div className="space-y-2">
-                    <label className="text-aged-parchment font-source text-sm">Description pour AI</label>
-                    <Textarea
-                      value={avatarDescription}
-                      onChange={(e) => setAvatarDescription(e.target.value)}
-                      placeholder="Portrait 1920s style, investigateur, détective..."
-                      className="bg-cosmic-void border-aged-gold text-bone-white"
-                      rows={3}
-                    />
+                    <label className="text-aged-parchment font-source text-sm">Portrait actuel</label>
+                    {!avatarUrl && (
+                      <div className="w-full h-64 bg-cosmic-void border-2 border-aged-gold rounded-lg flex items-center justify-center">
+                        <span className="text-aged-parchment text-center">Aucun portrait</span>
+                      </div>
+                    )}
                   </div>
 
                   <Button
                     type="button"
-                    onClick={() => {}}
+                    onClick={() => setShowAvatarDialog(true)}
                     disabled={isGeneratingAvatar}
                     className="w-full bg-eldritch-green hover:bg-green-800 text-bone-white"
                   >
@@ -435,6 +501,96 @@ export default function CharacterEditPage() {
           </div>
         </form>
       </Form>
+
+      {/* Avatar Customization Dialog */}
+      <Dialog open={showAvatarDialog} onOpenChange={setShowAvatarDialog}>
+        <DialogContent className="bg-charcoal border-aged-gold max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-cinzel text-aged-gold flex items-center gap-2">
+              <Image className="h-5 w-5" />
+              Générer le portrait
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-aged-parchment">Genre</label>
+                <Select
+                  value={avatarSettings.gender}
+                  onValueChange={(value) => setAvatarSettings({ ...avatarSettings, gender: value })}
+                >
+                  <SelectTrigger className="bg-cosmic-void border-aged-gold text-bone-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-charcoal border-aged-gold">
+                    <SelectItem value="male">Homme</SelectItem>
+                    <SelectItem value="female">Femme</SelectItem>
+                    <SelectItem value="other">Autre</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="text-sm text-aged-parchment">Âge</label>
+                <Select
+                  value={avatarSettings.age}
+                  onValueChange={(value) => setAvatarSettings({ ...avatarSettings, age: value })}
+                >
+                  <SelectTrigger className="bg-cosmic-void border-aged-gold text-bone-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-charcoal border-aged-gold">
+                    <SelectItem value="young">Jeune (18-25)</SelectItem>
+                    <SelectItem value="adult">Adulte (26-40)</SelectItem>
+                    <SelectItem value="middle">Âge mûr (41-60)</SelectItem>
+                    <SelectItem value="elderly">Âgé (60+)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm text-aged-parchment">Description physique (optionnel)</label>
+              <Textarea
+                value={avatarSettings.physicalDescription}
+                onChange={(e) => setAvatarSettings({ ...avatarSettings, physicalDescription: e.target.value })}
+                placeholder="Cicatrice, moustache, petits yeux, grand build..."
+                className="bg-cosmic-void border-aged-gold text-bone-white"
+                rows={3}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-aged-parchment">Style vestimentaire (optionnel)</label>
+              <Input
+                value={avatarSettings.styleHints}
+                onChange={(e) => setAvatarSettings({ ...avatarSettings, styleHints: e.target.value })}
+                placeholder="1920s, gentleman élégant, bohème..."
+                className="bg-cosmic-void border-aged-gold text-bone-white"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowAvatarDialog(false)}
+                className="border-aged-gold text-aged-gold hover:bg-aged-gold hover:text-deep-black"
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleGenerateAvatar}
+                disabled={isGeneratingAvatar}
+                className="bg-eldritch-green hover:bg-green-800 text-bone-white"
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                {isGeneratingAvatar ? 'Génération...' : 'Générer'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

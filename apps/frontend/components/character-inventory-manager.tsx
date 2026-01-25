@@ -106,14 +106,32 @@ export default function CharacterInventoryManager({ characterId, isGM = false }:
   // Add item mutation
   const addItemMutation = useMutation({
     mutationFn: async (item: any) => {
+      console.log("[DEBUG] Adding inventory item:", {
+        characterId,
+        itemData: item,
+        url: `/api/characters/${characterId}/inventory`
+      });
       const response = await apiRequest("POST", `/api/characters/${characterId}/inventory`, item);
-      return response.json();
+      console.log("[DEBUG] Add inventory response status:", response.status);
+      const data = await response.json();
+      console.log("[DEBUG] Add inventory response data:", data);
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("[DEBUG] Add item mutation success:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/characters", characterId, "inventory"] });
       toast({
         title: "Objet ajouté",
         description: "L'objet a été ajouté à l'inventaire.",
+      });
+    },
+    onError: (error: any) => {
+      console.error("[DEBUG] Add item mutation error:", error);
+      const errorMessage = error?.message || "Impossible d'ajouter l'objet";
+      toast({
+        title: "Erreur",
+        description: errorMessage,
+        variant: "destructive",
       });
     },
   });
@@ -196,7 +214,8 @@ export default function CharacterInventoryManager({ characterId, isGM = false }:
   };
 
   const handleAddItem = (item: any) => {
-    addItemMutation.mutate({
+    console.log("[DEBUG] handleAddItem called with:", item);
+    const inventoryItem = {
       name: item.name,
       category: item.category,
       damage: item.damage || null,
@@ -205,7 +224,9 @@ export default function CharacterInventoryManager({ characterId, isGM = false }:
       quantity: 1,
       isEquipped: false,
       description: item.description || null
-    });
+    };
+    console.log("[DEBUG] Prepared inventory item:", inventoryItem);
+    addItemMutation.mutate(inventoryItem);
   };
 
   const handleQuantityChange = (itemId: string, currentQuantity: number, delta: number) => {
@@ -455,11 +476,15 @@ export default function CharacterInventoryManager({ characterId, isGM = false }:
                       </div>
                       <Button
                         size="sm"
-                        onClick={() => handleAddItem(item)}
+                        onClick={() => {
+                          console.log("[DEBUG] Add button clicked for item:", item);
+                          handleAddItem(item);
+                        }}
                         className="h-7 px-3 bg-eldritch-green hover:bg-green-700 text-bone-white"
+                        disabled={addItemMutation.isPending}
                       >
                         <Plus className="mr-1 h-3 w-3" />
-                        Ajouter
+                        {addItemMutation.isPending ? "Ajout en cours..." : "Ajouter"}
                       </Button>
                     </div>
                   ))}

@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
-import { CharactersService } from '@/lib/api-client';
+import { CharactersService, AiService } from '@/lib/api-client';
 import { useToast } from '@/hooks/use-toast';
 import { rollCharacteristics, calculateDerivedStats } from '@/lib/dice';
 import {
@@ -264,25 +264,42 @@ export default function CharacterCreationPage() {
   };
 
   const handleGenerateAvatar = async () => {
-    if (!avatarUrl) {
-      toast({
-        title: 'Portrait manquant',
-        description: 'Veuillez d\'abord générer un portrait.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     try {
       setIsGeneratingAvatar(true);
-      toast({
-        title: 'Portrait généré',
-        description: 'Le portrait de votre personnage a été créé avec succès.',
+      const characterName = form.getValues('name');
+      const occupation = form.getValues('occupation');
+      const age = form.getValues('age') || 25;
+      const gender = form.getValues('gender') || '';
+
+      // Determine age category from numeric age
+      let ageCategory = 'adult';
+      if (age <= 25) ageCategory = 'young';
+      else if (age <= 40) ageCategory = 'adult';
+      else if (age <= 60) ageCategory = 'middle';
+      else ageCategory = 'elderly';
+
+      const response = await AiService.aiControllerGenerateAvatar({
+        characterName,
+        occupation,
+        age: ageCategory,
+        gender: gender || 'male',
+        physicalDescription: physicalTraits.distinctiveFeatures.join(', ') || undefined,
+        styleHints: physicalTraits.style || '1920s',
       });
-    } catch (error) {
+
+      if (response?.imageUrl) {
+        setAvatarUrl(response.imageUrl);
+        toast({
+          title: 'Portrait généré',
+          description: 'Le portrait AI de votre personnage a été créé avec succès.',
+        });
+      } else {
+        throw new Error('No image URL returned');
+      }
+    } catch (error: any) {
       toast({
-        title: 'Erreur',
-        description: 'Impossible de générer le portrait.',
+        title: 'Erreur de génération',
+        description: error.message || 'Impossible de générer le portrait AI.',
         variant: 'destructive',
       });
     } finally {
@@ -890,10 +907,42 @@ export default function CharacterCreationPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-aged-parchment font-source">Genre</FormLabel>
-                        <FormControl>
-                          <Input {...field} className="bg-cosmic-void border-aged-gold text-bone-white" />
-                        </FormControl>
+                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                          <FormControl>
+                            <SelectTrigger className="bg-cosmic-void border-aged-gold text-bone-white">
+                              <SelectValue placeholder="Sélectionnez un genre" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="bg-cosmic-void border-aged-gold">
+                            <SelectItem value="Homme">Homme</SelectItem>
+                            <SelectItem value="Femme">Femme</SelectItem>
+                            <SelectItem value="Autre">Autre</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="age"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-aged-parchment font-source">Âge (optionnel pour rappel)</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            min={15}
+                            max={99}
+                            disabled
+                            className="bg-cosmic-void border-aged-gold text-bone-white opacity-75"
+                          />
+                        </FormControl>
+                        <div className="text-xs text-aged-parchment mt-1">
+                          L'âge saisi dans les informations de base sera utilisé pour la génération du portrait.
+                        </div>
                       </FormItem>
                     )}
                   />

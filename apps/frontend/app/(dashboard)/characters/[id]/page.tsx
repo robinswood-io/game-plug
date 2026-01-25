@@ -101,6 +101,23 @@ export default function CharacterSheetPage() {
     },
   });
 
+  // Helper function to convert age number to age category
+  const getAgeCategory = (ageNumber: number): string => {
+    if (ageNumber <= 25) return 'young';
+    if (ageNumber <= 40) return 'adult';
+    if (ageNumber <= 60) return 'middle';
+    return 'elderly';
+  };
+
+  // Helper function to convert gender string to gender category
+  const getGenderCategory = (genderStr: string | undefined | null): string => {
+    if (!genderStr) return 'male';
+    const normalized = genderStr.toLowerCase().trim();
+    if (normalized.includes('femme') || normalized.includes('female') || normalized.includes('f')) return 'female';
+    if (normalized.includes('autre') || normalized.includes('other')) return 'other';
+    return 'male';
+  };
+
   useEffect(() => {
     if (character?.notes) {
       setNotes(character.notes);
@@ -108,7 +125,15 @@ export default function CharacterSheetPage() {
     if (character?.money) {
       setMoneyValue(character.money.toString());
     }
-  }, [character?.notes, character?.money]);
+    // Auto-populate avatar settings from character data
+    if (character) {
+      setAvatarSettings((prev) => ({
+        ...prev,
+        gender: getGenderCategory(character.gender),
+        age: getAgeCategory(character.age || 25),
+      }));
+    }
+  }, [character?.notes, character?.money, character?.gender, character?.age, character?.id]);
 
   const saveNotes = async () => {
     if (!notesModified || !characterId) return;
