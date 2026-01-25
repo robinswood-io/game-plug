@@ -115,3 +115,27 @@ attached_assets/
 # Server public files
 server/public
 vite.config.ts.*
+# Rapports et documentation temporaires
+*_REPORT.md
+*_FIX_*.md
+*_FIX_*.txt
+*_VALIDATION*.md
+*_VALIDATION*.txt
+*_INDEX.txt
+*_CHECKLIST.txt
+*_SUMMARY.txt
+SYNTHESE_*.md
+LIVRABLE_*.md
+00_LIRE_DABORD.md
+QUICK_FIX_REFERENCE.md
+final-validation.txt
+
+# Scripts de test temporaires
+test-*.sh
+test-*.html
+verify-*.sh
+
+# Dossiers temporaires
+bmad/
+apps/frontend/api/
+apps/frontend/public/test-*.html
