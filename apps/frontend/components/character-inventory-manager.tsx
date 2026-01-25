@@ -12,10 +12,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { 
-  Package, Search, Plus, Minus, Trash2, 
-  Sword, Shield, Coins, DollarSign, 
-  Heart, Sparkles, Book, Wrench
+import {
+  Package, Search, Plus, Minus, Trash2,
+  Sword, Shield, Coins, DollarSign,
+  Heart, Sparkles, Book, Wrench, CheckCircle, Circle
 } from "lucide-react";
 import type { Character, InventoryItem } from "@shared/schema";
 
@@ -143,6 +143,23 @@ export default function CharacterInventoryManager({ characterId, isGM = false }:
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/characters", characterId, "inventory"] });
+    },
+  });
+
+  // Toggle equip mutation
+  const toggleEquipMutation = useMutation({
+    mutationFn: async ({ itemId, isEquipped }: { itemId: string; isEquipped: boolean }) => {
+      const response = await apiRequest("PATCH", `/api/characters/${characterId}/inventory/${itemId}`, {
+        isEquipped: !isEquipped
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/characters", characterId, "inventory"] });
+      toast({
+        title: "Équipement mis à jour",
+        description: "L'objet a été équipé/déséquipé.",
+      });
     },
   });
 
@@ -337,37 +354,49 @@ export default function CharacterInventoryManager({ characterId, isGM = false }:
                         {item.armor && <span>Armure: +{item.armor}</span>}
                       </div>
                     </div>
-                    {isGM && (
-                      <div className="flex items-center gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleQuantityChange(item.id, item.quantity || 0, -1)}
-                          className="h-7 w-7 p-0 text-aged-gold hover:bg-cosmic-void"
-                        >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <span className="text-bone-white text-sm w-8 text-center">
-                          {item.quantity}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleQuantityChange(item.id, item.quantity || 0, 1)}
-                          className="h-7 w-7 p-0 text-aged-gold hover:bg-cosmic-void"
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => removeItemMutation.mutate(item.id)}
-                          className="h-7 w-7 p-0 text-blood-burgundy hover:bg-blood-burgundy/20"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleEquipMutation.mutate({ itemId: item.id, isEquipped: item.isEquipped || false })}
+                        className={`h-7 w-7 p-0 ${item.isEquipped ? 'text-eldritch-green' : 'text-aged-parchment'} hover:bg-cosmic-void`}
+                        title={item.isEquipped ? "Déséquiper" : "Équiper"}
+                      >
+                        {item.isEquipped ? <CheckCircle className="h-3 w-3" /> : <Circle className="h-3 w-3" />}
+                      </Button>
+                      {isGM && (
+                        <>
+                          <Separator orientation="vertical" className="h-6 mx-1" />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleQuantityChange(item.id, item.quantity || 0, -1)}
+                            className="h-7 w-7 p-0 text-aged-gold hover:bg-cosmic-void"
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="text-bone-white text-sm w-8 text-center">
+                            {item.quantity}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleQuantityChange(item.id, item.quantity || 0, 1)}
+                            className="h-7 w-7 p-0 text-aged-gold hover:bg-cosmic-void"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removeItemMutation.mutate(item.id)}
+                            className="h-7 w-7 p-0 text-blood-burgundy hover:bg-blood-burgundy/20"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))
               )}
