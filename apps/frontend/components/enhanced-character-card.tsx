@@ -162,36 +162,111 @@ function EnhancedCharacterCard({
 
         {/* Vital Stats Bar */}
         <div className="grid grid-cols-5 gap-1 mb-3">
-          <div className="text-center bg-cosmic-void rounded p-2 border border-aged-gold/30">
+          {/* PV - Points de Vie */}
+          <div className="bg-cosmic-void rounded border border-aged-gold/30 p-1">
+            <div className="text-xs text-aged-parchment text-center mb-1">PV</div>
             <div className={cn(
-              "text-sm font-bold",
+              "text-sm font-bold text-center mb-1",
               character.hitPoints < character.maxHitPoints * 0.3 ? "text-blood-burgundy" : "text-bone-white"
             )}>
               {character.hitPoints}/{character.maxHitPoints}
             </div>
-            <div className="text-xs text-aged-parchment">PV</div>
+            <div className="flex gap-0.5">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onApplyDamage(1)}
+                className="h-5 px-1 flex-1 hover:bg-blood-burgundy/20 text-blood-burgundy"
+                data-testid={`button-hp-minus-${character.id}`}
+              >
+                <Minus className="h-3 w-3" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onApplyDamage(-1)}
+                className="h-5 px-1 flex-1 hover:bg-eldritch-green/20 text-eldritch-green"
+                data-testid={`button-hp-plus-${character.id}`}
+              >
+                <Plus className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
-          <div className="text-center bg-cosmic-void rounded p-2 border border-aged-gold/30">
+
+          {/* SAN - Santé Mentale */}
+          <div className="bg-cosmic-void rounded border border-aged-gold/30 p-1">
+            <div className="text-xs text-aged-parchment text-center mb-1">SAN</div>
             <div className={cn(
-              "text-sm font-bold",
+              "text-sm font-bold text-center mb-1",
               character.sanity < character.maxSanity * 0.3 ? "text-purple-600" : "text-bone-white"
             )}>
               {character.sanity}/{character.maxSanity}
             </div>
-            <div className="text-xs text-aged-parchment">SAN</div>
+            <div className="flex gap-0.5">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onApplySanity(1)}
+                className="h-5 px-1 flex-1 hover:bg-purple-600/20 text-purple-600"
+                data-testid={`button-san-minus-${character.id}`}
+              >
+                <Minus className="h-3 w-3" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onApplySanity(-1)}
+                className="h-5 px-1 flex-1 hover:bg-eldritch-green/20 text-eldritch-green"
+                data-testid={`button-san-plus-${character.id}`}
+              >
+                <Plus className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
-          <div className="text-center bg-cosmic-void rounded p-2 border border-aged-gold/30">
-            <div className="text-sm font-bold text-bone-white">
+
+          {/* PM - Points de Magie */}
+          <div className="bg-cosmic-void rounded border border-aged-gold/30 p-1">
+            <div className="text-xs text-aged-parchment text-center mb-1">PM</div>
+            <div className="text-sm font-bold text-bone-white text-center mb-1">
               {character.magicPoints}/{character.maxMagicPoints}
             </div>
-            <div className="text-xs text-aged-parchment">PM</div>
+            <div className="flex gap-0.5">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  const newMP = Math.max(0, character.magicPoints - 1);
+                  onApplyBuff("Points de Magie", newMP - character.magicPoints);
+                }}
+                className="h-5 px-1 flex-1 hover:bg-aged-gold/20 text-aged-gold"
+                data-testid={`button-mp-minus-${character.id}`}
+              >
+                <Minus className="h-3 w-3" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  const newMP = Math.min(character.maxMagicPoints, character.magicPoints + 1);
+                  onApplyBuff("Points de Magie", newMP - character.magicPoints);
+                }}
+                className="h-5 px-1 flex-1 hover:bg-eldritch-green/20 text-eldritch-green"
+                data-testid={`button-mp-plus-${character.id}`}
+              >
+                <Plus className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
+
+          {/* CHA - Chance */}
           <div className="text-center bg-cosmic-void rounded p-2 border border-aged-gold/30">
             <div className="text-sm font-bold text-bone-white">
               {character.luck}
             </div>
             <div className="text-xs text-aged-parchment">CHA</div>
           </div>
+
+          {/* $ - Argent */}
           <div className="text-center bg-cosmic-void rounded p-2 border border-aged-gold/30">
             <div className="text-sm font-bold text-yellow-600">
               ${typeof character.money === 'string' ? parseFloat(character.money).toFixed(0) : (character.money || 0).toFixed(0)}
