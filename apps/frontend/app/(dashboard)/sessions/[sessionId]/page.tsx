@@ -14,10 +14,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { motion } from "framer-motion";
 import {
-  Users, Copy, Share2, Settings, Package,
+  Users, Settings, Package,
   Plus, Monitor, BookOpen, Trash2
 } from "lucide-react";
-import { QRCodeCanvas } from "qrcode.react";
 
 // Components
 import ConnectionIndicator from "@/components/connection-indicator";
@@ -54,7 +53,6 @@ export default function GMDashboard() {
   const queryClient = useQueryClient();
 
   // Modal states
-  const [showQRDialog, setShowQRDialog] = useState(false);
   const [inventoryModalOpen, setInventoryModalOpen] = useState(false);
   const [selectedCharacterForInventory, setSelectedCharacterForInventory] = useState<string | null>(null);
   const [deleteCharacterId, setDeleteCharacterId] = useState<string | null>(null);
@@ -164,32 +162,6 @@ export default function GMDashboard() {
         title: "Code copié",
         description: `Le code ${session.code} a été copié dans le presse-papier.`,
       });
-    }
-  };
-
-  const handleCopyLink = () => {
-    const url = `${window.location.origin}/join/${session?.code}`;
-    navigator.clipboard.writeText(url);
-    toast({
-      title: "Lien copié",
-      description: "Le lien de la session a été copié dans le presse-papier.",
-    });
-  };
-
-  const handleShare = async () => {
-    const url = `${window.location.origin}/join/${session?.code}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Rejoindre la session ${session?.name}`,
-          text: `Rejoins notre partie de l'Appel de Cthulhu avec le code: ${session?.code}`,
-          url: url,
-        });
-      } catch (error) {
-        console.log('Share cancelled');
-      }
-    } else {
-      handleCopyLink();
     }
   };
 
@@ -588,49 +560,6 @@ export default function GMDashboard() {
           </div>
         )}
       </div>
-
-      {/* QR Code Dialog */}
-      <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>
-        <DialogContent className="bg-charcoal border-aged-gold max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-cinzel text-aged-gold">Code QR de la Session</DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col items-center space-y-4 p-4">
-            <div className="bg-white p-4 rounded-lg">
-              <QRCodeCanvas
-                value={`${window.location.origin}/join/${session.code}`}
-                size={256}
-                level="H"
-                includeMargin
-              />
-            </div>
-            <p className="text-aged-parchment text-center">
-              Scannez ce code QR pour rejoindre la session
-            </p>
-            <div className="text-2xl font-cinzel text-aged-gold text-center">
-              {session.code}
-            </div>
-            <div className="w-full flex flex-col gap-2 pt-2">
-              <Button
-                onClick={handleCopyLink}
-                className="w-full bg-blood-burgundy hover:bg-dark-crimson text-bone-white"
-              >
-                <Copy className="mr-2 h-4 w-4" />
-                Copier le Lien
-              </Button>
-              {typeof window !== 'undefined' && typeof navigator.share === 'function' && (
-                <Button
-                  onClick={handleShare}
-                  className="w-full bg-aged-gold hover:bg-yellow-700 text-deep-black"
-                >
-                  <Share2 className="mr-2 h-4 w-4" />
-                  Partager
-                </Button>
-              )}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Inventory Modal */}
       <Dialog open={inventoryModalOpen} onOpenChange={setInventoryModalOpen}>
