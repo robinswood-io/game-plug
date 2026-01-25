@@ -435,10 +435,12 @@ export default function GMRollWithEffects({
                   onClick={() => toggleCharacterSelection(character.id)}
                   data-testid={`character-select-${character.id}`}
                 >
-                  <Checkbox
-                    checked={selectedCharacters.includes(character.id)}
-                    onCheckedChange={() => toggleCharacterSelection(character.id)}
-                  />
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={selectedCharacters.includes(character.id)}
+                      onCheckedChange={() => toggleCharacterSelection(character.id)}
+                    />
+                  </div>
                   {/* Avatar */}
                   {character.avatarUrl ? (
                     <img 

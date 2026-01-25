@@ -492,17 +492,27 @@ export default function GMDashboard() {
                     });
                   }}
                   onApplyBuff={async (name, value, duration) => {
+                    // Déterminer le type d'effet selon le nom et la valeur
+                    let effectType = "buff";
+                    if (name === "PV") {
+                      effectType = value > 0 ? "healing" : "damage";
+                    } else if (name === "SAN") {
+                      effectType = value > 0 ? "sanity_recovery" : "sanity_loss";
+                    } else if (name === "PM" || name === "Points de Magie") {
+                      effectType = value > 0 ? "magic_recovery" : "magic_loss";
+                    }
+
                     await apiRequest("POST", `/api/characters/${character.id}/effects`, {
                       name,
-                      type: "buff",
-                      value: value.toString(),
+                      type: effectType,
+                      value: Math.abs(value).toString(),
                       duration: duration || 0
                     });
                     queryClient.invalidateQueries({ queryKey: ["/api/sessions", sessionId, "characters"] });
                     toast({
-                      title: "Buff appliqué",
-                      description: `${name} (+${value}) appliqué à ${character.name}`,
-                      className: "bg-eldritch-green/20 border-eldritch-green"
+                      title: value > 0 ? "Bonus appliqué" : "Malus appliqué",
+                      description: `${name} (${value > 0 ? '+' : ''}${value}) pour ${character.name}`,
+                      className: value > 0 ? "bg-eldritch-green/20 border-eldritch-green" : "bg-blood-burgundy/20 border-blood-burgundy"
                     });
                   }}
                   onApplyDebuff={async (name, value) => {

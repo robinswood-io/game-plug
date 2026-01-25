@@ -14,6 +14,8 @@ export enum EffectType {
   HEALING = 'healing',
   SANITY_LOSS = 'sanity_loss',
   SANITY_RECOVERY = 'sanity_recovery',
+  MAGIC_LOSS = 'magic_loss',
+  MAGIC_RECOVERY = 'magic_recovery',
 }
 
 export class ApplyEffectDto {

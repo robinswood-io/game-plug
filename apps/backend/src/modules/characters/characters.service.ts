@@ -134,6 +134,13 @@ export class CharactersService {
         character.maxSanity,
         character.sanity + Math.abs(value)
       );
+    } else if (dto.type === 'magic_loss' && value !== 0) {
+      characterUpdates.magicPoints = Math.max(0, character.magicPoints - Math.abs(value));
+    } else if (dto.type === 'magic_recovery' && value !== 0) {
+      characterUpdates.magicPoints = Math.min(
+        character.maxMagicPoints,
+        character.magicPoints + Math.abs(value)
+      );
     }
 
     if (Object.keys(characterUpdates).length > 0) {
