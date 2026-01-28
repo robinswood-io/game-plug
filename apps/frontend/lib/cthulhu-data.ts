@@ -431,11 +431,23 @@ export const SANITY_PRESETS: SanityPreset[] = [
   },
 ];
 
+// Characteristics interface for occupation calculations
+interface CharacterCharacteristics {
+  strength: number;
+  constitution: number;
+  size: number;
+  dexterity: number;
+  appearance: number;
+  intelligence: number;
+  power: number;
+  education: number;
+}
+
 // Common phobias that can develop from sanity loss
 // Calculate occupation skill points based on formula
 export function calculateOccupationPoints(
   formula: string,
-  characteristics: any
+  characteristics: CharacterCharacteristics
 ): number {
   const { strength, constitution, size, dexterity, appearance, intelligence, power, education } = characteristics;
   

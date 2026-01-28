@@ -61,14 +61,14 @@ export const WSEventTypes = {
 } as const;
 
 // WebSocket Message Interface
-export interface WebSocketMessage<T = any> {
+export interface WebSocketMessage<T = unknown> {
   type: string;
   data?: T;
   timestamp?: Date;
 }
 
 // Typed event handlers
-export type EventHandler<T = any> = (message: WebSocketMessage<T>) => void;
+export type EventHandler<T = unknown> = (message: WebSocketMessage<T>) => void;
 
 const MAX_HISTORY_SIZE = 100;
 
@@ -143,7 +143,7 @@ export function useWebSocket(autoConnect = true) {
   /**
    * Subscribe to a specific event
    */
-  const on = useCallback(<T = any>(event: string, handler: EventHandler<T>) => {
+  const on = useCallback(<T = unknown>(event: string, handler: EventHandler<T>) => {
     const socket = initSocket();
 
     // Track handler for cleanup
@@ -190,7 +190,7 @@ export function useWebSocket(autoConnect = true) {
   /**
    * Emit an event to the server
    */
-  const emit = useCallback(<T = any>(event: string, data: T) => {
+  const emit = useCallback(<T = unknown>(event: string, data: T) => {
     const socket = socketRef.current;
     if (socket?.connected) {
       socket.emit(event, data);
@@ -205,7 +205,7 @@ export function useWebSocket(autoConnect = true) {
    * Send a message (legacy API compatibility)
    * Maps to emit for backward compatibility with old ws API
    */
-  const sendMessage = useCallback((type: string, data: any) => {
+  const sendMessage = useCallback((type: string, data: unknown) => {
     return emit(type, data);
   }, [emit]);
 
@@ -262,8 +262,8 @@ export function useWebSocket(autoConnect = true) {
       // Cleanup: remove all event handlers
       if (socketRef.current) {
         eventHandlersRef.current.forEach((handlers, event) => {
-          handlers.forEach(handler => {
-            socketRef.current?.off(event, handler as any);
+          handlers.forEach((handler) => {
+            socketRef.current?.off(event, (data: unknown) => handler({ type: event, data } as WebSocketMessage));
           });
         });
         eventHandlersRef.current.clear();

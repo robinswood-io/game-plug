@@ -4,6 +4,19 @@ import { inventory } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { CharactersService } from '../characters/characters.service';
 
+interface CreateInventoryDto {
+  characterId: string;
+  name: string;
+  description?: string;
+  quantity?: number;
+  isEquipped?: boolean;
+  [key: string]: unknown;
+}
+
+interface UpdateInventoryDto {
+  [key: string]: unknown;
+}
+
 @Injectable()
 export class InventoryService {
   constructor(
@@ -29,21 +42,21 @@ export class InventoryService {
     return item;
   }
 
-  async create(data: any) {
+  async create(data: CreateInventoryDto) {
     // Validate character exists before creating inventory item (BUG-009 fix)
     await this.charactersService.findOne(data.characterId);
 
     const [item] = await this.db.db
       .insert(inventory)
-      .values(data)
+      .values(data as Parameters<typeof this.db.db.insert>[0]['values'][0])
       .returning();
     return item;
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, data: UpdateInventoryDto) {
     const [updated] = await this.db.db
       .update(inventory)
-      .set(data as any)
+      .set(data as Parameters<typeof this.db.db.update>[0]['set'][0])
       .where(eq(inventory.id, id))
       .returning();
     if (!updated) {

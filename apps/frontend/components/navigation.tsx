@@ -2,14 +2,14 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, type User } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Eye, User, Users, LogOut, Settings } from "lucide-react";
+import { Eye, User as UserIcon, Users, LogOut, Settings } from "lucide-react";
 
 export default function Navigation() {
-  const { user } = useAuth();
+  const { user } = useAuth() as { user: User | null | undefined; isLoading?: boolean; error?: Error | null };
   const pathname = usePathname();
-  
+
   const isPlayerView = pathname === "/" || pathname.startsWith("/character");
   const isGMView = pathname.startsWith("/gm");
 
@@ -34,7 +34,7 @@ export default function Navigation() {
                     }`}
                     data-testid="nav-button-player"
                   >
-                    <User className="mr-2 h-4 w-4" />
+                    <UserIcon className="mr-2 h-4 w-4" />
                     Joueur
                   </Button>
                 </Link>
@@ -72,7 +72,7 @@ export default function Navigation() {
                   <div className="hidden md:flex items-center space-x-2 text-sm">
                     <span className="text-aged-parchment">Connecté:</span>
                     <span className="text-bone-white">
-                      {(user as any)?.email || 'Utilisateur'}
+                      {user?.email || 'Utilisateur'}
                     </span>
                   </div>
                   
