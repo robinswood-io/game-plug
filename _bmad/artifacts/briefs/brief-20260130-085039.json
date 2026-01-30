@@ -1,0 +1,14 @@
+{
+  "id": "brief-20260130-085039",
+  "timestamp": "2026-01-30T08:50:39+00:00",
+  "level": 2,
+  "task": "Test task for validation",
+  "context": "Context for testing",
+  "acceptance_criteria": [
+    "Criterion 1",
+    "Criterion 2",
+    "Criterion 3"
+  ],
+  "status": "draft",
+  "project": "game-plug"
+}

@@ -1,0 +1,30 @@
+{
+  "id": "story-20260130-085039",
+  "plan_id": "plan-20260130-085039",
+  "brief_id": "brief-20260130-085039",
+  "timestamp": "2026-01-30T08:50:39+00:00",
+  "title": "As a user, I want to test this workflow",
+  "description": "Test description",
+  "task": "Test task for validation",
+  "context": "Context for testing",
+  "original_acceptance_criteria": [
+    "Criterion 1",
+    "Criterion 2",
+    "Criterion 3"
+  ],
+  "acceptance_tests": [
+    "Test 1",
+    "Test 2"
+  ],
+  "effort": "M",
+  "priority": "P1",
+  "story_points": 5,
+  "sprint": "Sprint-Test",
+  "tags": [
+    "test",
+    "validation"
+  ],
+  "status": "backlog",
+  "created_at": "2026-01-30T08:50:39+00:00",
+  "updated_at": "2026-01-30T08:50:39+00:00"
+}

@@ -1,0 +1,17 @@
+{
+  "id": "plan-example-001",
+  "brief_id": "brief-example-001",
+  "timestamp": "2026-01-30T12:00:00Z",
+  "steps": [
+    "Design database schema for users table",
+    "Implement authentication API endpoints",
+    "Create login/register forms",
+    "Add session management",
+    "Write integration tests"
+  ],
+  "effort": "M",
+  "priority": "P0",
+  "owner": "dev-team",
+  "dependencies": "",
+  "status": "example"
+}

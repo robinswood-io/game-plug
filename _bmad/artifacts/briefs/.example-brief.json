@@ -1,0 +1,15 @@
+{
+  "id": "brief-example-001",
+  "timestamp": "2026-01-30T12:00:00Z",
+  "level": 2,
+  "task": "Example: Implement user authentication",
+  "context": "Users need secure login to the application",
+  "acceptance_criteria": [
+    "Users can register with email and password",
+    "Users can log in with correct credentials",
+    "Invalid credentials show error message",
+    "Session persists across page refreshes"
+  ],
+  "status": "example",
+  "project": "example-project"
+}

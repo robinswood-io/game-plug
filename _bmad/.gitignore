@@ -1,0 +1,11 @@
+# Ignore local logs
+logs/*.log
+*.tmp
+
+# Keep artifacts (important for history)
+!artifacts/
+!templates/
+!metrics/
+
+# Ignore generated files
+*.lock
