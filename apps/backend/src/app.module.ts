@@ -17,6 +17,7 @@ import { SanityModule } from './modules/sanity/sanity.module';
 import { DiceModule } from './modules/dice/dice.module';
 import { EffectsModule } from './modules/effects/effects.module';
 import { RollsModule } from './modules/rolls/rolls.module';
+import { AdminConfigModule } from './modules/admin-config/admin-config.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { RollsModule } from './modules/rolls/rolls.module';
     DiceModule,
     EffectsModule,
     RollsModule,
+    AdminConfigModule,
   ],
   controllers: [],
   providers: [],

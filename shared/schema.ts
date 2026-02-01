@@ -209,6 +209,15 @@ export const narrativeEntries = pgTable("narrative_entries", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// System configuration - admin settings for the application
+export const systemConfig = pgTable("system_config", {
+  key: varchar("key").primaryKey(), // e.g., 'api.timeout', 'upload.maxSize', 'features.aiEnabled'
+  value: jsonb("value").notNull(), // JSONB for flexible data types
+  description: text("description"), // Human-readable description
+  updatedBy: varchar("updated_by").references(() => users.id), // Admin who made the change
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [index("IDX_system_config_updated_at").on(table.updatedAt)]);
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   characters: many(characters),
@@ -315,6 +324,13 @@ export const narrativeEntriesRelations = relations(narrativeEntries, ({ one }) =
   }),
   gm: one(users, {
     fields: [narrativeEntries.gmId],
+    references: [users.id],
+  }),
+}));
+
+export const systemConfigRelations = relations(systemConfig, ({ one }) => ({
+  updatedByUser: one(users, {
+    fields: [systemConfig.updatedBy],
     references: [users.id],
   }),
 }));
@@ -467,6 +483,20 @@ export const localLoginSchema = z.object({
   password: z.string().min(1, "Mot de passe requis"),
 });
 
+// System config schema
+export const insertSystemConfigSchema = z.object({
+  key: z.string().min(1, "Config key required"),
+  value: z.any(), // JSONB can be any type
+  description: z.string().optional(),
+  updatedBy: z.string().optional(),
+});
+
+export const updateSystemConfigSchema = z.object({
+  value: z.any(),
+  description: z.string().optional(),
+  updatedBy: z.string().optional(),
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -488,3 +518,6 @@ export type InventoryItem = typeof inventory.$inferSelect;
 export type InsertInventoryItem = z.infer<typeof insertInventorySchema>;
 export type NarrativeEntry = typeof narrativeEntries.$inferSelect;
 export type InsertNarrativeEntry = z.infer<typeof insertNarrativeEntrySchema>;
+export type SystemConfig = typeof systemConfig.$inferSelect;
+export type InsertSystemConfig = z.infer<typeof insertSystemConfigSchema>;
+export type UpdateSystemConfig = z.infer<typeof updateSystemConfigSchema>;
