@@ -512,7 +512,9 @@ NEXT_PUBLIC_API_URL=http://localhost:4000  # Backend URL for Next.js
 
 ### Current Deployment (Docker)
 
-**Production URL:** https://game-plug.rbw.ovh
+**URL Staging (serveur dev):** https://game-plug.rbw.ovh
+
+**⚠️ Note Environnement:** Cette URL pointe vers le serveur de développement/staging. Le serveur de production réel est un déploiement séparé géré par CI/CD.
 
 **Docker Compose:** `/srv/workspace/docker-compose.apps.yml`
 
@@ -690,9 +692,9 @@ services:
    - [x] Synced dice rolls
    - [x] Synced GameBoard updates
 
-### ✅ Phase 3: Production Deployment - COMPLETE
+### ✅ Phase 3: Déploiement staging - COMPLETE
 
-**Status:** ✅ Deployed to Production
+**Status:** ✅ Déployé sur serveur dev
 
 **Completed Tasks:**
 
@@ -895,7 +897,7 @@ The platform implements the following CoC 7e mechanics:
 
 ## Support & Documentation
 
-**Production URL:** https://game-plug.rbw.ovh
+**URL Staging (serveur dev):** https://game-plug.rbw.ovh
 
 **Documentation:**
 - README.md - Project overview
