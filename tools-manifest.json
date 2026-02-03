@@ -1,0 +1,29 @@
+{
+  "name": "Game-Plug",
+  "description": "Plateforme gaming avec système de points et récompenses. Permet aux utilisateurs de participer à des jeux, accumuler des points, et accéder à un système de classement.",
+  "category": "application",
+  "icon": {
+    "emoji": "🎮"
+  },
+  "healthEndpoint": "/api/health",
+  "version": "1.0.0",
+  "subdomain": "game-plug",
+  "dockerContainerName": "game-plug",
+  "port": 3000,
+  "tags": ["nextjs", "nestjs", "gaming", "production"],
+  "features": ["gaming", "points", "leaderboard", "real-time"],
+  "environment": "production",
+  "grafanaDashboardUid": "game-plug-dashboard",
+  "links": {
+    "documentation": "https://docs.rbw.ovh/game-plug",
+    "repository": "https://github.com/robinswood/game-plug",
+    "issues": "https://github.com/robinswood/game-plug/issues",
+    "runbook": "https://wiki.rbw.ovh/game-plug"
+  },
+  "owner": {
+    "team": "Platform Engineering",
+    "contact": "platform@robinswood.io",
+    "slack": "#platform-engineering"
+  },
+  "dependencies": []
+}
