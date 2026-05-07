@@ -155,3 +155,9 @@ apps/frontend/public/test-*.html
 CORRECTED_*.md
 CRITICAL_*.md
 scripts/build-production.sh
+
+# security: forbid committed env files
+.env*
+**/.env*
+!.env.example
+!**/.env.example
