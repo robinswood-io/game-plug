@@ -1,0 +1,46 @@
+[Unit]
+Description=GamePlug repo-scoped canonical deployment runner
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=gameplug-runner
+Group=gameplug-runner
+WorkingDirectory=/opt/actions-runner-gameplug
+ExecStart=/opt/actions-runner-gameplug/runsvc.sh
+Restart=always
+RestartSec=10
+KillMode=process
+KillSignal=SIGTERM
+TimeoutStopSec=5min
+Environment=HOME=/var/lib/gameplug-runner
+Environment=DOTNET_CLI_TELEMETRY_OPTOUT=1
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+ProtectProc=invisible
+ProcSubset=pid
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native
+ReadWritePaths=/opt/actions-runner-gameplug/_work /opt/actions-runner-gameplug/_diag /var/lib/gameplug-runner
+MemoryMax=1G
+TasksMax=128
+
+[Install]
+WantedBy=multi-user.target
