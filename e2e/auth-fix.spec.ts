@@ -5,10 +5,10 @@ test.describe('Authentication Fix Tests', () => {
 
   test('should login and fetch user without infinite loop', async ({ page }) => {
     // Navigate to login page
-    await page.goto(`${BASE_URL}/gm-login`);
+    await page.goto(`${BASE_URL}/`);
 
-    // Click dev login button
-    await page.click('[data-testid="button-dev-login"]');
+    // Use the production landing page's explicit development access.
+    await page.getByRole('button', { name: /GM Login|Dev MJ \(Test\)/i }).click();
 
     // Wait for navigation to dashboard
     await page.waitForURL('**/dashboard', { timeout: 10000 });
@@ -42,7 +42,7 @@ test.describe('Authentication Fix Tests', () => {
   test('should handle 401 and clear token', async ({ page, context }) => {
     // Set invalid token in localStorage
     await context.addCookies([{
-      name: 'access_token',
+      name: 'auth-token',
       value: 'invalid-token',
       domain: 'game-plug.rbw.ovh',
       path: '/'
@@ -65,8 +65,8 @@ test.describe('Authentication Fix Tests', () => {
 
   test('should preserve token after page reload', async ({ page }) => {
     // Login
-    await page.goto(`${BASE_URL}/gm-login`);
-    await page.click('[data-testid="button-dev-login"]');
+    await page.goto(`${BASE_URL}/`);
+    await page.getByRole('button', { name: /GM Login|Dev MJ \(Test\)/i }).click();
     await page.waitForURL('**/dashboard', { timeout: 10000 });
 
     // Get token
@@ -92,8 +92,8 @@ test.describe('Authentication Fix Tests', () => {
     });
 
     // Login
-    await page.goto(`${BASE_URL}/gm-login`);
-    await page.click('[data-testid="button-dev-login"]');
+    await page.goto(`${BASE_URL}/`);
+    await page.getByRole('button', { name: /GM Login|Dev MJ \(Test\)/i }).click();
     await page.waitForURL('**/dashboard', { timeout: 10000 });
 
     // Wait to ensure no excessive fetching
