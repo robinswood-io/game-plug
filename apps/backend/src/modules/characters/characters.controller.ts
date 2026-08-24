@@ -6,19 +6,14 @@ import {
   Delete,
   Body,
   Param,
-  Query,
   UseGuards,
   Req,
   HttpException,
   HttpStatus,
-  Injectable,
-  CanActivate,
-  ExecutionContext,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { CharactersService } from './characters.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { SkipAuth } from '../auth/decorators/skip-auth.decorator';
 import { InventoryService } from '../inventory/inventory.service';
 import {
   CreateCharacterDto,
@@ -31,13 +26,6 @@ import {
 } from './dto';
 import { CreateInventoryDto } from '../inventory/dto';
 
-// Dummy guard that allows all requests
-@Injectable()
-class NoAuthGuard implements CanActivate {
-  canActivate(context: ExecutionContext): boolean {
-    return true;
-  }
-}
 
 @ApiTags('Characters')
 @ApiBearerAuth()
@@ -53,8 +41,8 @@ export class CharactersController {
   @ApiOperation({ summary: 'Get all characters' })
   @ApiQuery({ name: 'userId', required: false, description: 'Filter by user ID' })
   @ApiResponse({ status: 200, description: 'List of characters retrieved' })
-  async findAll(@Req() req: any, @Query('userId') userId?: string) {
-    return this.charactersService.findAll(userId || req.user.id);
+  async findAll(@Req() req: any) {
+    return this.charactersService.findAll(req.user.id);
   }
 
   @Get(':id')
@@ -62,8 +50,8 @@ export class CharactersController {
   @ApiParam({ name: 'id', description: 'Character ID' })
   @ApiResponse({ status: 200, description: 'Character retrieved' })
   @ApiResponse({ status: 404, description: 'Character not found' })
-  async findOne(@Param('id') id: string) {
-    return this.charactersService.findOne(id);
+  async findOne(@Param('id') id: string, @Req() req: any) {
+    return this.charactersService.findOneAuthorized(id, req.user.id);
   }
 
   @Post()
@@ -82,8 +70,9 @@ export class CharactersController {
   async update(
     @Param('id') id: string,
     @Body() data: UpdateCharacterDto,
+    @Req() req: any,
   ) {
-    return this.charactersService.update(id, data);
+    return this.charactersService.update(id, data, req.user.id);
   }
 
   @Delete(':id')
@@ -91,8 +80,8 @@ export class CharactersController {
   @ApiParam({ name: 'id', description: 'Character ID' })
   @ApiResponse({ status: 200, description: 'Character deleted successfully' })
   @ApiResponse({ status: 404, description: 'Character not found' })
-  async delete(@Param('id') id: string) {
-    await this.charactersService.delete(id);
+  async delete(@Param('id') id: string, @Req() req: any) {
+    await this.charactersService.delete(id, req.user.id);
     return { success: true };
   }
 
@@ -105,8 +94,9 @@ export class CharactersController {
   async giveSkillPoints(
     @Param('id') id: string,
     @Body() dto: SkillPointsDto,
+    @Req() req: any,
   ) {
-    return this.charactersService.giveSkillPoints(id, dto.points);
+    return this.charactersService.giveSkillPoints(id, dto.points, req.user.id);
   }
 
   @Post(':id/distribute-points')
@@ -118,12 +108,12 @@ export class CharactersController {
   async distributePoints(
     @Param('id') id: string,
     @Body() dto: DistributePointsDto,
+    @Req() req: any,
   ) {
-    return this.charactersService.distributeSkillPoints(id, dto.skillUpdates);
+    return this.charactersService.distributeSkillPoints(id, dto.skillUpdates, req.user.id);
   }
 
   @Post(':id/effects')
-  @SkipAuth()
   @ApiOperation({ summary: 'Apply effect/buff/debuff to character' })
   @ApiParam({ name: 'id', description: 'Character ID' })
   @ApiResponse({ status: 201, description: 'Effect applied successfully' })
@@ -131,8 +121,9 @@ export class CharactersController {
   async applyEffect(
     @Param('id') id: string,
     @Body() dto: ApplyEffectDto,
+    @Req() req: any,
   ) {
-    return this.charactersService.applyEffect(id, dto);
+    return this.charactersService.applyEffect(id, dto, req.user.id);
   }
 
   @Post(':characterId/generate-avatar')
@@ -143,8 +134,9 @@ export class CharactersController {
   async generateAvatar(
     @Param('characterId') characterId: string,
     @Body() dto: GenerateAvatarDto,
+    @Req() req: any,
   ) {
-    return this.charactersService.generateAvatar(characterId, dto);
+    return this.charactersService.generateAvatar(characterId, dto, req.user.id);
   }
 
   @Patch(':id/notes')
@@ -155,8 +147,9 @@ export class CharactersController {
   async updateNotes(
     @Param('id') id: string,
     @Body() dto: UpdateNotesDto,
+    @Req() req: any,
   ) {
-    return this.charactersService.updateNotes(id, dto.notes || '');
+    return this.charactersService.updateNotes(id, dto.notes || '', req.user.id);
   }
 
   @Get(':id/inventory')
@@ -164,7 +157,8 @@ export class CharactersController {
   @ApiParam({ name: 'id', description: 'Character ID' })
   @ApiResponse({ status: 200, description: 'Character inventory retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Character not found' })
-  async getInventory(@Param('id') characterId: string) {
+  async getInventory(@Param('id') characterId: string, @Req() req: any) {
+    await this.charactersService.findOneAuthorized(characterId, req.user.id);
     return this.inventoryService.findByCharacter(characterId);
   }
 

@@ -44,7 +44,7 @@ export class AuthService {
     };
   }
 
-  async devLogin(email: string, demoKey?: string) {
+  async devLogin(demoKey?: string) {
     const enabled = process.env.GAMEPLUG_DEMO_AUTH_ENABLED === 'true';
     const expectedKey = process.env.GAMEPLUG_DEMO_AUTH_KEY;
     const allowedEmail = process.env.GAMEPLUG_DEMO_AUTH_EMAIL;
@@ -59,9 +59,6 @@ export class AuthService {
       throw new NotFoundException();
     }
 
-    if (email !== allowedEmail) {
-      throw new ForbiddenException('Demo identity is not allowed');
-    }
 
     const user = await this.db.db.query.users.findFirst({
       where: eq(users.email, allowedEmail),

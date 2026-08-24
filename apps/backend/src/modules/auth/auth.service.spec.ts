@@ -206,16 +206,16 @@ describe('AuthService', () => {
 
     it('fails closed when demo mode is disabled', async () => {
       process.env.GAMEPLUG_DEMO_AUTH_ENABLED = 'false';
-      await expect(service.devLogin(demoUser.email, 'unit-test-demo-key')).rejects.toThrow(NotFoundException);
+      await expect(service.devLogin('unit-test-demo-key')).rejects.toThrow(NotFoundException);
     });
 
     it('fails closed when the demo key is invalid', async () => {
-      await expect(service.devLogin(demoUser.email, 'wrong-key')).rejects.toThrow(NotFoundException);
+      await expect(service.devLogin('wrong-key')).rejects.toThrow(NotFoundException);
     });
 
     it('issues a non-GM demo claim only for the configured empty identity', async () => {
       jest.spyOn(dbService.db.query.users, 'findFirst').mockResolvedValue(demoUser as any);
-      const result = await service.devLogin(demoUser.email, 'unit-test-demo-key');
+      const result = await service.devLogin('unit-test-demo-key');
 
       expect(result.user.isGM).toBe(false);
       expect(jwtService.sign).toHaveBeenCalledWith(expect.objectContaining({
@@ -227,7 +227,7 @@ describe('AuthService', () => {
 
     it('rejects a privileged demo identity', async () => {
       jest.spyOn(dbService.db.query.users, 'findFirst').mockResolvedValue({ ...demoUser, isGM: true } as any);
-      await expect(service.devLogin(demoUser.email, 'unit-test-demo-key')).rejects.toThrow(ForbiddenException);
+      await expect(service.devLogin('unit-test-demo-key')).rejects.toThrow(ForbiddenException);
     });
   });
 

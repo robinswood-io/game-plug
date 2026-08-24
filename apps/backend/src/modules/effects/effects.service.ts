@@ -14,9 +14,8 @@ export class EffectsService {
     private readonly charactersService: CharactersService,
   ) {}
 
-  async create(data: CreateEffectDto) {
-    // Validate character exists before creating effect (BUG-005 fix)
-    await this.charactersService.findOne(data.characterId);
+  async create(data: CreateEffectDto, userId: string) {
+    await this.charactersService.findOneAuthorized(data.characterId, userId);
 
     const [effect] = await this.db.db
       .insert(activeEffects)
@@ -25,7 +24,9 @@ export class EffectsService {
     return effect;
   }
 
-  async update(id: string, data: UpdateEffectDto) {
+  async update(id: string, data: UpdateEffectDto, userId: string) {
+    const existing = await this.findOne(id);
+    await this.charactersService.findOneAuthorized(existing.characterId, userId);
     const [updated] = await this.db.db
       .update(activeEffects)
       .set(data)

@@ -3,14 +3,18 @@ import { test, expect, type Page } from '@playwright/test';
 const BASE_URL = 'https://game-plug.rbw.ovh';
 const DEMO_KEY = process.env.GAMEPLUG_DEMO_AUTH_KEY;
 const DEMO_EMAIL = process.env.GAMEPLUG_DEMO_AUTH_EMAIL;
+const AUTH_TEST_BASE_URL = process.env.GAMEPLUG_AUTH_TEST_BASE_URL;
+const IDOR_CHARACTER_ID = process.env.GAMEPLUG_IDOR_CHARACTER_ID;
+const IDOR_EFFECT_ID = process.env.GAMEPLUG_IDOR_EFFECT_ID;
 
 async function authenticateDemo(page: Page) {
   expect(DEMO_KEY, 'GAMEPLUG_DEMO_AUTH_KEY is required for governed demo E2E').toBeTruthy();
   expect(DEMO_EMAIL, 'GAMEPLUG_DEMO_AUTH_EMAIL is required for governed demo E2E').toBeTruthy();
+  expect(AUTH_TEST_BASE_URL, 'GAMEPLUG_AUTH_TEST_BASE_URL must target the isolated backend').toBeTruthy();
 
-  const response = await page.request.post(`${BASE_URL}/api/auth/dev-login`, {
+  const response = await page.request.post(`${AUTH_TEST_BASE_URL}/api/auth/dev-login`, {
     headers: { 'x-gameplug-demo-key': DEMO_KEY! },
-    data: { email: DEMO_EMAIL },
+    data: { email: 'gm@example.com', userId: '00000000-0000-4000-a000-000000000001' },
   });
   expect(response.status()).toBe(201);
 
@@ -51,6 +55,8 @@ test.describe('Authentication security and stability', () => {
 
   test('issues only a route-limited, read-only, non-GM demo token', async ({ page }) => {
     const { token } = await authenticateDemo(page);
+    expect(IDOR_CHARACTER_ID).toBeTruthy();
+    expect(IDOR_EFFECT_ID).toBeTruthy();
     const headers = { Authorization: `Bearer ${token}` };
 
     const sessions = await page.request.get(`${BASE_URL}/api/sessions`, { headers });
@@ -67,8 +73,38 @@ test.describe('Authentication security and stability', () => {
     });
     expect(mutation.status()).toBe(403);
 
+    const idorCharacterRead = await page.request.get(
+      `${BASE_URL}/api/characters/${IDOR_CHARACTER_ID}`,
+      { headers },
+    );
+    expect(idorCharacterRead.status()).toBe(403);
+
+    const characterEffectMutation = await page.request.post(
+      `${BASE_URL}/api/characters/${IDOR_CHARACTER_ID}/effects`,
+      { headers, data: { type: 'damage', name: 'IDOR', value: '1' } },
+    );
+    expect(characterEffectMutation.status()).toBe(403);
+
+    const effectCreate = await page.request.post(`${BASE_URL}/api/effects`, {
+      headers,
+      data: { characterId: IDOR_CHARACTER_ID, type: 'damage', name: 'IDOR' },
+    });
+    expect(effectCreate.status()).toBe(403);
+
+    const effectUpdate = await page.request.patch(`${BASE_URL}/api/effects/${IDOR_EFFECT_ID}`, {
+      headers,
+      data: { name: 'IDOR' },
+    });
+    expect(effectUpdate.status()).toBe(403);
+
     const adminRead = await page.request.get(`${BASE_URL}/api/admin/config`, { headers });
     expect(adminRead.status()).toBe(403);
+
+    const bearerRefresh = await page.request.post(`${BASE_URL}/api/auth/refresh`, {
+      headers,
+      data: { refreshToken: token },
+    });
+    expect(bearerRefresh.status()).toBe(403);
 
     const refresh = await page.request.post(`${BASE_URL}/api/auth/refresh`, {
       data: { refreshToken: token },

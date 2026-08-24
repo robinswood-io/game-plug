@@ -93,7 +93,7 @@ jobs:
         continue-on-error: true
 
       - name: Run blocking authentication security tests
-        run: bun run --cwd apps/backend test -- --config jest.config.ts --runInBand src/modules/auth/auth.service.spec.ts src/modules/auth/auth.controller.spec.ts
+        run: bun run --cwd apps/backend test -- --config jest.config.ts --runInBand src/modules/auth/auth.service.spec.ts src/modules/auth/auth.controller.spec.ts src/modules/auth/middleware/demo-token-policy.middleware.spec.ts src/modules/characters/characters.authorization.spec.ts src/modules/effects/effects.authorization.spec.ts
         env:
           DATABASE_URL: postgresql://${{ env.POSTGRES_USER }}:${{ env.POSTGRES_PASSWORD }}@localhost:5432/${{ env.POSTGRES_DB }}
           REDIS_URL: redis://localhost:6379

@@ -28,6 +28,23 @@ export class CharactersService {
     return character;
   }
 
+  async findOneAuthorized(id: string, userId: string) {
+    const character = await this.findOne(id);
+    const isOwner = character.userId === userId;
+    const session = character.sessionId
+      ? await this.db.db.query.gameSessions.findFirst({
+          where: eq(gameSessions.id, character.sessionId),
+        })
+      : null;
+    const isSessionGm = session?.gmId === userId;
+
+    if (!isOwner && !isSessionGm) {
+      throw new ForbiddenException('Permission denied for this character');
+    }
+
+    return character;
+  }
+
   async create(data: any, userId?: string) {
     // Explicitly handle userId to avoid it being overwritten by null in data
     const { userId: bodyUserId, ...cleanData } = data;
@@ -40,7 +57,8 @@ export class CharactersService {
     return character;
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, data: any, userId: string) {
+    await this.findOneAuthorized(id, userId);
     const [updated] = await this.db.db
       .update(characters)
       .set(data)
@@ -49,12 +67,13 @@ export class CharactersService {
     return updated;
   }
 
-  async delete(id: string) {
+  async delete(id: string, userId: string) {
+    await this.findOneAuthorized(id, userId);
     await this.db.db.delete(characters).where(eq(characters.id, id));
   }
 
-  async giveSkillPoints(characterId: string, points: number) {
-    const character = await this.findOne(characterId);
+  async giveSkillPoints(characterId: string, points: number, userId: string) {
+    const character = await this.findOneAuthorized(characterId, userId);
 
     const currentPoints = character.availableSkillPoints || 0;
     const [updated] = await this.db.db
@@ -68,8 +87,8 @@ export class CharactersService {
     return updated;
   }
 
-  async distributeSkillPoints(characterId: string, skillUpdates: Record<string, number>) {
-    const character = await this.findOne(characterId);
+  async distributeSkillPoints(characterId: string, skillUpdates: Record<string, number>, userId: string) {
+    const character = await this.findOneAuthorized(characterId, userId);
 
     const currentSkills = (character.skills as Record<string, number>) || {};
     let totalPointsUsed = 0;
@@ -101,8 +120,8 @@ export class CharactersService {
     return updated;
   }
 
-  async applyEffect(characterId: string, dto: ApplyEffectDto) {
-    const character = await this.findOne(characterId);
+  async applyEffect(characterId: string, dto: ApplyEffectDto, userId: string) {
+    const character = await this.findOneAuthorized(characterId, userId);
 
     const [effect] = await this.db.db
       .insert(activeEffects)
@@ -153,8 +172,8 @@ export class CharactersService {
     return effect;
   }
 
-  async generateAvatar(characterId: string, dto: GenerateAvatarDto) {
-    const character = await this.findOne(characterId);
+  async generateAvatar(characterId: string, dto: GenerateAvatarDto, userId: string) {
+    const character = await this.findOneAuthorized(characterId, userId);
 
     if (character.avatarUrl && !dto.forceRegenerate) {
       return {
@@ -191,8 +210,8 @@ export class CharactersService {
     };
   }
 
-  async updateNotes(characterId: string, notes: string) {
-    const character = await this.findOne(characterId);
+  async updateNotes(characterId: string, notes: string, userId: string) {
+    await this.findOneAuthorized(characterId, userId);
 
     const [updated] = await this.db.db
       .update(characters)
@@ -206,21 +225,7 @@ export class CharactersService {
   }
 
   async addInventoryItem(characterId: string, dto: any, userId: string) {
-    const character = await this.findOne(characterId);
-
-    // Check if user is GM or owns the character
-    const session = character.sessionId
-      ? await this.db.db.query.gameSessions.findFirst({
-          where: eq(gameSessions.id, character.sessionId),
-        })
-      : null;
-
-    const isGM = session && session.gmId === userId;
-    const isOwner = character.userId === userId;
-
-    if (!isOwner && !isGM) {
-      throw new ForbiddenException('Permission denied - you must own this character or be the GM');
-    }
+    await this.findOneAuthorized(characterId, userId);
 
     // Create inventory item
     const [item] = await this.db.db

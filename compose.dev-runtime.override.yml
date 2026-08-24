@@ -31,10 +31,11 @@ services:
     command:
       - sh
       - -c
-      - set -a; . /app/.env; set +a; exec bun apps/backend/dist/apps/backend/src/main.js
+      - set -a; . /run/secrets/gameplug-backend.env; set +a; exec bun apps/backend/dist/apps/backend/src/main.js
     volumes:
       - /srv/workspace/game-plug:/app
       - /srv/workspace/game-plug/node_modules:/app/node_modules
+      - /srv/workspace/.secrets/gameplug-backend.env:/run/secrets/gameplug-backend.env:ro
     labels:
       - traefik.http.routers.game-plug-backend.service=game-plug-backend
       - traefik.http.routers.game-plug-backend.middlewares=

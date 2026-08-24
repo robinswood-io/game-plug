@@ -5,6 +5,7 @@ import {
   Body,
   Param,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { EffectsService } from './effects.service';
@@ -22,8 +23,8 @@ export class EffectsController {
   @ApiOperation({ summary: 'Create active effect' })
   @ApiResponse({ status: 201, description: 'Effect created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid effect data' })
-  async create(@Body() dto: CreateEffectDto) {
-    return this.effectsService.create(dto);
+  async create(@Body() dto: CreateEffectDto, @Req() req: any) {
+    return this.effectsService.create(dto, req.user.id);
   }
 
   @Patch(':id')
@@ -34,7 +35,8 @@ export class EffectsController {
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateEffectDto,
+    @Req() req: any,
   ) {
-    return this.effectsService.update(id, dto);
+    return this.effectsService.update(id, dto, req.user.id);
   }
 }

@@ -31,11 +31,8 @@ export class AuthController {
 
   @Post('dev-login')
   @ApiOperation({ summary: 'Development only: bypass password' })
-  async devLogin(
-    @Body() data: { email: string },
-    @Headers('x-gameplug-demo-key') demoKey?: string,
-  ) {
-    return this.authService.devLogin(data.email, demoKey);
+  async devLogin(@Headers('x-gameplug-demo-key') demoKey?: string) {
+    return this.authService.devLogin(demoKey);
   }
 
   @Post('refresh')
