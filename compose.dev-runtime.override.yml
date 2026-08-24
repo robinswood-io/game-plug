@@ -4,12 +4,14 @@ services:
     pull_policy: if_not_present
     user: "1000:1002"
     working_dir: /app
+    environment:
+      NODE_ENV: production
     command:
       - bun
       - run
       - --cwd
       - apps/frontend
-      - dev
+      - start
       - --hostname
       - 0.0.0.0
       - --port
