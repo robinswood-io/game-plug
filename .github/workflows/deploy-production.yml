@@ -4,25 +4,17 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'apps/backend/**'
-      - 'apps/frontend/**'
-      - 'shared/**'
-      - 'package.json'
-      - 'bun.lock'
-      - 'compose.production.yml'
-      - '.github/workflows/deploy.yml'
-      - '.github/workflows/deploy-production.yml'
-  push:
-    branches: [main]
-    paths:
-      - 'apps/backend/**'
-      - 'apps/frontend/**'
-      - 'shared/**'
-      - 'package.json'
-      - 'bun.lock'
-      - 'compose.production.yml'
-      - '.github/workflows/deploy.yml'
-      - '.github/workflows/deploy-production.yml'
+      - apps/backend/**
+      - apps/frontend/**
+      - shared/**
+      - package.json
+      - bun.lock
+      - compose.production.yml
+      - .github/workflows/deploy.yml
+      - .github/workflows/deploy-production.yml
+      - .github/scripts/assert_deploy_executor_contract.py
+      - .github/actionlint.yaml
+      - ops/deploy-executor/**
   workflow_dispatch:
 
 concurrency:
@@ -31,20 +23,19 @@ concurrency:
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
   validate-contract:
-    name: Validate deployment contract
+    name: Validate deployment and executor contracts
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
-
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.14
-
       - name: Validate builds and security gates
         run: |
           set -euo pipefail
@@ -58,54 +49,61 @@ jobs:
             src/modules/effects/effects.authorization.spec.ts
           bun run --cwd apps/frontend type-check
           bun run build:frontend
-
       - name: Validate production Compose schema
         run: |
           set -euo pipefail
           env_file=$(mktemp)
           trap 'rm -f "$env_file"' EXIT
           printf '%s\n' \
-            'DATABASE_URL=postgresql://test:test@db:5432/test' \
-            'REDIS_URL=redis://redis:6379' \
-            'JWT_SECRET=contract-only' \
-            'GAMEPLUG_DEMO_AUTH_ENABLED=false' > "$env_file"
-          GAMEPLUG_FRONTEND_IMAGE=example/frontend:test \
-          GAMEPLUG_BACKEND_IMAGE=example/backend:test \
+            DATABASE_URL=postgresql://test:test@db:5432/test \
+            REDIS_URL=redis://redis:6379 \
+            JWT_SECRET=contract-only \
+            GAMEPLUG_DEMO_AUTH_ENABLED=false > "$env_file"
+          chmod 600 "$env_file"
+          GAMEPLUG_FRONTEND_IMAGE=example/frontend@sha256:$(printf frontend | sha256sum | cut -d' ' -f1) \
+          GAMEPLUG_BACKEND_IMAGE=example/backend@sha256:$(printf backend | sha256sum | cut -d' ' -f1) \
           GAMEPLUG_BACKEND_ENV_FILE="$env_file" \
             docker compose -f compose.production.yml config --quiet
+      - name: Prove pull-request jobs cannot execute on deployment runner
+        run: python3 .github/scripts/assert_deploy_executor_contract.py
 
   deployment-readiness:
     name: Check explicit deployment readiness
     runs-on: ubuntu-latest
     needs: validate-contract
+    permissions:
+      contents: read
     outputs:
       ready: ${{ steps.gate.outputs.ready }}
     env:
       DEPLOY_ENABLED: ${{ vars.GAMEPLUG_CANONICAL_DEPLOY_ENABLED }}
-      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
-      GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
-      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
     steps:
-      - name: Fail closed unless target and credentials are explicit
+      - name: Fail closed until reviewed architecture is activated
         id: gate
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref }}
+          ACTOR: ${{ github.actor }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
         run: |
           set -euo pipefail
-          ready=true
-          [ "$DEPLOY_ENABLED" = 'true' ] || ready=false
-          for value in "$DEPLOY_HOST" "$DEPLOY_USER" "$DEPLOY_KEY" "$GHCR_USERNAME" "$GHCR_TOKEN"; do
-            [ -n "$value" ] || ready=false
-          done
+          ready=false
+          if [ "$DEPLOY_ENABLED" = true ] && \
+             [ "$EVENT_NAME" = workflow_dispatch ] && \
+             [ "$REF_NAME" = refs/heads/main ] && \
+             [ "$ACTOR" = Aoleon ] && \
+             [ "$TRIGGERING_ACTOR" = Aoleon ]; then
+            ready=true
+          fi
           echo "ready=$ready" >> "$GITHUB_OUTPUT"
           if [ "$ready" != true ]; then
-            echo 'Production deploy skipped: canonical deploy variable/secrets are not fully configured.'
+            echo 'Canonical deployment remains disabled or is not a manual Aoleon dispatch from main.'
           fi
 
   build-images:
     name: Build immutable production images
     needs: validate-contract
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
       packages: write
@@ -113,93 +111,43 @@ jobs:
     with:
       push_images: true
       image_tag: ${{ github.sha }}
-    secrets: inherit
 
   deploy:
-    name: Deploy canonical image manifest
-    runs-on: ubuntu-latest
+    name: Deploy through isolated GamePlug executor
+    runs-on: [gameplug-canonical-deploy, repo-game-plug, trusted-main-only]
     timeout-minutes: 20
     needs: [validate-contract, deployment-readiness, build-images]
     if: >-
       always() &&
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor == 'Aoleon' &&
+      github.triggering_actor == 'Aoleon' &&
       needs.validate-contract.result == 'success' &&
       needs.build-images.result == 'success' &&
-      needs.deployment-readiness.outputs.ready == 'true' &&
-      github.event_name != 'pull_request'
+      needs.deployment-readiness.outputs.ready == 'true'
     environment: production
+    permissions:
+      contents: read
     env:
-      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
-      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
-      GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
-      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-      BACKEND_IMAGE: ghcr.io/${{ github.repository }}-backend:${{ github.sha }}
-      FRONTEND_IMAGE: ghcr.io/${{ github.repository }}-frontend:${{ github.sha }}
+      BACKEND_DIGEST: ${{ needs.build-images.outputs.backend_digest }}
+      FRONTEND_DIGEST: ${{ needs.build-images.outputs.frontend_digest }}
     steps:
-      - name: Deploy by SSH with bounded rollback
-        uses: appleboy/ssh-action@v1.2.2
-        env:
-          GHCR_USERNAME: ${{ env.GHCR_USERNAME }}
-          GHCR_TOKEN: ${{ env.GHCR_TOKEN }}
-          BACKEND_IMAGE: ${{ env.BACKEND_IMAGE }}
-          FRONTEND_IMAGE: ${{ env.FRONTEND_IMAGE }}
-          DEPLOY_SHA: ${{ github.sha }}
-        with:
-          host: ${{ env.DEPLOY_HOST }}
-          username: ${{ env.DEPLOY_USER }}
-          key: ${{ env.DEPLOY_KEY }}
-          port: ${{ env.DEPLOY_PORT || 22 }}
-          timeout: 120s
-          command_timeout: 900s
-          envs: GHCR_USERNAME,GHCR_TOKEN,BACKEND_IMAGE,FRONTEND_IMAGE,DEPLOY_SHA
-          script: |
-            set -euo pipefail
-            root=/srv/workspace/game-plug
-            backend_env=/srv/workspace/.secrets/gameplug-backend.env
-            cd "$root"
-
-            git fetch origin main
-            git checkout --detach "$DEPLOY_SHA"
-
-            for key in DATABASE_URL REDIS_URL JWT_SECRET GAMEPLUG_DEMO_AUTH_ENABLED; do
-              grep -q "^${key}=" "$backend_env" || { echo "Missing backend env key: $key"; exit 1; }
-            done
-            grep -q '^GAMEPLUG_DEMO_AUTH_ENABLED=false$' "$backend_env" || {
-              echo 'Public demo auth must remain disabled.'
-              exit 1
-            }
-
-            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
-            export GAMEPLUG_BACKEND_IMAGE="$BACKEND_IMAGE"
-            export GAMEPLUG_FRONTEND_IMAGE="$FRONTEND_IMAGE"
-            export GAMEPLUG_BACKEND_ENV_FILE="$backend_env"
-
-            docker compose -f compose.production.yml config --quiet
-            docker compose -f compose.production.yml pull
-
-            rollback() {
-              echo 'Canonical image deployment failed; restoring the verified source-runtime bridge.'
-              docker rm -f game-plug game-plug-backend >/dev/null 2>&1 || true
-              cd /srv/workspace
-              docker compose -f docker-compose.apps.yml \
-                -f game-plug/compose.dev-runtime.override.yml \
-                up -d --force-recreate game-plug game-plug-backend
-            }
-            trap rollback ERR
-
-            docker rm -f game-plug game-plug-backend >/dev/null 2>&1 || true
-            docker compose -f compose.production.yml up -d
-
-            for attempt in $(seq 1 30); do
-              frontend_health=$(docker inspect game-plug --format '{{.State.Health.Status}}' 2>/dev/null || true)
-              backend_health=$(docker inspect game-plug-backend --format '{{.State.Health.Status}}' 2>/dev/null || true)
-              if [ "$frontend_health" = healthy ] && [ "$backend_health" = healthy ]; then break; fi
-              sleep 2
-            done
-
-            test "$(docker inspect game-plug --format '{{.State.Health.Status}}')" = healthy
-            test "$(docker inspect game-plug-backend --format '{{.State.Health.Status}}')" = healthy
-            curl --fail --silent --show-error https://game-plug.rbw.ovh/ >/dev/null
-            curl --fail --silent --show-error https://game-plug.rbw.ovh/api/health >/dev/null
-            trap - ERR
+      - name: Validate immutable manifest inputs
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$BACKEND_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          [[ "$FRONTEND_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+      - name: Invoke only the forced-command deployment identity
+        run: |
+          set -euo pipefail
+          exec ssh -F /dev/null \
+            -i /var/lib/gameplug-runner/.ssh/id_ed25519 \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile=/var/lib/gameplug-runner/.ssh/known_hosts \
+            -o ConnectTimeout=15 \
+            ubuntu@164.132.161.150 \
+            "deploy $GITHUB_SHA $BACKEND_DIGEST $FRONTEND_DIGEST"

@@ -4,13 +4,17 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'apps/backend/**'
-      - 'apps/frontend/**'
-      - 'shared/**'
-      - 'package.json'
-      - 'bun.lock'
-      - 'compose.production.yml'
-      - '.github/workflows/deploy.yml'
+      - apps/backend/**
+      - apps/frontend/**
+      - shared/**
+      - package.json
+      - bun.lock
+      - compose.production.yml
+      - .github/workflows/deploy.yml
+      - .github/workflows/deploy-production.yml
+      - .github/scripts/assert_deploy_executor_contract.py
+      - .github/actionlint.yaml
+      - ops/deploy-executor/**
   workflow_call:
     inputs:
       push_images:
@@ -21,53 +25,100 @@ on:
         type: string
         required: false
         default: ''
-  workflow_dispatch:
+    outputs:
+      backend_digest:
+        description: Immutable backend manifest digest
+        value: ${{ jobs.build-backend.outputs.digest }}
+      frontend_digest:
+        description: Immutable frontend manifest digest
+        value: ${{ jobs.build-frontend.outputs.digest }}
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
-  build-images:
-    name: Build ${{ matrix.app }} image
+  build-backend:
+    name: Build backend image on GitHub-hosted runner
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      matrix:
-        app: [backend, frontend]
-
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: docker/setup-buildx-action@v3
-
       - name: Resolve immutable image reference
         id: image
         env:
           REQUESTED_TAG: ${{ inputs.image_tag }}
         run: |
           set -euo pipefail
-          tag="$REQUESTED_TAG"
-          if [ -z "$tag" ]; then tag="$GITHUB_SHA"; fi
-          echo "ref=ghcr.io/${GITHUB_REPOSITORY}-${{ matrix.app }}:${tag}" >> "$GITHUB_OUTPUT"
-
-      - name: Log in to GHCR
+          tag="${REQUESTED_TAG:-$GITHUB_SHA}"
+          [[ "$tag" =~ ^[0-9a-f]{40}$ ]]
+          echo "ref=ghcr.io/${GITHUB_REPOSITORY}-backend:${tag}" >> "$GITHUB_OUTPUT"
+      - name: Log in to GHCR only for trusted publication
         if: inputs.push_images == true
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build image from monorepo root
+      - name: Build backend from monorepo root
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./apps/${{ matrix.app }}/Dockerfile
+          file: ./apps/backend/Dockerfile
           push: ${{ inputs.push_images == true }}
           tags: ${{ steps.image.outputs.ref }}
-          cache-from: type=gha,scope=game-plug-${{ matrix.app }}
-          cache-to: type=gha,mode=max,scope=game-plug-${{ matrix.app }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha,scope=game-plug-backend
+          cache-to: type=gha,mode=max,scope=game-plug-backend
+
+  build-frontend:
+    name: Build frontend image on GitHub-hosted runner
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Resolve immutable image reference
+        id: image
+        env:
+          REQUESTED_TAG: ${{ inputs.image_tag }}
+        run: |
+          set -euo pipefail
+          tag="${REQUESTED_TAG:-$GITHUB_SHA}"
+          [[ "$tag" =~ ^[0-9a-f]{40}$ ]]
+          echo "ref=ghcr.io/${GITHUB_REPOSITORY}-frontend:${tag}" >> "$GITHUB_OUTPUT"
+      - name: Log in to GHCR only for trusted publication
+        if: inputs.push_images == true
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build frontend from monorepo root
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./apps/frontend/Dockerfile
+          push: ${{ inputs.push_images == true }}
+          tags: ${{ steps.image.outputs.ref }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           build-args: |
             NEXT_PUBLIC_API_URL=https://game-plug.rbw.ovh
+          cache-from: type=gha,scope=game-plug-frontend
+          cache-to: type=gha,mode=max,scope=game-plug-frontend
