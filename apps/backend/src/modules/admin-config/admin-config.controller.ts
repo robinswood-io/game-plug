@@ -11,10 +11,10 @@ import {
 } from '@nestjs/common';
 import { AdminConfigService } from './admin-config.service';
 import * as schema from '@shared/schema';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('api/admin/config')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 export class AdminConfigController {
   private readonly logger = new Logger(AdminConfigController.name);
 

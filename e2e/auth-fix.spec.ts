@@ -1,107 +1,128 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
-test.describe('Authentication Fix Tests', () => {
-  const BASE_URL = 'https://game-plug.rbw.ovh';
+const BASE_URL = 'https://game-plug.rbw.ovh';
+const DEMO_KEY = process.env.GAMEPLUG_DEMO_AUTH_KEY;
+const DEMO_EMAIL = process.env.GAMEPLUG_DEMO_AUTH_EMAIL;
 
-  test('should login and fetch user without infinite loop', async ({ page }) => {
-    // Navigate to login page
+async function authenticateDemo(page: Page) {
+  expect(DEMO_KEY, 'GAMEPLUG_DEMO_AUTH_KEY is required for governed demo E2E').toBeTruthy();
+  expect(DEMO_EMAIL, 'GAMEPLUG_DEMO_AUTH_EMAIL is required for governed demo E2E').toBeTruthy();
+
+  const response = await page.request.post(`${BASE_URL}/api/auth/dev-login`, {
+    headers: { 'x-gameplug-demo-key': DEMO_KEY! },
+    data: { email: DEMO_EMAIL },
+  });
+  expect(response.status()).toBe(201);
+
+  const body = await response.json();
+  expect(body.user.email).toBe(DEMO_EMAIL);
+  expect(body.user.isGM).toBe(false);
+  const token = body.access_token as string;
+  const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString('utf8'));
+  expect(payload.isGM).toBe(false);
+  expect(payload.isDemo).toBe(true);
+
+  await page.context().addCookies([{
+    name: 'auth-token',
+    value: token,
+    domain: 'game-plug.rbw.ovh',
+    path: '/',
+  }]);
+  await page.addInitScript((value) => localStorage.setItem('access_token', value), token);
+  return { token, user: body.user, payload };
+}
+
+// The governed demo key must never be persisted in a Playwright trace.
+test.use({ trace: 'off' });
+
+test.describe('Authentication security and stability', () => {
+
+  test('keeps public dev-login and dev controls fail-closed without the demo key', async ({ page }) => {
     await page.goto(`${BASE_URL}/`);
+    await expect(page.getByRole('button', { name: /Dev MJ|Dev Joueur|GM Login/i })).toHaveCount(0);
 
-    // Use the production landing page's explicit development access.
-    await page.getByRole('button', { name: /GM Login|Dev MJ \(Test\)/i }).click();
+    for (const path of ['/api/auth/dev-login', '/api/v1/auth/dev-login']) {
+      const response = await page.request.post(`${BASE_URL}${path}`, {
+        data: { email: DEMO_EMAIL || 'demo-e2e@game-plug.invalid' },
+      });
+      expect(response.status()).toBe(404);
+    }
+  });
 
-    // Wait for navigation to dashboard
+  test('issues only a route-limited, read-only, non-GM demo token', async ({ page }) => {
+    const { token } = await authenticateDemo(page);
+    const headers = { Authorization: `Bearer ${token}` };
+
+    const sessions = await page.request.get(`${BASE_URL}/api/sessions`, { headers });
+    expect(sessions.status()).toBe(200);
+    expect(await sessions.json()).toEqual([]);
+
+    const characters = await page.request.get(`${BASE_URL}/api/characters`, { headers });
+    expect(characters.status()).toBe(200);
+    expect(await characters.json()).toEqual([]);
+
+    const mutation = await page.request.post(`${BASE_URL}/api/sessions`, {
+      headers,
+      data: { name: 'forbidden-demo-mutation' },
+    });
+    expect(mutation.status()).toBe(403);
+
+    const adminRead = await page.request.get(`${BASE_URL}/api/admin/config`, { headers });
+    expect(adminRead.status()).toBe(403);
+  });
+
+  test('logs in and fetches the demo user without an infinite loop', async ({ page }) => {
+    await authenticateDemo(page);
+    await page.goto(`${BASE_URL}/dashboard`);
     await page.waitForURL('**/dashboard', { timeout: 10000 });
-
-    // Check that we're on the dashboard
     expect(page.url()).toContain('/dashboard');
 
-    // Wait a bit to ensure no infinite loop
-    await page.waitForTimeout(3000);
-
-    // Check browser console for useAuth logs
     const logs: string[] = [];
     page.on('console', (msg) => {
       const text = msg.text();
-      if (text.includes('useAuth:')) {
-        logs.push(text);
-      }
+      if (text.includes('useAuth:')) logs.push(text);
     });
 
-    // Reload page to trigger useAuth
     await page.reload();
     await page.waitForTimeout(2000);
-
-    // Should not have excessive useAuth calls (indicates no loop)
-    // Allow up to 3 calls (initial + possible remount), but not more
     expect(logs.length).toBeLessThanOrEqual(3);
-
-    console.log(`useAuth called ${logs.length} times (should be ≤ 3)`);
   });
 
-  test('should handle 401 and clear token', async ({ page, context }) => {
-    // Set invalid token in localStorage
+  test('handles 401 and clears an invalid token', async ({ page, context }) => {
     await context.addCookies([{
       name: 'auth-token',
       value: 'invalid-token',
       domain: 'game-plug.rbw.ovh',
-      path: '/'
+      path: '/',
     }]);
+    await page.addInitScript(() => localStorage.setItem('access_token', 'invalid-token'));
 
-    await page.addInitScript(() => {
-      localStorage.setItem('access_token', 'invalid-token');
-    });
-
-    // Navigate to dashboard (protected route)
     await page.goto(`${BASE_URL}/dashboard`);
-
-    // Should redirect to login or show not authenticated
     await page.waitForTimeout(2000);
-
-    // Check that token was cleared
-    const token = await page.evaluate(() => localStorage.getItem('access_token'));
-    expect(token).toBeNull();
+    expect(await page.evaluate(() => localStorage.getItem('access_token'))).toBeNull();
   });
 
-  test('should preserve token after page reload', async ({ page }) => {
-    // Login
-    await page.goto(`${BASE_URL}/`);
-    await page.getByRole('button', { name: /GM Login|Dev MJ \(Test\)/i }).click();
-    await page.waitForURL('**/dashboard', { timeout: 10000 });
-
-    // Get token
+  test('preserves a governed demo token after page reload', async ({ page }) => {
+    await authenticateDemo(page);
+    await page.goto(`${BASE_URL}/dashboard`);
     const tokenBefore = await page.evaluate(() => localStorage.getItem('access_token'));
     expect(tokenBefore).toBeTruthy();
 
-    // Reload page
     await page.reload();
     await page.waitForTimeout(2000);
-
-    // Token should still be there
-    const tokenAfter = await page.evaluate(() => localStorage.getItem('access_token'));
-    expect(tokenAfter).toBe(tokenBefore);
+    expect(await page.evaluate(() => localStorage.getItem('access_token'))).toBe(tokenBefore);
   });
 
-  test('should not refetch user data excessively', async ({ page }) => {
+  test('does not refetch demo user data excessively', async ({ page }) => {
     let userFetchCount = 0;
-
-    // Intercept /api/auth/user requests
     await page.route('**/api/auth/user', (route) => {
       userFetchCount++;
       route.continue();
     });
 
-    // Login
-    await page.goto(`${BASE_URL}/`);
-    await page.getByRole('button', { name: /GM Login|Dev MJ \(Test\)/i }).click();
-    await page.waitForURL('**/dashboard', { timeout: 10000 });
-
-    // Wait to ensure no excessive fetching
+    await authenticateDemo(page);
+    await page.goto(`${BASE_URL}/dashboard`);
     await page.waitForTimeout(3000);
-
-    // Should fetch user data only once or twice (initial + possible cache validation)
     expect(userFetchCount).toBeLessThanOrEqual(2);
-
-    console.log(`/api/auth/user called ${userFetchCount} times (should be ≤ 2)`);
   });
 });

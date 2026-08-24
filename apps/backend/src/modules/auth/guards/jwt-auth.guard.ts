@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { isObservable, lastValueFrom } from 'rxjs';
 import { SKIP_AUTH_KEY } from '../decorators/skip-auth.decorator';
@@ -38,10 +38,27 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     // Otherwise, perform normal JWT validation
     try {
       const result = super.canActivate(context);
-      if (result instanceof Promise) return await result;
-      if (isObservable(result)) return await lastValueFrom(result);
-      return result;
+      const activated = result instanceof Promise
+        ? await result
+        : isObservable(result)
+          ? await lastValueFrom(result)
+          : result;
+
+      if (activated && req.user?.isDemo) {
+        const allowedReadPaths = new Set([
+          '/api/auth/user',
+          '/api/v1/auth/user',
+          '/api/sessions',
+          '/api/characters',
+        ]);
+        if (req.method !== 'GET' || !allowedReadPaths.has(req.path)) {
+          throw new ForbiddenException('Demo tokens are read-only and route-limited');
+        }
+      }
+
+      return activated;
     } catch (err) {
+      if (err instanceof ForbiddenException) throw err;
       this.logger.error(`Auth failed for ${req.path}: ${err.message}`);
       throw new UnauthorizedException('Invalid or missing JWT token');
     }
