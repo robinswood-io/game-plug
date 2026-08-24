@@ -31,7 +31,7 @@ const nextConfig = {
   },
   // Turbopack configuration for monorepo
   turbopack: {
-    root: process.env.TURBOPACK_ROOT || '../..',
+    root: process.env.TURBOPACK_ROOT || path.resolve(__dirname, '../..'),
   },
   // Webpack configuration for alias resolution
   webpack: (config) => {

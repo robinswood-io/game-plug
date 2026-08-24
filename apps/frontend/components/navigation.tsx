@@ -111,7 +111,7 @@ export default function Navigation() {
               data-testid="mobile-nav-player"
             >
               <div className="flex flex-col items-center">
-                <User className="h-4 w-4 mb-1" />
+                <UserIcon className="h-4 w-4 mb-1" />
                 <span className="text-xs">Joueur</span>
               </div>
             </Button>

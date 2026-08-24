@@ -38,21 +38,17 @@ export default function AdminConfigPage() {
   const [newConfig, setNewConfig] = useState({ key: "", value: "", description: "" });
 
   // Fetch all configs
-  const { data: configs = [], isLoading } = useQuery({
+  const { data: configs = [], isLoading } = useQuery<SystemConfig[]>({
     queryKey: ["admin-config"],
-    queryFn: () => apiRequest("/api/admin/config"),
+    queryFn: async () => (await apiRequest("GET", "/api/admin/config")).json(),
   });
 
   // Update config mutation
   const updateMutation = useMutation({
     mutationFn: (config: { key: string; value: any; description?: string }) =>
-      apiRequest(`/api/admin/config/${config.key}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          value: config.value,
-          description: config.description,
-        }),
+      apiRequest("PATCH", `/api/admin/config/${config.key}`, {
+        value: config.value,
+        description: config.description,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-config"] });
@@ -74,13 +70,9 @@ export default function AdminConfigPage() {
   // Create config mutation
   const createMutation = useMutation({
     mutationFn: (config: { key: string; value: any; description?: string }) =>
-      apiRequest(`/api/admin/config/${config.key}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          value: config.value,
-          description: config.description,
-        }),
+      apiRequest("PATCH", `/api/admin/config/${config.key}`, {
+        value: config.value,
+        description: config.description,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-config"] });
@@ -103,7 +95,7 @@ export default function AdminConfigPage() {
   // Delete config mutation
   const deleteMutation = useMutation({
     mutationFn: (key: string) =>
-      apiRequest(`/api/admin/config/${key}`, { method: "DELETE" }),
+      apiRequest("DELETE", `/api/admin/config/${key}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-config"] });
       toast({
@@ -380,7 +372,7 @@ export default function AdminConfigPage() {
                 placeholder="Enter value (JSON or string)"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Tip: Use JSON format for objects/arrays (e.g., {"true"}, 123, {"{"}"max": 100})
+                Tip: Use JSON format for objects/arrays (e.g., true, 123, {'{"max": 100}'})
               </p>
             </div>
             <div>
