@@ -114,7 +114,7 @@ export class AdminConfigService {
                   description: description ?? existing[0].description,
                   updatedBy,
                   updatedAt: new Date(),
-                })
+                } as Partial<typeof schema.systemConfig.$inferInsert>)
                 .where(eq(schema.systemConfig.key, key))
                 .returning()
             )[0]
@@ -128,7 +128,7 @@ export class AdminConfigService {
                   description,
                   updatedBy,
                   updatedAt: new Date(),
-                })
+                } as typeof schema.systemConfig.$inferInsert)
                 .returning()
             )[0];
 

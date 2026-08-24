@@ -2,60 +2,11 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, LogIn, ShieldAlert, Skull, ScrollText } from "lucide-react";
+import { Users, Skull } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
 
 export default function LandingPage() {
   const router = useRouter();
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleDevLogin = async (role: "gm" | "player") => {
-    setIsLoading(true);
-    try {
-      const email = "gm@example.com"; 
-      
-      const response = await fetch("/api/auth/dev-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) throw new Error("Dev login failed");
-
-      const data = await response.json();
-
-      localStorage.setItem("access_token", data.access_token);
-      document.cookie = `auth-token=${data.access_token}; path=/; max-age=86400; SameSite=Strict`;
-
-      if (role === "player") {
-        localStorage.setItem("current_session_code", "TEST01");
-        toast({
-          title: "Infiltration réussie",
-          description: "Vous avez rejoint la session TEST01",
-        });
-        router.push("/join/TEST01");
-      } else {
-        toast({
-          title: "Gardien éveillé",
-          description: "Bienvenue, Maître de Jeu",
-        });
-        router.push("/dashboard");
-      }
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "L'Indicible résiste",
-        description: "Échec de la connexion occulte",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-cosmic-void text-bone-white parchment-bg overflow-hidden flex flex-col items-center justify-center p-4">
       {/* Background decoration */}
@@ -113,35 +64,6 @@ export default function LandingPage() {
           </Card>
         </main>
 
-        {/* Dev Access Panel */}
-        <section className="max-w-2xl mx-auto">
-          <div className="gothic-border p-8 glass-card space-y-6">
-            <h3 className="font-cinzel text-aged-gold flex items-center justify-center gap-3 uppercase tracking-widest">
-              <ShieldAlert className="h-5 w-5 text-blood-burgundy" />
-              Archives Secrètes (Développement)
-            </h3>
-            
-            <div className="grid sm:grid-cols-2 gap-4">
-              <Button 
-                disabled={isLoading}
-                onClick={() => handleDevLogin("gm")}
-                className="btn-secondary h-16 flex flex-col items-center justify-center gap-1"
-              >
-                <ScrollText className="h-4 w-4" />
-                <span>Dev MJ (Test)</span>
-              </Button>
-              
-              <Button 
-                disabled={isLoading}
-                onClick={() => handleDevLogin("player")}
-                className="bg-eldritch-green/20 hover:bg-eldritch-green/40 text-bone-white border border-eldritch-green/50 h-16 flex flex-col items-center justify-center gap-1"
-              >
-                <Users className="h-4 w-4" />
-                <span>Dev Joueur (TEST01)</span>
-              </Button>
-            </div>
-          </div>
-        </section>
 
         <footer className="pt-8 opacity-60">
           <p className="font-crimson text-sm text-aged-parchment">

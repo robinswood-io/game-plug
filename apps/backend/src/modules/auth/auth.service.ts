@@ -1,9 +1,10 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { DatabaseService } from '../database/database.service';
 import { users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import * as bcrypt from 'bcryptjs';
+import { timingSafeEqual } from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -30,21 +31,44 @@ export class AuthService {
     return result;
   }
 
-  async login(user: any) {
-    const payload = { email: user.email, sub: user.id, isGM: user.isGM };
+  async login(user: any, options: { isDemo?: boolean } = {}) {
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      isGM: user.isGM,
+      isDemo: options.isDemo === true,
+    };
     return {
       access_token: this.jwtService.sign(payload),
       user,
     };
   }
 
-  async devLogin(email: string) {
+  async devLogin(demoKey?: string) {
+    const enabled = process.env.GAMEPLUG_DEMO_AUTH_ENABLED === 'true';
+    const expectedKey = process.env.GAMEPLUG_DEMO_AUTH_KEY;
+    const allowedEmail = process.env.GAMEPLUG_DEMO_AUTH_EMAIL;
+
+    if (!enabled || !expectedKey || !allowedEmail || !demoKey) {
+      throw new NotFoundException();
+    }
+
+    const expected = Buffer.from(expectedKey);
+    const presented = Buffer.from(demoKey);
+    if (expected.length !== presented.length || !timingSafeEqual(expected, presented)) {
+      throw new NotFoundException();
+    }
+
+
     const user = await this.db.db.query.users.findFirst({
-      where: eq(users.email, email),
+      where: eq(users.email, allowedEmail),
     });
-    if (!user) throw new UnauthorizedException('User not found');
+    if (!user || user.authType !== 'dev-bypass' || user.isGM) {
+      throw new ForbiddenException('Demo identity is not safely configured');
+    }
+
     const { passwordHash, ...result } = user;
-    return this.login(result);
+    return this.login(result, { isDemo: true });
   }
 
   async signup(data: { email: string; password: string; firstName?: string; lastName?: string; isGM?: boolean }) {
@@ -68,7 +92,12 @@ export class AuthService {
   async refreshToken(refreshToken: string) {
     try {
       const payload = this.jwtService.verify(refreshToken);
-      const newPayload = { email: payload.email, sub: payload.sub, isGM: payload.isGM };
+      const newPayload = {
+        email: payload.email,
+        sub: payload.sub,
+        isGM: payload.isGM,
+        isDemo: payload.isDemo === true,
+      };
       return {
         access_token: this.jwtService.sign(newPayload),
       };

@@ -2,11 +2,11 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 /**
- * Authentication Middleware
+ * Authentication Proxy
  * Protects dashboard routes by checking for auth token
  * Redirects unauthorized users to login page
  */
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const token = request.cookies.get('auth-token')?.value;
   const { pathname } = request.nextUrl;
 
@@ -23,7 +23,7 @@ export function middleware(request: NextRequest) {
 }
 
 /**
- * Middleware configuration
+ * Proxy configuration
  * Applies to all protected routes under /dashboard, /characters, and /sessions
  */
 export const config = {

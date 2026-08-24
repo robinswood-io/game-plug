@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { DatabaseService } from '../database/database.service';
@@ -156,6 +156,7 @@ describe('AuthService', () => {
         email: 'test@example.com',
         sub: 'user-1',
         isGM: false,
+        isDemo: false,
       });
     });
 
@@ -166,6 +167,7 @@ describe('AuthService', () => {
         email: 'gm@example.com',
         sub: 'user-2',
         isGM: true,
+        isDemo: false,
       });
     });
 
@@ -178,6 +180,54 @@ describe('AuthService', () => {
           sub: mockUser.id,
         }),
       );
+    });
+  });
+
+  describe('devLogin', () => {
+    const demoUser = {
+      ...mockUser,
+      email: 'demo-e2e@game-plug.invalid',
+      passwordHash: null,
+      authType: 'dev-bypass',
+      isGM: false,
+    };
+
+    beforeEach(() => {
+      process.env.GAMEPLUG_DEMO_AUTH_ENABLED = 'true';
+      process.env.GAMEPLUG_DEMO_AUTH_KEY = 'unit-test-demo-key';
+      process.env.GAMEPLUG_DEMO_AUTH_EMAIL = demoUser.email;
+    });
+
+    afterEach(() => {
+      delete process.env.GAMEPLUG_DEMO_AUTH_ENABLED;
+      delete process.env.GAMEPLUG_DEMO_AUTH_KEY;
+      delete process.env.GAMEPLUG_DEMO_AUTH_EMAIL;
+    });
+
+    it('fails closed when demo mode is disabled', async () => {
+      process.env.GAMEPLUG_DEMO_AUTH_ENABLED = 'false';
+      await expect(service.devLogin('unit-test-demo-key')).rejects.toThrow(NotFoundException);
+    });
+
+    it('fails closed when the demo key is invalid', async () => {
+      await expect(service.devLogin('wrong-key')).rejects.toThrow(NotFoundException);
+    });
+
+    it('issues a non-GM demo claim only for the configured empty identity', async () => {
+      jest.spyOn(dbService.db.query.users, 'findFirst').mockResolvedValue(demoUser as any);
+      const result = await service.devLogin('unit-test-demo-key');
+
+      expect(result.user.isGM).toBe(false);
+      expect(jwtService.sign).toHaveBeenCalledWith(expect.objectContaining({
+        email: demoUser.email,
+        isGM: false,
+        isDemo: true,
+      }));
+    });
+
+    it('rejects a privileged demo identity', async () => {
+      jest.spyOn(dbService.db.query.users, 'findFirst').mockResolvedValue({ ...demoUser, isGM: true } as any);
+      await expect(service.devLogin('unit-test-demo-key')).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -324,6 +374,7 @@ describe('AuthService', () => {
         email: 'test@example.com',
         sub: 'user-1',
         isGM: false,
+        isDemo: false,
       };
       (jwtService.verify as jest.Mock).mockReturnValue(payload);
 
@@ -363,6 +414,7 @@ describe('AuthService', () => {
         email: 'gm@example.com',
         sub: 'user-2',
         isGM: true,
+        isDemo: false,
       };
       (jwtService.verify as jest.Mock).mockReset();
       (jwtService.verify as jest.Mock).mockReturnValue(userPayload);

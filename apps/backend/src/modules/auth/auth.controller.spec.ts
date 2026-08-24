@@ -34,6 +34,7 @@ describe('AuthController', () => {
             login: jest.fn(),
             refreshToken: jest.fn(),
             findById: jest.fn(),
+            devLogin: jest.fn(),
           },
         },
       ],
@@ -136,6 +137,17 @@ describe('AuthController', () => {
       jest.spyOn(authService, 'login').mockRejectedValue(new Error('Login failed'));
 
       await expect(controller.login(mockRequest)).rejects.toThrow('Login failed');
+    });
+  });
+
+  describe('devLogin', () => {
+    it('passes only the governed key and never an arbitrary identity', async () => {
+      jest.spyOn(authService, 'devLogin').mockResolvedValue(mockAuthResponse);
+
+      const result = await controller.devLogin('governed-key');
+
+      expect(result).toEqual(mockAuthResponse);
+      expect(authService.devLogin).toHaveBeenCalledWith('governed-key');
     });
   });
 

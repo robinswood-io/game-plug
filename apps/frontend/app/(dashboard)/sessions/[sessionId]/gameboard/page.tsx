@@ -111,7 +111,7 @@ export default function GameBoard() {
         case 'projection_update':
           // Update projection content
           if (lastMessage.data && typeof lastMessage.data === 'object' && 'content' in lastMessage.data) {
-            setProjectionContent(lastMessage.data.content);
+            setProjectionContent(lastMessage.data.content as ProjectionContent);
           }
           break;
       }

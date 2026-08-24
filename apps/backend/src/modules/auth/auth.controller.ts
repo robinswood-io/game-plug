@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Request, Headers } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
@@ -6,7 +6,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { SignupDto, LoginDto } from './dto';
 
 @ApiTags('Authentication')
-@Controller('api/auth')
+@Controller(['api/auth', 'api/v1/auth'])
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -31,8 +31,8 @@ export class AuthController {
 
   @Post('dev-login')
   @ApiOperation({ summary: 'Development only: bypass password' })
-  async devLogin(@Body() data: { email: string }) {
-    return this.authService.devLogin(data.email);
+  async devLogin(@Headers('x-gameplug-demo-key') demoKey?: string) {
+    return this.authService.devLogin(demoKey);
   }
 
   @Post('refresh')
