@@ -15,6 +15,9 @@ readonly CANARY_NETWORK="gameplug-canonical-canary"
 readonly CANARY_BACKEND="gameplug-canonical-canary-backend"
 readonly CANARY_FRONTEND="gameplug-canonical-canary-frontend"
 readonly LOCK_FILE="${STATE_DIR}/deploy.lock"
+readonly PUBLIC_HOME_URL="https://game-plug.rbw.ovh/"
+readonly PUBLIC_HEALTH_URL="https://game-plug.rbw.ovh/api/health"
+ROLLBACK_ATTEMPTED=false
 
 log() { printf '[gameplug-deploy] %s\n' "$*"; }
 die() { log "DENIED: $*" >&2; exit 64; }
@@ -63,6 +66,35 @@ verify_env() {
   grep -aq '^GAMEPLUG_DEMO_AUTH_ENABLED=false$' "$ENV_FILE" || die "public demo auth must remain disabled"
 }
 
+verify_enable_gate_metadata() {
+  local gate=$1 mode=$2 uid=$3 gid=$4
+  if [[ ! -f "$gate" || -L "$gate" ]]; then
+    log "local cutover gate must be a regular non-symlink file" >&2
+    return 1
+  fi
+  if [[ "$uid" != 0 || "$gid" != 0 ]]; then
+    log "local cutover gate must be owned by root:root" >&2
+    return 1
+  fi
+  if [[ "$mode" != 644 ]]; then
+    log "local cutover gate must be mode 0644" >&2
+    return 1
+  fi
+  if ! cmp -s -- "$gate" <(printf 'enabled=true\n'); then
+    log "local cutover gate content is not exact" >&2
+    return 1
+  fi
+}
+
+verify_enable_gate() {
+  local gate=$1 mode uid gid
+  [[ -e "$gate" ]] || { log "local cutover gate is disabled" >&2; return 1; }
+  mode=$(stat -c %a -- "$gate") || return 1
+  uid=$(stat -c %u -- "$gate") || return 1
+  gid=$(stat -c %g -- "$gate") || return 1
+  verify_enable_gate_metadata "$gate" "$mode" "$uid" "$gid"
+}
+
 verify_rollback() {
   [[ -x "$ROLLBACK_SCRIPT" ]] || die "source-runtime rollback script unavailable"
   (cd "$ROLLBACK_DIR" && sha256sum --quiet -c SHA256SUMS) || die "rollback bundle checksum mismatch"
@@ -103,13 +135,51 @@ cleanup_canary() {
   docker network rm "$CANARY_NETWORK" >/dev/null 2>&1 || true
 }
 
+verify_canary_ports_closed() {
+  local sockets
+  if ! sockets=$(ss -ltn); then
+    log "unable to inspect canary listeners" >&2
+    return 1
+  fi
+  if grep -Eq '127\.0\.0\.1:5523[01] ' <<< "$sockets"; then
+    log "canary listener remains open after cleanup" >&2
+    return 1
+  fi
+}
+
 wait_http() {
-  local url=$1
+  local label=$1 url=$2 attempts=${3:-30} delay=${4:-2}
   local attempt
-  for attempt in $(seq 1 30); do
-    curl --fail --silent --show-error "$url" >/dev/null 2>&1 && return 0
-    sleep 2
+  [[ "$attempts" =~ ^[1-9][0-9]*$ ]] || { log "invalid HTTP wait attempt bound" >&2; return 2; }
+  [[ "$delay" =~ ^[0-9]+$ ]] || { log "invalid HTTP wait delay" >&2; return 2; }
+  for ((attempt = 1; attempt <= attempts; attempt++)); do
+    if curl --fail --silent --show-error --connect-timeout 5 --max-time 10 "$url" >/dev/null 2>&1; then
+      log "${label} ready after attempt ${attempt}/${attempts}"
+      return 0
+    fi
+    if (( attempt < attempts )); then
+      log "${label} not ready at attempt ${attempt}/${attempts}; retrying"
+      sleep "$delay"
+    fi
   done
+  log "${label} timed out after ${attempts} attempts" >&2
+  return 1
+}
+
+wait_container_healthy() {
+  local name=$1 attempts=${2:-30} delay=${3:-2}
+  local attempt status
+  for ((attempt = 1; attempt <= attempts; attempt++)); do
+    status=$(docker inspect "$name" --format '{{.State.Health.Status}}' 2>/dev/null || true)
+    if [[ "$status" == healthy ]]; then
+      log "container ${name} healthy after attempt ${attempt}/${attempts}"
+      return 0
+    fi
+    if (( attempt < attempts )); then
+      sleep "$delay"
+    fi
+  done
+  log "container ${name} health timed out after ${attempts} attempts" >&2
   return 1
 }
 
@@ -129,9 +199,9 @@ canary() {
     -e NODE_ENV=production -e HOSTNAME=0.0.0.0 -e PORT=5000 \
     -p 127.0.0.1:55231:5000 \
     "${FRONTEND_REPO}@${FRONTEND_DIGEST}" >/dev/null
-  wait_http http://127.0.0.1:55230/api/health || die "backend canary health failed"
-  wait_http http://127.0.0.1:55231/ || die "frontend canary health failed"
-  wait_http http://127.0.0.1:55231/api/health || die "frontend-to-backend canary proxy failed"
+  wait_http "backend canary health" http://127.0.0.1:55230/api/health || die "backend canary health failed"
+  wait_http "frontend canary health" http://127.0.0.1:55231/ || die "frontend canary health failed"
+  wait_http "frontend-to-backend canary proxy" http://127.0.0.1:55231/api/health || die "frontend-to-backend canary proxy failed"
   [[ $(docker inspect "$CANARY_BACKEND" --format '{{.HostConfig.RestartPolicy.Name}}') = no ]]
   [[ $(docker inspect "$CANARY_FRONTEND" --format '{{.HostConfig.RestartPolicy.Name}}') = no ]]
   [[ $(docker inspect "$CANARY_BACKEND" --format '{{.Config.User}}') = bun ]]
@@ -139,37 +209,53 @@ canary() {
   log "exact-digest isolated canary passed"
   cleanup_canary
   trap - EXIT
-  ! ss -ltn | grep -Eq '127\.0\.0\.1:5523[01] '
+  verify_canary_ports_closed || die "canary listener cleanup could not be verified"
 }
 
-rollback() {
-  log "canonical deployment failed; restoring verified source-runtime"
-  "$ROLLBACK_SCRIPT"
+rollback_once() {
+  local rollback_script=$1 home_url=$2 health_url=$3
+  if [[ "$ROLLBACK_ATTEMPTED" == true ]]; then
+    log "source-runtime rollback already attempted; refusing duplicate execution" >&2
+    return 75
+  fi
+  ROLLBACK_ATTEMPTED=true
+  log "canonical deployment failed; restoring verified source-runtime once"
+  if ! "$rollback_script"; then
+    log "source-runtime rollback command failed" >&2
+    return 1
+  fi
+  wait_http "public homepage after rollback" "$home_url" 45 2 || return 1
+  wait_http "public health after rollback" "$health_url" 45 2 || return 1
+  log "verified source-runtime restored"
+}
+
+perform_cutover() {
+  docker rm -f game-plug game-plug-backend >/dev/null 2>&1 || true
+  docker compose -f "$REPO_DIR/compose.production.yml" up -d || return $?
+  wait_container_healthy game-plug 30 2 || return 1
+  wait_container_healthy game-plug-backend 30 2 || return 1
+  wait_http "public homepage after deploy" "$PUBLIC_HOME_URL" 45 2 || return 1
+  wait_http "public health after deploy" "$PUBLIC_HEALTH_URL" 45 2 || return 1
 }
 
 deploy() {
-  [[ -f "$ENABLE_FILE" ]] && grep -qx 'enabled=true' "$ENABLE_FILE" || die "local cutover gate is disabled"
+  verify_enable_gate "$ENABLE_FILE" || die "local cutover gate is disabled or invalid"
   preflight true
   canary
   export GAMEPLUG_BACKEND_IMAGE="${BACKEND_REPO}@${BACKEND_DIGEST}"
   export GAMEPLUG_FRONTEND_IMAGE="${FRONTEND_REPO}@${FRONTEND_DIGEST}"
   export GAMEPLUG_BACKEND_ENV_FILE="$ENV_FILE"
   docker compose -f "$REPO_DIR/compose.production.yml" config --quiet
-  trap rollback ERR
-  docker rm -f game-plug game-plug-backend >/dev/null 2>&1 || true
-  docker compose -f "$REPO_DIR/compose.production.yml" up -d
-  local attempt front back
-  for attempt in $(seq 1 30); do
-    front=$(docker inspect game-plug --format '{{.State.Health.Status}}' 2>/dev/null || true)
-    back=$(docker inspect game-plug-backend --format '{{.State.Health.Status}}' 2>/dev/null || true)
-    [[ "$front" = healthy && "$back" = healthy ]] && break
-    sleep 2
-  done
-  [[ $(docker inspect game-plug --format '{{.State.Health.Status}}') = healthy ]]
-  [[ $(docker inspect game-plug-backend --format '{{.State.Health.Status}}') = healthy ]]
-  curl --fail --silent --show-error https://game-plug.rbw.ovh/ >/dev/null
-  curl --fail --silent --show-error https://game-plug.rbw.ovh/api/health >/dev/null
-  trap - ERR
+
+  local deploy_rc=0 rollback_rc=0
+  perform_cutover || deploy_rc=$?
+  if (( deploy_rc != 0 )); then
+    rollback_once "$ROLLBACK_SCRIPT" "$PUBLIC_HOME_URL" "$PUBLIC_HEALTH_URL" || rollback_rc=$?
+    if (( rollback_rc == 0 )); then
+      die "canonical deployment failed; verified source-runtime restored"
+    fi
+    die "canonical deployment failed and source-runtime rollback could not be verified"
+  fi
   log "canonical deployment verified"
 }
 
@@ -187,4 +273,6 @@ main() {
   esac
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi

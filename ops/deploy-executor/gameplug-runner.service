@@ -16,6 +16,7 @@ KillSignal=SIGTERM
 TimeoutStopSec=5min
 Environment=HOME=/var/lib/gameplug-runner
 Environment=DOTNET_CLI_TELEMETRY_OPTOUT=1
+Environment=ACTIONS_RUNNER_HOOK_JOB_STARTED=/usr/local/libexec/gameplug-runner-pre-job.sh
 UMask=0077
 NoNewPrivileges=true
 PrivateTmp=true
