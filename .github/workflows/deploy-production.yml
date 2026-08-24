@@ -15,20 +15,6 @@ on:
       - .github/scripts/assert_deploy_executor_contract.py
       - .github/actionlint.yaml
       - ops/deploy-executor/**
-  push:
-    branches: [main]
-    paths:
-      - apps/backend/**
-      - apps/frontend/**
-      - shared/**
-      - package.json
-      - bun.lock
-      - compose.production.yml
-      - .github/workflows/deploy.yml
-      - .github/workflows/deploy-production.yml
-      - .github/scripts/assert_deploy_executor_contract.py
-      - .github/actionlint.yaml
-      - ops/deploy-executor/**
   workflow_dispatch:
 
 concurrency:
@@ -97,22 +83,27 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           REF_NAME: ${{ github.ref }}
+          ACTOR: ${{ github.actor }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
         run: |
           set -euo pipefail
           ready=false
-          if [ "$DEPLOY_ENABLED" = true ] && [ "$REF_NAME" = refs/heads/main ] && \
-             { [ "$EVENT_NAME" = push ] || [ "$EVENT_NAME" = workflow_dispatch ]; }; then
+          if [ "$DEPLOY_ENABLED" = true ] && \
+             [ "$EVENT_NAME" = workflow_dispatch ] && \
+             [ "$REF_NAME" = refs/heads/main ] && \
+             [ "$ACTOR" = Aoleon ] && \
+             [ "$TRIGGERING_ACTOR" = Aoleon ]; then
             ready=true
           fi
           echo "ready=$ready" >> "$GITHUB_OUTPUT"
           if [ "$ready" != true ]; then
-            echo 'Canonical deployment remains disabled or the event is not trusted main/manual.'
+            echo 'Canonical deployment remains disabled or is not a manual Aoleon dispatch from main.'
           fi
 
   build-images:
     name: Build immutable production images
     needs: validate-contract
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
       packages: write
@@ -128,8 +119,10 @@ jobs:
     needs: [validate-contract, deployment-readiness, build-images]
     if: >-
       always() &&
-      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      github.event_name == 'workflow_dispatch' &&
       github.ref == 'refs/heads/main' &&
+      github.actor == 'Aoleon' &&
+      github.triggering_actor == 'Aoleon' &&
       needs.validate-contract.result == 'success' &&
       needs.build-images.result == 'success' &&
       needs.deployment-readiness.outputs.ready == 'true'
