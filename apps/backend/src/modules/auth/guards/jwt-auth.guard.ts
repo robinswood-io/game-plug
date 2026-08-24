@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { isObservable, lastValueFrom } from 'rxjs';
 import { SKIP_AUTH_KEY } from '../decorators/skip-auth.decorator';
 
 @Injectable()
@@ -37,7 +38,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     // Otherwise, perform normal JWT validation
     try {
       const result = super.canActivate(context);
-      return result instanceof Promise ? await result : result;
+      if (result instanceof Promise) return await result;
+      if (isObservable(result)) return await lastValueFrom(result);
+      return result;
     } catch (err) {
       this.logger.error(`Auth failed for ${req.path}: ${err.message}`);
       throw new UnauthorizedException('Invalid or missing JWT token');
