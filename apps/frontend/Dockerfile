@@ -1,86 +1,32 @@
-# =============================================================================
-# Multi-stage Dockerfile for Next.js 16 Frontend (using Bun runtime)
-# =============================================================================
-# This Dockerfile uses a multi-stage approach to minimize the final image size
-# Stage 1: Dependencies - Install all dependencies using bun
-# Stage 2: Build - Compile Next.js application with bun
-# Stage 3: Production - Minimal runtime image with bun runtime
-
-# =============================================================================
-# Stage 1: Dependencies
-# =============================================================================
-FROM oven/bun:1-alpine AS deps
+# syntax=docker/dockerfile:1.7
+FROM oven/bun:1.3.14-alpine AS builder
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json* bun.lockb* ./
+ARG NEXT_PUBLIC_API_URL=https://game-plug.rbw.ovh
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
 
-# Install all dependencies (including devDependencies for build)
-RUN bun install
+COPY package.json bun.lock ./
+COPY apps/backend/package.json ./apps/backend/package.json
+COPY apps/frontend/package.json ./apps/frontend/package.json
+RUN bun install --frozen-lockfile --ignore-scripts
 
-# =============================================================================
-# Stage 2: Builder
-# =============================================================================
-FROM oven/bun:1-alpine AS builder
+COPY shared ./shared
+COPY apps/frontend ./apps/frontend
+RUN bun run build:frontend
+
+FROM oven/bun:1.3.14-alpine AS runner
 WORKDIR /app
-
-# Build arguments
-ARG NEXT_PUBLIC_API_URL=http://localhost:5002
-ARG NODE_ENV=production
-
-# Copy dependencies from deps stage
-COPY --from=deps /app/node_modules ./node_modules
-
-# Copy source code and build configuration
-COPY . .
-
-# Set environment variables for build
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-ENV NODE_ENV=${NODE_ENV}
-ENV NEXT_TELEMETRY_DISABLED=1
-
-# Build the Next.js application using bun
-RUN bun run build
-
-# =============================================================================
-# Stage 3: Production Runtime
-# =============================================================================
-FROM oven/bun:1-alpine
-
-WORKDIR /app
-
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init && rm -rf /var/cache/apk/*
-
-# Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
-
-# Copy only production dependencies
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package.json ./
-
-# Set correct permissions
-RUN chown -R nodejs:nodejs /app
-
-# Switch to non-root user
-USER nodejs
-
-# Expose application port
-EXPOSE 3000
-
-# Environment variables
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-
-# Health check using bun
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD bun run --no-install wget --quiet --tries=1 --spider http://localhost:3000 || exit 1
-
-# Use dumb-init to properly handle signals
+RUN apk add --no-cache dumb-init
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0 PORT=5000
+COPY --from=builder --chown=bun:bun /app/node_modules ./node_modules
+COPY --from=builder --chown=bun:bun /app/apps/frontend/node_modules ./apps/frontend/node_modules
+COPY --from=builder --chown=bun:bun /app/apps/frontend/.next ./apps/frontend/.next
+COPY --from=builder --chown=bun:bun /app/apps/frontend/public ./apps/frontend/public
+COPY --from=builder --chown=bun:bun /app/apps/frontend/package.json ./apps/frontend/package.json
+COPY --from=builder --chown=bun:bun /app/apps/frontend/next.config.js ./apps/frontend/next.config.js
+USER bun
+EXPOSE 5000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD bun -e "fetch('http://127.0.0.1:5000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 ENTRYPOINT ["dumb-init", "--"]
-
-# Start Next.js application using bun
-CMD ["bun", "run", "start"]
+CMD ["bun", "run", "--cwd", "apps/frontend", "start", "--hostname", "0.0.0.0", "--port", "5000"]
