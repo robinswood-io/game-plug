@@ -69,6 +69,19 @@ test.describe('Authentication security and stability', () => {
 
     const adminRead = await page.request.get(`${BASE_URL}/api/admin/config`, { headers });
     expect(adminRead.status()).toBe(403);
+
+    const refresh = await page.request.post(`${BASE_URL}/api/auth/refresh`, {
+      data: { refreshToken: token },
+    });
+    expect(refresh.status()).toBe(201);
+    const refreshedToken = (await refresh.json()).access_token as string;
+    const refreshedPayload = JSON.parse(Buffer.from(refreshedToken.split('.')[1], 'base64url').toString('utf8'));
+    expect(refreshedPayload.isDemo).toBe(true);
+    const refreshedMutation = await page.request.post(`${BASE_URL}/api/sessions`, {
+      headers: { Authorization: `Bearer ${refreshedToken}` },
+      data: { name: 'still-forbidden-after-refresh' },
+    });
+    expect(refreshedMutation.status()).toBe(403);
   });
 
   test('logs in and fetches the demo user without an infinite loop', async ({ page }) => {

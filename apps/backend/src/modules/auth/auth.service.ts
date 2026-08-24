@@ -95,7 +95,12 @@ export class AuthService {
   async refreshToken(refreshToken: string) {
     try {
       const payload = this.jwtService.verify(refreshToken);
-      const newPayload = { email: payload.email, sub: payload.sub, isGM: payload.isGM };
+      const newPayload = {
+        email: payload.email,
+        sub: payload.sub,
+        isGM: payload.isGM,
+        isDemo: payload.isDemo === true,
+      };
       return {
         access_token: this.jwtService.sign(newPayload),
       };
