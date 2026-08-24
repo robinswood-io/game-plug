@@ -18,6 +18,12 @@ on:
       - 'package.json'
       - 'package-lock.json'
 
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 env:
   NODE_VERSION: '20'
   POSTGRES_DB: game_plug_test

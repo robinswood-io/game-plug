@@ -18,6 +18,12 @@ on:
       - 'package.json'
       - 'package-lock.json'
 
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 env:
   NODE_VERSION: '20'
   NEXT_PUBLIC_API_URL: 'http://localhost:5002'
