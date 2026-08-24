@@ -1,0 +1,58 @@
+services:
+  game-plug:
+    image: ${GAMEPLUG_FRONTEND_IMAGE:?GAMEPLUG_FRONTEND_IMAGE is required}
+    container_name: game-plug
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: "5000"
+    networks:
+      - traefik_public
+      - dev_network
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik_public
+      - traefik.http.routers.game-plug.rule=Host(`game-plug.rbw.ovh`)
+      - traefik.http.routers.game-plug.entrypoints=websecure
+      - traefik.http.routers.game-plug.tls=true
+      - traefik.http.routers.game-plug.tls.certresolver=letsencrypt
+      - traefik.http.routers.game-plug.service=game-plug
+      - traefik.http.services.game-plug.loadbalancer.server.port=5000
+
+  game-plug-backend:
+    image: ${GAMEPLUG_BACKEND_IMAGE:?GAMEPLUG_BACKEND_IMAGE is required}
+    container_name: game-plug-backend
+    restart: unless-stopped
+    env_file:
+      - ${GAMEPLUG_BACKEND_ENV_FILE:?GAMEPLUG_BACKEND_ENV_FILE is required}
+    environment:
+      NODE_ENV: production
+      PORT: "4000"
+      CORS_ORIGIN: https://game-plug.rbw.ovh
+      API_URL: https://game-plug.rbw.ovh/api
+    networks:
+      - traefik_public
+      - dev_network
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik_public
+      - traefik.http.routers.game-plug-backend.rule=Host(`game-plug.rbw.ovh`) && PathPrefix(`/api`)
+      - traefik.http.routers.game-plug-backend.priority=100
+      - traefik.http.routers.game-plug-backend.entrypoints=websecure
+      - traefik.http.routers.game-plug-backend.tls=true
+      - traefik.http.routers.game-plug-backend.tls.certresolver=letsencrypt
+      - traefik.http.routers.game-plug-backend.service=game-plug-backend
+      - traefik.http.services.game-plug-backend.loadbalancer.server.port=4000
+      - traefik.http.routers.game-plug-ws.rule=Host(`game-plug.rbw.ovh`) && PathPrefix(`/game-ws`)
+      - traefik.http.routers.game-plug-ws.priority=110
+      - traefik.http.routers.game-plug-ws.entrypoints=websecure
+      - traefik.http.routers.game-plug-ws.tls=true
+      - traefik.http.routers.game-plug-ws.tls.certresolver=letsencrypt
+      - traefik.http.routers.game-plug-ws.service=game-plug-backend
+
+networks:
+  traefik_public:
+    external: true
+  dev_network:
+    external: true

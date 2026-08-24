@@ -1,223 +1,57 @@
-name: Docker Build & Test
+name: Docker Deployment Contract
 
 on:
-  push:
-    branches: [main, develop]
-    paths:
-      - 'apps/backend/Dockerfile'
-      - 'apps/frontend/Dockerfile'
-      - 'docker-compose.yml'
-      - '.dockerignore'
-      - '.github/workflows/docker-build-test.yml'
   pull_request:
-    branches: [main, develop]
+    branches: [main]
     paths:
       - 'apps/backend/Dockerfile'
       - 'apps/frontend/Dockerfile'
-      - 'docker-compose.yml'
-      - '.dockerignore'
+      - 'compose.production.yml'
+      - '.github/workflows/deploy.yml'
+      - '.github/workflows/deploy-production.yml'
       - '.github/workflows/docker-build-test.yml'
+  workflow_dispatch:
 
-env:
-  REGISTRY: ghcr.io
+permissions:
+  contents: read
 
 jobs:
-  docker-build:
-    name: Build Docker Images
+  canonical-contract:
+    name: Validate canonical Docker contract
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-    permissions:
-      contents: read
-      packages: write
-
-    strategy:
-      matrix:
-        app: [backend, frontend]
-
+    timeout-minutes: 10
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build ${{ matrix.app }} image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./apps/${{ matrix.app }}
-          push: false
-          tags: game-plug-${{ matrix.app }}:test
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Test ${{ matrix.app }} image
+      - name: Validate image-only production manifest
         run: |
-          echo "Testing Docker build for ${{ matrix.app }}..."
-          docker buildx build ./apps/${{ matrix.app }} -t game-plug-${{ matrix.app }}:test --load
+          set -euo pipefail
+          env_file=$(mktemp)
+          trap 'rm -f "$env_file"' EXIT
+          printf '%s\n' \
+            'DATABASE_URL=postgresql://test:test@db:5432/test' \
+            'REDIS_URL=redis://redis:6379' \
+            'JWT_SECRET=contract-only' \
+            'GAMEPLUG_DEMO_AUTH_ENABLED=false' > "$env_file"
 
-          echo "Image built successfully"
-          docker images | grep game-plug-${{ matrix.app }}
+          export GAMEPLUG_FRONTEND_IMAGE=example/frontend:test
+          export GAMEPLUG_BACKEND_IMAGE=example/backend:test
+          export GAMEPLUG_BACKEND_ENV_FILE="$env_file"
+          docker compose -f compose.production.yml config --quiet
 
-  docker-compose-test:
-    name: Test Docker Compose Stack
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Start Docker Compose stack
-        run: |
-          echo "Starting Docker Compose stack..."
-          # Create test environment file
-          cat > .env.test << EOF
-          NODE_ENV=test
-          POSTGRES_DB=game_plug_test
-          POSTGRES_USER=postgres
-          POSTGRES_PASSWORD=test_password
-          JWT_SECRET=test-jwt-secret
-          SESSION_SECRET=test-session-secret
-          REDIS_PASSWORD=test_redis_password
-          CORS_ORIGIN=http://localhost:3000,http://localhost:5173,http://localhost:5002
-          NEXT_PUBLIC_API_URL=http://localhost:5002
-          LOG_LEVEL=info
-          EOF
-
-          docker compose -f docker-compose.yml config > docker-compose.resolved.yml
-          cat docker-compose.resolved.yml
-
-      - name: Build images
-        run: |
-          docker compose -f docker-compose.yml build
-
-      - name: Start services
-        run: |
-          docker compose -f docker-compose.yml up -d
-          sleep 30
-
-      - name: Check service health
-        run: |
-          echo "Checking PostgreSQL health..."
-          docker compose -f docker-compose.yml exec -T postgres pg_isready -U postgres
-
-          echo "Checking Redis health..."
-          docker compose -f docker-compose.yml exec -T redis redis-cli ping
-
-          echo "Checking Backend health..."
-          for i in {1..30}; do
-            if docker compose -f docker-compose.yml exec -T backend curl -f http://localhost:5002/api/health 2>/dev/null; then
-              echo "✓ Backend is healthy"
-              break
-            fi
-            echo "Attempt $i/30..."
-            sleep 2
-          done
-
-          echo "Checking Frontend health..."
-          for i in {1..30}; do
-            if docker compose -f docker-compose.yml exec -T frontend curl -f http://localhost:3000 2>/dev/null; then
-              echo "✓ Frontend is healthy"
-              break
-            fi
-            echo "Attempt $i/30..."
-            sleep 2
-          done
-
-      - name: Test API endpoints
-        run: |
-          echo "Testing backend API..."
-
-          # Test health endpoint
-          curl -f http://localhost:5002/api/health || exit 1
-
-          echo "✓ API health check passed"
-
-      - name: Verify logs for errors
-        if: always()
-        run: |
-          echo "=== Backend Logs ==="
-          docker compose -f docker-compose.yml logs backend | tail -50
-
-          echo "=== Frontend Logs ==="
-          docker compose -f docker-compose.yml logs frontend | tail -50
-
-          echo "=== Database Logs ==="
-          docker compose -f docker-compose.yml logs postgres | tail -30
-
-          echo "=== Redis Logs ==="
-          docker compose -f docker-compose.yml logs redis | tail -30
-
-          # Check for errors
-          if docker compose -f docker-compose.yml logs | grep -i "error\|exception\|failed" | grep -v "health\|retries"; then
-            echo "⚠ Errors found in logs"
-          else
-            echo "✓ No errors found in logs"
+          services=$(docker compose -f compose.production.yml config --services)
+          printf '%s\n' "$services" | grep -qx game-plug
+          printf '%s\n' "$services" | grep -qx game-plug-backend
+          if printf '%s\n' "$services" | grep -Eq 'postgres|redis'; then
+            echo 'Production manifest must reuse external data services, not create parallel ones.'
+            exit 1
           fi
 
-      - name: Cleanup
-        if: always()
+      - name: Verify monorepo-root build contract
         run: |
-          echo "Stopping Docker Compose stack..."
-          docker compose -f docker-compose.yml down -v
-
-  security-scan:
-    name: Security Scan Docker Images
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-
-    strategy:
-      matrix:
-        app: [backend, frontend]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./apps/${{ matrix.app }}
-          push: false
-          tags: game-plug-${{ matrix.app }}:scan
-          load: true
-
-      - name: Run Trivy vulnerability scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: game-plug-${{ matrix.app }}:scan
-          format: 'sarif'
-          output: 'trivy-results-${{ matrix.app }}.sarif'
-
-      - name: Upload Trivy results
-        uses: github/codeql-action/upload-sarif@v2
-        if: always()
-        with:
-          sarif_file: 'trivy-results-${{ matrix.app }}.sarif'
-          category: 'trivy-${{ matrix.app }}'
-
-  report:
-    name: Generate Report
-    runs-on: ubuntu-latest
-    needs: [docker-build, docker-compose-test, security-scan]
-    if: always()
-
-    steps:
-      - name: Generate summary
-        run: |
-          echo "## Docker Build & Test Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Build Status" >> $GITHUB_STEP_SUMMARY
-          echo "- Backend build: ${{ needs.docker-build.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Frontend build: ${{ needs.docker-build.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Docker Compose Test" >> $GITHUB_STEP_SUMMARY
-          echo "- Stack test: ${{ needs.docker-compose-test.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Security Scan" >> $GITHUB_STEP_SUMMARY
-          echo "- Trivy scan: ${{ needs.security-scan.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✓ All Docker builds and tests completed" >> $GITHUB_STEP_SUMMARY
+          set -euo pipefail
+          grep -q 'context: \.' .github/workflows/deploy.yml
+          grep -q 'file: ./apps/' .github/workflows/deploy.yml
+          grep -q '/Dockerfile' .github/workflows/deploy.yml
+          grep -q 'COPY package.json bun.lock' apps/backend/Dockerfile
+          grep -q 'COPY package.json bun.lock' apps/frontend/Dockerfile
