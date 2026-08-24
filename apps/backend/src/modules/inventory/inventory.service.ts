@@ -3,19 +3,7 @@ import { DatabaseService } from '../database/database.service';
 import { inventory } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { CharactersService } from '../characters/characters.service';
-
-interface CreateInventoryDto {
-  characterId: string;
-  name: string;
-  description?: string;
-  quantity?: number;
-  isEquipped?: boolean;
-  [key: string]: unknown;
-}
-
-interface UpdateInventoryDto {
-  [key: string]: unknown;
-}
+import { CreateInventoryDto, UpdateInventoryDto } from './dto';
 
 @Injectable()
 export class InventoryService {
@@ -44,11 +32,12 @@ export class InventoryService {
 
   async create(data: CreateInventoryDto) {
     // Validate character exists before creating inventory item (BUG-009 fix)
-    await this.charactersService.findOne(data.characterId);
+    const characterId = data.characterId as string;
+    await this.charactersService.findOne(characterId);
 
     const [item] = await this.db.db
       .insert(inventory)
-      .values(data as Parameters<typeof this.db.db.insert>[0]['values'][0])
+      .values({ ...data, characterId } as typeof inventory.$inferInsert)
       .returning();
     return item;
   }
@@ -56,7 +45,7 @@ export class InventoryService {
   async update(id: string, data: UpdateInventoryDto) {
     const [updated] = await this.db.db
       .update(inventory)
-      .set(data as Parameters<typeof this.db.db.update>[0]['set'][0])
+      .set({ ...data, updatedAt: new Date() } as Partial<typeof inventory.$inferInsert>)
       .where(eq(inventory.id, id))
       .returning();
     if (!updated) {
@@ -82,7 +71,7 @@ export class InventoryService {
       .update(inventory)
       .set({
         isEquipped: !item.isEquipped,
-      } as any)
+      } as Partial<typeof inventory.$inferInsert>)
       .where(eq(inventory.id, id))
       .returning();
 
