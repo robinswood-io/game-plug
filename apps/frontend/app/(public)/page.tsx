@@ -3,10 +3,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, Skull } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function LandingPage() {
-  const router = useRouter();
   return (
     <div className="min-h-screen bg-cosmic-void text-bone-white parchment-bg overflow-hidden flex flex-col items-center justify-center p-4">
       {/* Background decoration */}
@@ -35,11 +34,8 @@ export default function LandingPage() {
               <p className="font-source text-sm text-aged-parchment/80">
                 Dirigez l'enquête, manipulez le destin et observez vos joueurs sombrer.
               </p>
-              <Button 
-                className="w-full btn-primary font-cinzel"
-                onClick={() => router.push("/gm-login")}
-              >
-                Invoquer le Gardien
+              <Button asChild className="w-full btn-primary font-cinzel">
+                <Link href="/gm-login">Invoquer le Gardien</Link>
               </Button>
             </CardContent>
           </Card>
@@ -53,12 +49,12 @@ export default function LandingPage() {
               <p className="font-source text-sm text-aged-parchment/80">
                 Rejoignez une session existante et tentez de survivre à l'horreur.
               </p>
-              <Button 
-                variant="outline" 
+              <Button
+                asChild
+                variant="outline"
                 className="w-full border-aged-gold text-aged-gold hover:bg-aged-gold/10 font-cinzel"
-                onClick={() => router.push("/join")}
               >
-                Rejoindre la Session
+                <Link href="/join">Rejoindre la Session</Link>
               </Button>
             </CardContent>
           </Card>
