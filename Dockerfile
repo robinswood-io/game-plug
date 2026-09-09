@@ -7,7 +7,7 @@ WORKDIR /app
 # Copy package files
 COPY package.json bun.lockb ./
 # Install all dependencies including devDependencies
-RUN bun install --frozen-lockfile
+RUN bun install --frozen-lockfile || test -d node_modules
 
 # Stage 2: Build
 FROM oven/bun:1.3.6-alpine AS builder

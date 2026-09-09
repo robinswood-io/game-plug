@@ -433,7 +433,7 @@ export default function GameBoard() {
                 Utilisez les outils ci-dessous pour projeter des images, descriptions et éléments visuels aux joueurs.
               </p>
             </div>
-          ) : projectionContent.type === 'image' ? (
+          ) : projectionContent.type === 'image' && projectionContent.url ? (
             <div className="h-full flex flex-col items-center justify-center p-4">
               <div className="flex-1 flex items-center justify-center max-w-full max-h-full">
                 <NextImage

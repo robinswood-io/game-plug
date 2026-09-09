@@ -79,6 +79,19 @@ export default function CharacterCreationPage() {
     distinctiveFeatures: [] as string[],
   });
 
+  const form = useForm<CharacterCreationForm>({
+    resolver: zodResolver(characterCreationSchema),
+    defaultValues: {
+      name: '',
+      occupation: '',
+      age: 25,
+      birthplace: '',
+      residence: '',
+      gender: '',
+      sessionId: '',
+    },
+  });
+
   // Initialize skills with defaults
   useEffect(() => {
     const baseSkills = { ...DEFAULT_SKILLS };
@@ -209,19 +222,6 @@ export default function CharacterCreationPage() {
       }
     }
   }, [selectedOccupation, characteristics, manualSkillMode, autoAllocateSkills]);
-
-  const form = useForm<CharacterCreationForm>({
-    resolver: zodResolver(characterCreationSchema),
-    defaultValues: {
-      name: '',
-      occupation: '',
-      age: 25,
-      birthplace: '',
-      residence: '',
-      gender: '',
-      sessionId: '',
-    },
-  });
 
   // Update form when sessionId is loaded from localStorage
   useEffect(() => {

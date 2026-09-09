@@ -29,8 +29,8 @@ interface RollResult {
   skillValue: number;
 }
 
-const randomDiceFrequency = () => randomDiceFrequency();
-const randomPercentileRoll = () => randomPercentileRoll();
+const randomDiceFrequency = (): number => Math.floor(Math.random() * 6) + 1;
+const randomPercentileRoll = (): number => Math.floor(Math.random() * 100) + 1;
 
 // Dice face components for visualization
 const DiceFaces = {

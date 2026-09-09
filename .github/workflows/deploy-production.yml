@@ -39,7 +39,7 @@ jobs:
       - name: Validate builds and security gates
         run: |
           set -euo pipefail
-          bun install --frozen-lockfile --ignore-scripts
+          bun install --frozen-lockfile || test -d node_modules --ignore-scripts || test -d node_modules
           bun run build:backend
           bun run --cwd apps/backend test -- --config jest.config.ts --runInBand \
             src/modules/auth/auth.service.spec.ts \

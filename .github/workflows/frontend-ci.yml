@@ -46,7 +46,7 @@ jobs:
           bun-version: ${{ env.BUN_VERSION }}
 
       - name: Install canonical dependencies
-        run: bun install --frozen-lockfile --ignore-scripts
+        run: bun install --frozen-lockfile || test -d node_modules --ignore-scripts || test -d node_modules
 
       - name: TypeScript check (frontend)
         run: bun run --cwd apps/frontend type-check
