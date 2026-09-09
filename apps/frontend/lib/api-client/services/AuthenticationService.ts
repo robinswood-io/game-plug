@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+
 import type { LoginDto } from '../models/LoginDto';
 import type { SignupDto } from '../models/SignupDto';
 import type { CancelablePromise } from '../core/CancelablePromise';

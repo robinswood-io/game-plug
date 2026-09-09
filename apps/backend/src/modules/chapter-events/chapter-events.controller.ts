@@ -8,6 +8,7 @@ import {
   Param,
   Query,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { ChapterEventsService } from './chapter-events.service';
@@ -27,12 +28,13 @@ export class ChapterEventsController {
   async find(
     @Query('chapterId') chapterId?: string,
     @Query('sessionId') sessionId?: string,
+    @Req() req?: any,
   ) {
     if (chapterId) {
-      return this.chapterEventsService.findByChapter(chapterId);
+      return this.chapterEventsService.findByChapterForGm(chapterId, req.user.id);
     }
     if (sessionId) {
-      return this.chapterEventsService.findBySession(sessionId);
+      return this.chapterEventsService.findBySessionForGm(sessionId, req.user.id);
     }
     return [];
   }
@@ -44,48 +46,48 @@ export class ChapterEventsController {
   @ApiResponse({ status: 200, description: 'List of chapter events' })
   async getChapterEvents(
     @Param('chapterId') chapterId: string,
-    @Query('limit') limit?: string,
+    @Query('limit') _limit?: string,
+    @Req() req?: any,
   ) {
-    const limitNum = limit ? parseInt(limit, 10) : 100;
-    return this.chapterEventsService.findByChapter(chapterId);
+    return this.chapterEventsService.findByChapterForGm(chapterId, req.user.id);
   }
 
   @Get('sessions/:sessionId/important-events')
   @ApiOperation({ summary: 'Get important events for a session' })
   @ApiParam({ name: 'sessionId', description: 'Session ID' })
   @ApiResponse({ status: 200, description: 'List of important chapter events' })
-  async getImportantEvents(@Param('sessionId') sessionId: string) {
-    return this.chapterEventsService.findImportantBySession(sessionId);
+  async getImportantEvents(@Param('sessionId') sessionId: string, @Req() req: any) {
+    return this.chapterEventsService.findImportantBySessionForGm(sessionId, req.user.id);
   }
 
   @Get('chapter-events/:id')
   @ApiOperation({ summary: 'Get chapter event by ID' })
   @ApiResponse({ status: 200, description: 'Chapter event details' })
-  async findOne(@Param('id') id: string) {
-    return this.chapterEventsService.findOne(id);
+  async findOne(@Param('id') id: string, @Req() req: any) {
+    return this.chapterEventsService.findOneForGm(id, req.user.id);
   }
 
   @Post('chapter-events')
   @ApiOperation({ summary: 'Create new chapter event' })
   @ApiResponse({ status: 201, description: 'Chapter event created' })
   @ApiResponse({ status: 400, description: 'Invalid event data - eventType and title are required' })
-  async create(@Body() data: CreateChapterEventDto) {
-    return this.chapterEventsService.create(data);
+  async create(@Body() data: CreateChapterEventDto, @Req() req: any) {
+    return this.chapterEventsService.create(data, req.user.id);
   }
 
   @Patch('chapter-events/:id')
   @ApiOperation({ summary: 'Update chapter event' })
   @ApiResponse({ status: 200, description: 'Chapter event updated' })
   @ApiResponse({ status: 404, description: 'Chapter event not found' })
-  async update(@Param('id') id: string, @Body() data: UpdateChapterEventDto) {
-    return this.chapterEventsService.update(id, data);
+  async update(@Param('id') id: string, @Body() data: UpdateChapterEventDto, @Req() req: any) {
+    return this.chapterEventsService.update(id, data, req.user.id);
   }
 
   @Delete('chapter-events/:id')
   @ApiOperation({ summary: 'Delete chapter event' })
   @ApiResponse({ status: 200, description: 'Chapter event deleted' })
-  async delete(@Param('id') id: string) {
-    await this.chapterEventsService.delete(id);
+  async delete(@Param('id') id: string, @Req() req: any) {
+    await this.chapterEventsService.delete(id, req.user.id);
     return { success: true };
   }
 }

@@ -95,10 +95,8 @@ docker compose -f docker-compose.yml down
 ```
 DEPLOY_HOST   = your-server.com
 DEPLOY_USER   = ubuntu
-DEPLOY_KEY    = -----BEGIN OPENSSH PRIVATE KEY-----
-                ...full private key...
-                -----END OPENSSH PRIVATE KEY-----
-SLACK_WEBHOOK = https://hooks.slack.com/services/...
+DEPLOY_KEY    = <private-key-redacted>
+SLACK_WEBHOOK = SLACK_WEBHOOK_REDACTED_ROTATE_GITHUB_SECRET_SCANNING_ALERT_1
 ```
 
 ### 2. Variables (Settings > Variables > Actions)

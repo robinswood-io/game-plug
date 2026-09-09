@@ -110,7 +110,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       secretOrKey: process.env.JWT_SECRET || 'dev-secret-change-in-production',
     });
   }
-  
+
   async validate(payload: any) {
     return { id: payload.sub, email: payload.email, isGM: payload.isGM };
   }
@@ -298,7 +298,7 @@ Negligible performance difference.
 ```bash
 # Still works perfectly
 curl -X POST http://backend:4000/api/rolls \
-  -H "Authorization: Bearer eyJhbGc..." \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
   -H "Content-Type: application/json" \
   -d '{"characterId": "...", "sessionId": "...", ...}'
 ```
@@ -359,7 +359,7 @@ curl -X POST http://backend:4000/api/rolls \
 
 ---
 
-**Status:** Complete and Deployed  
-**Date:** 2026-01-25  
-**Author:** AI Agent  
+**Status:** Complete and Deployed
+**Date:** 2026-01-25
+**Author:** AI Agent
 **Commit:** 9804f81

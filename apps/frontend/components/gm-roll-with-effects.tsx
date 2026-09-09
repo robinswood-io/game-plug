@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import NextImage from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,9 +12,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  EyeOff, Dice6, Brain, Heart, Shield, 
-  Zap, Users, User, AlertTriangle, Target, Dices 
+import {
+  EyeOff, Dice6, Brain, Heart, Shield,
+  Zap, Users, User, AlertTriangle, Target, Dices
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { rollDice } from "@/lib/dice";
@@ -23,7 +24,7 @@ import { cn } from "@/lib/utils";
 import type { Character } from "@shared/schema";
 
 interface GMRollWithEffectsProps {
-  characters: Array<Character & { 
+  characters: Array<Character & {
     sanityConditions?: any[];
     activeEffects?: any[];
   }>;
@@ -47,72 +48,72 @@ interface AppliedEffect {
 }
 
 const ROLL_PRESETS = [
-  { 
-    label: "Test de compétence", 
-    value: "1d100", 
+  {
+    label: "Test de compétence",
+    value: "1d100",
     category: "test",
     icon: Dice6,
     canApplyEffect: false
   },
-  { 
-    label: "Sanité mineure", 
-    value: "1d4", 
+  {
+    label: "Sanité mineure",
+    value: "1d4",
     category: "sanity",
     icon: Brain,
     canApplyEffect: true,
     effectType: 'sanity'
   },
-  { 
-    label: "Sanité modérée", 
-    value: "1d8", 
+  {
+    label: "Sanité modérée",
+    value: "1d8",
     category: "sanity",
     icon: Brain,
     canApplyEffect: true,
     effectType: 'sanity'
   },
-  { 
-    label: "Sanité majeure", 
-    value: "2d10", 
+  {
+    label: "Sanité majeure",
+    value: "2d10",
     category: "sanity",
     icon: Brain,
     canApplyEffect: true,
     effectType: 'sanity'
   },
-  { 
-    label: "Dégâts légers", 
-    value: "1d6", 
+  {
+    label: "Dégâts légers",
+    value: "1d6",
     category: "damage",
     icon: Heart,
     canApplyEffect: true,
     effectType: 'health'
   },
-  { 
-    label: "Dégâts moyens", 
-    value: "2d6", 
+  {
+    label: "Dégâts moyens",
+    value: "2d6",
     category: "damage",
     icon: Heart,
     canApplyEffect: true,
     effectType: 'health'
   },
-  { 
-    label: "Dégâts lourds", 
-    value: "3d6+2", 
+  {
+    label: "Dégâts lourds",
+    value: "3d6+2",
     category: "damage",
     icon: Heart,
     canApplyEffect: true,
     effectType: 'health'
   },
-  { 
-    label: "Perte de Chance", 
-    value: "1d10", 
+  {
+    label: "Perte de Chance",
+    value: "1d10",
     category: "luck",
     icon: Zap,
     canApplyEffect: true,
     effectType: 'luck'
   },
-  { 
-    label: "Perte de Magie", 
-    value: "1d6", 
+  {
+    label: "Perte de Magie",
+    value: "1d6",
     category: "magic",
     icon: Shield,
     canApplyEffect: true,
@@ -120,10 +121,10 @@ const ROLL_PRESETS = [
   }
 ];
 
-export default function GMRollWithEffects({ 
-  characters, 
-  onRoll, 
-  onApplyEffect 
+export default function GMRollWithEffects({
+  characters,
+  onRoll,
+  onApplyEffect
 }: GMRollWithEffectsProps) {
   const { playRoll, playCritical, playFumble } = useDiceSound();
   const { toast } = useToast();
@@ -138,15 +139,15 @@ export default function GMRollWithEffects({
   const [isRolling, setIsRolling] = useState(false);
   const [rollMode, setRollMode] = useState<'individual' | 'group'>('individual');
   const [diceMode, setDiceMode] = useState<'auto' | 'manual'>('auto');
-  const [pendingRoll, setPendingRoll] = useState<{ 
-    formula: string; 
-    selectedCharacters: string[]; 
-    rollMode: string; 
-    isSecret: boolean; 
-    applyEffect: boolean; 
-    effectType: string; 
-    description: string; 
-    selectedPreset: any; 
+  const [pendingRoll, setPendingRoll] = useState<{
+    formula: string;
+    selectedCharacters: string[];
+    rollMode: string;
+    isSecret: boolean;
+    applyEffect: boolean;
+    effectType: string;
+    description: string;
+    selectedPreset: any;
   } | null>(null);
   const [manualResults, setManualResults] = useState<{ [charId: string]: number }>({});
 
@@ -192,20 +193,20 @@ export default function GMRollWithEffects({
     try {
       setIsRolling(true);
       playRoll();
-      
+
       await new Promise(resolve => setTimeout(resolve, 300));
-      
+
       const results = new Map<string, number>();
-      
+
       if (rollMode === 'group') {
         // Un seul jet pour tous
         const rollResult = rollDice(formula);
         const result = rollResult.total;
-        
+
         selectedCharacters.forEach(charId => {
           results.set(charId, result);
         });
-        
+
         // Play special sounds for critical results
         if (formula === "1d100") {
           if (result === 1) playCritical();
@@ -216,7 +217,7 @@ export default function GMRollWithEffects({
         for (const charId of selectedCharacters) {
           const rollResult = rollDice(formula);
           results.set(charId, rollResult.total);
-          
+
           // Play special sounds for each critical
           if (formula === "1d100") {
             if (rollResult.total === 1) playCritical();
@@ -224,10 +225,10 @@ export default function GMRollWithEffects({
           }
         }
       }
-      
+
       setLastResults(results);
       setIsRolling(false);
-      
+
       // Send roll results
       onRoll({
         formula,
@@ -236,13 +237,13 @@ export default function GMRollWithEffects({
         effectType: applyEffect ? effectType : undefined,
         description: description || undefined,
       });
-      
+
       // Apply effects if requested
       if (applyEffect) {
         const effectPromises = selectedCharacters.map(async (charId) => {
           const value = results.get(charId) || 0;
           const character = characters.find(c => c.id === charId);
-          
+
           if (character) {
             await onApplyEffect({
               characterIds: [charId],
@@ -252,21 +253,21 @@ export default function GMRollWithEffects({
             });
           }
         });
-        
+
         await Promise.all(effectPromises);
-        
+
         const totalAffected = selectedCharacters.length;
         const avgResult = Array.from(results.values()).reduce((a, b) => a + b, 0) / results.size;
-        
+
         toast({
           title: "Effets appliqués",
           description: `${selectedPreset.label} appliqué à ${totalAffected} personnage(s). Moyenne: ${avgResult.toFixed(1)}`,
         });
       }
-      
+
       // Reset description after roll
       setDescription("");
-      
+
     } catch (error) {
       console.error("Invalid dice formula:", error);
       setIsRolling(false);
@@ -351,7 +352,7 @@ export default function GMRollWithEffects({
             {selectedPreset.canApplyEffect && (
               <div className="p-3 bg-gray-800/50 rounded-lg space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm">Appliquer automatiquement l'effet</Label>
+                  <Label className="text-sm">Appliquer automatiquement l&apos;effet</Label>
                   <Switch
                     checked={applyEffect}
                     onCheckedChange={setApplyEffect}
@@ -380,7 +381,7 @@ export default function GMRollWithEffects({
             </div>
 
             <div className="space-y-2">
-              <Label>Type d'effet (si applicable)</Label>
+              <Label>Type d&apos;effet (si applicable)</Label>
               <Select value={effectType} onValueChange={setEffectType}>
                 <SelectTrigger data-testid="select-effect-type">
                   <SelectValue />
@@ -396,7 +397,7 @@ export default function GMRollWithEffects({
             </div>
 
             <div className="flex items-center justify-between">
-              <Label className="text-sm">Appliquer l'effet</Label>
+              <Label className="text-sm">Appliquer l&apos;effet</Label>
               <Switch
                 checked={applyEffect}
                 onCheckedChange={setApplyEffect}
@@ -453,10 +454,13 @@ export default function GMRollWithEffects({
                   <div className="relative w-full">
                     {/* Avatar */}
                     {character.avatarUrl ? (
-                      <img
+                      <NextImage
                         src={character.avatarUrl}
                         alt={`Portrait de ${character.name}`}
-                        className="w-12 h-12 rounded-full border-2 border-aged-gold object-cover mx-auto"
+                        width={48}
+                                  height={48}
+                                  unoptimized
+                                  className="w-12 h-12 rounded-full border-2 border-aged-gold object-cover mx-auto"
                       />
                     ) : (
                       <div className="w-12 h-12 rounded-full border-2 border-aged-gold bg-cosmic-void flex items-center justify-center mx-auto">
@@ -560,8 +564,8 @@ export default function GMRollWithEffects({
           disabled={isRolling || selectedCharacters.length === 0}
           className={cn(
             "w-full transition-all",
-            isSecret 
-              ? "bg-purple-900 hover:bg-purple-800" 
+            isSecret
+              ? "bg-purple-900 hover:bg-purple-800"
               : "bg-blood-burgundy hover:bg-dark-crimson"
           )}
           data-testid="button-roll-with-effects"
@@ -598,7 +602,7 @@ export default function GMRollWithEffects({
                 {Array.from(lastResults.entries()).map(([charId, result]) => {
                   const character = characters.find(c => c.id === charId);
                   if (!character) return null;
-                  
+
                   return (
                     <div key={charId} className="flex items-center justify-between">
                       <span className="text-sm">{character.name}</span>

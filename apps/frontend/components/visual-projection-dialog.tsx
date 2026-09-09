@@ -24,19 +24,19 @@ interface VisualProjectionDialogProps {
   sessionId: string | undefined;
 }
 
-export default function VisualProjectionDialog({ 
-  open, 
+export default function VisualProjectionDialog({
+  open,
   onOpenChange,
-  sessionId 
+  sessionId
 }: VisualProjectionDialogProps) {
   const { toast } = useToast();
   const { isConnected, sendMessage } = useWebSocket(true);
-  
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [imagePrompt, setImagePrompt] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const hasJoinedSession = useRef(false);
-  
+
   // Join the WebSocket session when connected
   useEffect(() => {
     if (isConnected && sessionId && !hasJoinedSession.current) {
@@ -48,7 +48,7 @@ export default function VisualProjectionDialog({
 
   const handleGenerateImage = async () => {
     if (!imagePrompt.trim()) return;
-    
+
     setIsGenerating(true);
     try {
       const response = await apiRequest("POST", "/api/gameboard/generate-scene", {
@@ -56,14 +56,14 @@ export default function VisualProjectionDialog({
         sessionId: sessionId
       });
       const data = await response.json();
-      
+
       const newContent: ProjectionContent = {
         type: 'image',
         url: data.imageUrl,
         description: imagePrompt,
         prompt: imagePrompt
       };
-      
+
       // Broadcast to WebSocket for sync
       if (isConnected) {
         sendMessage('projection_update', {
@@ -72,12 +72,12 @@ export default function VisualProjectionDialog({
           timestamp: new Date()
         });
       }
-      
+
       toast({
         title: "Image générée",
         description: "La scène a été générée et projetée sur le tableau de jeu.",
       });
-      
+
       setImagePrompt("");
       onOpenChange(false);
     } catch (error) {
@@ -93,13 +93,13 @@ export default function VisualProjectionDialog({
 
   const handleLoadFromUrl = () => {
     if (!imageUrl.trim()) return;
-    
+
     const newContent: ProjectionContent = {
       type: 'image',
       url: imageUrl,
       description: "Image depuis URL"
     };
-    
+
     if (isConnected) {
       sendMessage('projection_update', {
         sessionId,
@@ -107,19 +107,19 @@ export default function VisualProjectionDialog({
         timestamp: new Date()
       });
     }
-    
+
     toast({
       title: "Image chargée",
       description: "L'image a été projetée sur le tableau de jeu.",
     });
-    
+
     setImageUrl("");
     onOpenChange(false);
   };
 
   const clearProjection = () => {
     const newContent: ProjectionContent = { type: 'none' };
-    
+
     if (isConnected) {
       sendMessage('projection_update', {
         sessionId,
@@ -132,7 +132,7 @@ export default function VisualProjectionDialog({
       title: "Projection effacée",
       description: "Le tableau de jeu a été nettoyé.",
     });
-    
+
     onOpenChange(false);
   };
 
@@ -149,24 +149,24 @@ export default function VisualProjectionDialog({
         <div className="space-y-4">
           <Tabs defaultValue="ai-generation" className="w-full">
             <TabsList className="grid w-full grid-cols-3 bg-cosmic-void">
-              <TabsTrigger 
-                value="ai-generation" 
+              <TabsTrigger
+                value="ai-generation"
                 className="data-[state=active]:bg-aged-gold data-[state=active]:text-deep-black"
                 data-testid="tab-ai-generation"
               >
                 <Wand2 className="h-4 w-4 mr-2" />
                 Génération IA
               </TabsTrigger>
-              <TabsTrigger 
-                value="url-load" 
+              <TabsTrigger
+                value="url-load"
                 className="data-[state=active]:bg-aged-gold data-[state=active]:text-deep-black"
                 data-testid="tab-url-load"
               >
                 <Link className="h-4 w-4 mr-2" />
                 Depuis URL
               </TabsTrigger>
-              <TabsTrigger 
-                value="control" 
+              <TabsTrigger
+                value="control"
                 className="data-[state=active]:bg-aged-gold data-[state=active]:text-deep-black"
                 data-testid="tab-control"
               >
@@ -178,10 +178,10 @@ export default function VisualProjectionDialog({
             <TabsContent value="ai-generation" className="mt-4 space-y-3">
               <div className="bg-cosmic-void border border-aged-gold/30 rounded-lg p-4">
                 <h3 className="font-cinzel text-aged-gold mb-3">
-                  Générer une scène avec l'IA
+                  Générer une scène avec l&apos;IA
                 </h3>
                 <p className="text-sm text-aged-parchment mb-4">
-                  Décrivez la scène que vous souhaitez projeter. L'IA générera une image correspondante.
+                  Décrivez la scène que vous souhaitez projeter. L&apos;IA générera une image correspondante.
                 </p>
                 <Textarea
                   placeholder="Ex: Une bibliothèque sombre aux livres anciens, éclairée par des bougies vacillantes, avec des symboles étranges gravés sur les murs..."
@@ -208,7 +208,7 @@ export default function VisualProjectionDialog({
                   Charger une image depuis une URL
                 </h3>
                 <p className="text-sm text-aged-parchment mb-4">
-                  Entrez l'URL complète d'une image à projeter sur le tableau de jeu.
+                  Entrez l&apos;URL complète d&apos;une image à projeter sur le tableau de jeu.
                 </p>
                 <Input
                   placeholder="https://example.com/image.jpg"

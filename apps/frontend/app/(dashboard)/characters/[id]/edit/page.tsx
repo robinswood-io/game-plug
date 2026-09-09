@@ -15,8 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Dice6, Wand2, Save, ArrowLeft, RefreshCw, Sparkles, Image } from 'lucide-react';
+import { Dice6, Wand2, Save, ArrowLeft, RefreshCw, Sparkles, Image as ImageIcon } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import NextImage from "next/image";
 
 const characterEditSchema = z.object({
   name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
@@ -463,7 +464,7 @@ export default function CharacterEditPage() {
                 <CardContent className="space-y-4">
                   {avatarUrl && (
                     <div className="flex justify-center mb-4">
-                      <img src={avatarUrl} alt={character.name} className="w-64 h-64 rounded-lg border-2 border-aged-gold object-cover" />
+                      <NextImage src={avatarUrl} alt={character.name} width={256} height={256} unoptimized className="w-64 h-64 rounded-lg border-2 border-aged-gold object-cover" />
                     </div>
                   )}
 
@@ -507,7 +508,7 @@ export default function CharacterEditPage() {
         <DialogContent className="bg-charcoal border-aged-gold max-w-2xl">
           <DialogHeader>
             <DialogTitle className="font-cinzel text-aged-gold flex items-center gap-2">
-              <Image className="h-5 w-5" />
+              <ImageIcon className="h-5 w-5" />
               Générer le portrait
             </DialogTitle>
           </DialogHeader>

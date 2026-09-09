@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { apiRequest } from '@/lib/queryClient';
 import type { Character } from '@shared/schema';
+import NextImage from "next/image";
 
 interface ImportableCharacter extends Character {
   sessionName: string;
@@ -152,7 +153,7 @@ export default function AddPlayersDialog({
             Inviter des Joueurs
           </DialogTitle>
           <DialogDescription className="text-aged-parchment font-source">
-            Partagez le code ou le lien avec vos joueurs pour qu'ils rejoignent la session "{sessionName}"
+            Partagez le code ou le lien avec vos joueurs pour qu&apos;ils rejoignent la session &quot;{sessionName}&quot;
           </DialogDescription>
         </DialogHeader>
 
@@ -201,14 +202,14 @@ export default function AddPlayersDialog({
                 </Button>
               </div>
               <p className="text-sm text-aged-parchment">
-                Les joueurs peuvent rejoindre en utilisant ce code sur la page d'accueil.
+                Les joueurs peuvent rejoindre en utilisant ce code sur la page d&apos;accueil.
               </p>
             </div>
           </TabsContent>
 
           <TabsContent value="link" className="space-y-4 mt-6">
             <div className="space-y-2">
-              <Label className="text-aged-parchment font-source">Lien d'Invitation</Label>
+              <Label className="text-aged-parchment font-source">Lien d&apos;Invitation</Label>
               <div className="flex gap-2">
                 <Input
                   readOnly
@@ -275,7 +276,7 @@ export default function AddPlayersDialog({
             <div className="bg-cosmic-void border border-aged-gold rounded-lg p-4">
               <h3 className="font-cinzel text-aged-gold mb-3 flex items-center gap-2">
                 <RefreshCw className="h-4 w-4" />
-                Options d'import
+                Options d&apos;import
               </h3>
               <RadioGroup
                 value={resetState ? "reset" : "keep"}
@@ -287,7 +288,7 @@ export default function AddPlayersDialog({
                   <div className="flex-1">
                     <Label htmlFor="reset" className="font-cinzel text-aged-gold cursor-pointer flex items-center gap-2">
                       <RefreshCw className="h-4 w-4" />
-                      Réinitialiser l'état
+                      Réinitialiser l&apos;état
                     </Label>
                     <p className="text-sm text-aged-parchment opacity-80 mt-1">
                       PV, Santé mentale et PM remis au maximum. Inventaire, notes et historique effacés.
@@ -300,7 +301,7 @@ export default function AddPlayersDialog({
                   <div className="flex-1">
                     <Label htmlFor="keep" className="font-cinzel text-aged-gold cursor-pointer flex items-center gap-2">
                       <Save className="h-4 w-4" />
-                      Conserver l'état
+                      Conserver l&apos;état
                     </Label>
                     <p className="text-sm text-aged-parchment opacity-80 mt-1">
                       Copie complète : PV, Santé, inventaire, effets actifs, conditions et notes.
@@ -330,10 +331,10 @@ export default function AddPlayersDialog({
                 <div className="text-center py-8">
                   <User className="mx-auto h-12 w-12 text-aged-gold opacity-50 mb-4" />
                   <p className="text-aged-parchment font-crimson">
-                    Aucun personnage disponible pour l'import.
+                    Aucun personnage disponible pour l&apos;import.
                   </p>
                   <p className="text-sm text-aged-parchment opacity-70 mt-2">
-                    Les personnages apparaîtront ici une fois que vous aurez créé des personnages dans d'autres sessions.
+                    Les personnages apparaîtront ici une fois que vous aurez créé des personnages dans d&apos;autres sessions.
                   </p>
                 </div>
               ) : (
@@ -354,9 +355,12 @@ export default function AddPlayersDialog({
                           <div className="flex-1">
                             <CardTitle className="font-cinzel text-lg text-aged-gold flex items-center gap-2">
                               {character.avatarUrl && (
-                                <img
+                                <NextImage
                                   src={character.avatarUrl}
                                   alt={character.name}
+                                  width={32}
+                                  height={32}
+                                  unoptimized
                                   className="w-8 h-8 rounded-full object-cover border border-aged-gold"
                                 />
                               )}

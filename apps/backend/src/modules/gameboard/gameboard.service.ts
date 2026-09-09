@@ -1,14 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { CreateGameboardDto, UpdateGameboardDto, CreateProjectionDto, UpdateProjectionDto } from './dto';
 import { eq } from 'drizzle-orm';
-import { gameSessions, characters, chapters, chapterEvents } from '@shared/schema';
+import { characters, gameSessions } from '@shared/schema';
 
 @Injectable()
 export class GameboardService {
   constructor(private readonly db: DatabaseService) {}
 
-  async getGameboard(sessionId: string) {
+  async getGameboard(sessionId: string, gmId: string) {
     // Get session data
     const session = await this.db.db.query.gameSessions.findFirst({
       where: eq(gameSessions.id, sessionId),
@@ -26,6 +26,9 @@ export class GameboardService {
     if (!session) {
       throw new NotFoundException(`Session ${sessionId} not found`);
     }
+    if (session.gmId !== gmId) {
+      throw new ForbiddenException('Only the GM can access this gameboard');
+    }
 
     return {
       session,
@@ -33,7 +36,7 @@ export class GameboardService {
     };
   }
 
-  async create(dto: CreateGameboardDto) {
+  async create(dto: CreateGameboardDto, gmId: string) {
     // Verify session exists
     const session = await this.db.db.query.gameSessions.findFirst({
       where: eq(gameSessions.id, dto.sessionId),
@@ -41,6 +44,9 @@ export class GameboardService {
 
     if (!session) {
       throw new NotFoundException(`Session ${dto.sessionId} not found`);
+    }
+    if (session.gmId !== gmId) {
+      throw new ForbiddenException('Only the GM can create a gameboard for this session');
     }
 
     // For now, gameboard is a virtual concept aggregating session data
@@ -56,18 +62,13 @@ export class GameboardService {
     };
   }
 
-  async update(id: string, dto: UpdateGameboardDto) {
+  async update(id: string, dto: UpdateGameboardDto, gmId: string) {
     // Since gameboard is currently a virtual concept,
     // we update the underlying session if needed
-    if (dto.sessionId) {
-      const session = await this.db.db.query.gameSessions.findFirst({
-        where: eq(gameSessions.id, dto.sessionId),
-      });
-
-      if (!session) {
-        throw new NotFoundException(`Session ${dto.sessionId} not found`);
-      }
+    if (!dto.sessionId) {
+      throw new BadRequestException('sessionId is required to update a gameboard');
     }
+    await this.assertSessionGm(dto.sessionId, gmId, 'Only the GM can update this gameboard');
 
     return {
       success: true,
@@ -78,7 +79,7 @@ export class GameboardService {
   }
 
   // BUG-007 fix: Projection endpoints for display/visual rendering
-  async createProjection(dto: CreateProjectionDto) {
+  async createProjection(dto: CreateProjectionDto, gmId: string) {
     // Verify session exists
     const session = await this.db.db.query.gameSessions.findFirst({
       where: eq(gameSessions.id, dto.sessionId),
@@ -86,6 +87,9 @@ export class GameboardService {
 
     if (!session) {
       throw new NotFoundException(`Session ${dto.sessionId} not found`);
+    }
+    if (session.gmId !== gmId) {
+      throw new ForbiddenException('Only the GM can create a projection for this session');
     }
 
     // Verify all characters exist if specified
@@ -113,7 +117,12 @@ export class GameboardService {
     };
   }
 
-  async updateProjection(id: string, dto: UpdateProjectionDto) {
+  async updateProjection(id: string, dto: UpdateProjectionDto, gmId: string) {
+    if (!dto.sessionId) {
+      throw new BadRequestException('sessionId is required to update a projection');
+    }
+    await this.assertSessionGm(dto.sessionId, gmId, 'Only the GM can update this projection');
+
     // Verify characters exist if provided
     if (dto.characterIds && dto.characterIds.length > 0) {
       for (const charId of dto.characterIds) {
@@ -135,7 +144,7 @@ export class GameboardService {
     };
   }
 
-  async getProjection(sessionId: string) {
+  async getProjection(sessionId: string, gmId: string) {
     // Get session data for projection display
     const session = await this.db.db.query.gameSessions.findFirst({
       where: eq(gameSessions.id, sessionId),
@@ -152,6 +161,9 @@ export class GameboardService {
     if (!session) {
       throw new NotFoundException(`Session ${sessionId} not found`);
     }
+    if (session.gmId !== gmId) {
+      throw new ForbiddenException('Only the GM can access this projection');
+    }
 
     return {
       session,
@@ -159,5 +171,20 @@ export class GameboardService {
       chapters: session.chapters || [],
       message: 'Projection retrieved successfully',
     };
+  }
+
+  private async assertSessionGm(sessionId: string, gmId: string, message: string) {
+    const session = await this.db.db.query.gameSessions.findFirst({
+      where: eq(gameSessions.id, sessionId),
+    });
+
+    if (!session) {
+      throw new NotFoundException(`Session ${sessionId} not found`);
+    }
+    if (session.gmId !== gmId) {
+      throw new ForbiddenException(message);
+    }
+
+    return session;
   }
 }

@@ -8,6 +8,7 @@ import {
   Param,
   Query,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery, ApiParam, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { SanityService } from './sanity.service';
@@ -29,16 +30,16 @@ export class SanityController {
   @ApiQuery({ name: 'characterId', required: true, description: 'Character ID' })
   @ApiResponse({ status: 200, description: 'Sanity conditions retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Character not found' })
-  async findByCharacter(@Query('characterId') characterId: string) {
-    return this.sanityService.findByCharacter(characterId);
+  async findByCharacter(@Query('characterId') characterId: string, @Req() req: any) {
+    return this.sanityService.findByCharacterAuthorized(characterId, req.user.id);
   }
 
   @Post()
   @ApiOperation({ summary: 'Create a new sanity condition' })
   @ApiResponse({ status: 201, description: 'Sanity condition created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid sanity condition data' })
-  async create(@Body() data: CreateSanityConditionDto) {
-    return this.sanityService.create(data);
+  async create(@Body() data: CreateSanityConditionDto, @Req() req: any) {
+    return this.sanityService.create(data, req.user.id);
   }
 
   @Patch(':id')
@@ -49,8 +50,9 @@ export class SanityController {
   async update(
     @Param('id') id: string,
     @Body() data: UpdateSanityConditionDto,
+    @Req() req: any,
   ) {
-    return this.sanityService.update(id, data);
+    return this.sanityService.update(id, data, req.user.id);
   }
 
   @Delete(':id')
@@ -58,8 +60,8 @@ export class SanityController {
   @ApiParam({ name: 'id', description: 'Sanity condition ID' })
   @ApiResponse({ status: 200, description: 'Sanity condition deleted successfully' })
   @ApiResponse({ status: 404, description: 'Sanity condition not found' })
-  async delete(@Param('id') id: string) {
-    await this.sanityService.delete(id);
+  async delete(@Param('id') id: string, @Req() req: any) {
+    await this.sanityService.delete(id, req.user.id);
     return { success: true };
   }
 }

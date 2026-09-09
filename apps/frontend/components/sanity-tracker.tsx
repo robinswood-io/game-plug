@@ -25,7 +25,7 @@ export default function SanityTracker({ character }: SanityTrackerProps) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [madnessModalOpen, setMadnessModalOpen] = useState(false);
-  
+
   const sanityPercentage = (character.sanity / character.maxSanity) * 100;
   const isLowSanity = sanityPercentage < 30;
   const isCriticalSanity = sanityPercentage < 10;
@@ -146,8 +146,8 @@ export default function SanityTracker({ character }: SanityTrackerProps) {
                 {character.sanity}/{character.maxSanity}
               </span>
             </div>
-            <Progress 
-              value={sanityPercentage} 
+            <Progress
+              value={sanityPercentage}
               className="h-3 border border-aged-gold"
               data-testid="progress-sanity"
             />
@@ -224,7 +224,7 @@ export default function SanityTracker({ character }: SanityTrackerProps) {
           {user?.isGM && (
             <div className="border-t border-aged-gold pt-3">
               <p className="text-xs text-aged-parchment mb-2 text-center">
-                Actions d'urgence (utilisation limitée)
+                Actions d&apos;urgence (utilisation limitée)
               </p>
               <div className="grid grid-cols-2 gap-2">
                 <Button
@@ -266,10 +266,10 @@ export default function SanityTracker({ character }: SanityTrackerProps) {
               Conditions Mentales
             </DialogTitle>
             <DialogDescription className="text-aged-parchment">
-              Liste des phobies et manies affectant l'investigateur
+              Liste des phobies et manies affectant l&apos;investigateur
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             {activeConditions.length === 0 ? (
               <div className="text-center py-8">
@@ -278,7 +278,7 @@ export default function SanityTracker({ character }: SanityTrackerProps) {
                   Aucune condition mentale active pour le moment.
                 </p>
                 <p className="text-xs text-aged-parchment mt-2">
-                  Un esprit relativement sain... pour l'instant.
+                  Un esprit relativement sain... pour l&apos;instant.
                 </p>
               </div>
             ) : (

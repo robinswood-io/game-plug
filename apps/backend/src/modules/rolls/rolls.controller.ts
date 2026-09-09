@@ -5,10 +5,12 @@ import {
   Body,
   Request,
   Query,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { DiceService } from '../dice/dice.service';
 import { CreateRollDto } from './dto/create-roll.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Rolls')
 @Controller('api/rolls')
@@ -28,6 +30,8 @@ export class RollsController {
   }
 
   @Get()
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get roll history for a session' })
   @ApiResponse({
     status: 200,
@@ -36,11 +40,12 @@ export class RollsController {
   async findAll(
     @Query('sessionId') sessionId: string,
     @Query('limit') limit?: string,
+    @Request() req?: any,
   ) {
     if (!sessionId) {
       return { error: 'sessionId query parameter is required' };
     }
     const limitNumber = limit ? parseInt(limit, 10) : 50;
-    return this.diceService.getSessionRollHistory(sessionId, limitNumber);
+    return this.diceService.getSessionRollHistoryForGm(sessionId, limitNumber, req.user?.id || req.user?.sub);
   }
 }

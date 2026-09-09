@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import NextImage from "next/image";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -80,7 +81,7 @@ export default function ImportCharacterDialog({ open, onOpenChange, sessionId }:
             Importer un personnage
           </DialogTitle>
           <DialogDescription className="text-aged-parchment">
-            Sélectionnez un personnage depuis vos autres sessions pour l'importer dans cette session.
+            Sélectionnez un personnage depuis vos autres sessions pour l&apos;importer dans cette session.
           </DialogDescription>
         </DialogHeader>
 
@@ -88,7 +89,7 @@ export default function ImportCharacterDialog({ open, onOpenChange, sessionId }:
         <div className="bg-cosmic-void border border-aged-gold rounded-lg p-4 mt-4">
           <h3 className="font-cinzel text-aged-gold mb-3 flex items-center gap-2">
             <RefreshCw className="h-4 w-4" />
-            Options d'import
+            Options d&apos;import
           </h3>
           <RadioGroup
             value={resetState ? "reset" : "keep"}
@@ -100,20 +101,20 @@ export default function ImportCharacterDialog({ open, onOpenChange, sessionId }:
               <div className="flex-1">
                 <Label htmlFor="reset" className="font-cinzel text-aged-gold cursor-pointer flex items-center gap-2">
                   <RefreshCw className="h-4 w-4" />
-                  Réinitialiser l'état
+                  Réinitialiser l&apos;état
                 </Label>
                 <p className="text-sm text-aged-parchment opacity-80 mt-1">
                   PV, Santé mentale et PM remis au maximum. Inventaire, notes et historique effacés.
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-start space-x-3 p-3 rounded border border-aged-gold/30 hover:border-aged-gold transition-colors">
               <RadioGroupItem value="keep" id="keep" className="mt-1" data-testid="radio-keep-state" />
               <div className="flex-1">
                 <Label htmlFor="keep" className="font-cinzel text-aged-gold cursor-pointer flex items-center gap-2">
                   <Save className="h-4 w-4" />
-                  Conserver l'état
+                  Conserver l&apos;état
                 </Label>
                 <p className="text-sm text-aged-parchment opacity-80 mt-1">
                   Copie complète : PV, Santé, inventaire, effets actifs, conditions et notes.
@@ -142,10 +143,10 @@ export default function ImportCharacterDialog({ open, onOpenChange, sessionId }:
             <div className="text-center py-12">
               <User className="mx-auto h-12 w-12 text-aged-gold opacity-50 mb-4" />
               <p className="text-aged-parchment font-crimson">
-                Aucun personnage disponible pour l'import.
+                Aucun personnage disponible pour l&apos;import.
               </p>
               <p className="text-sm text-aged-parchment opacity-70 mt-2">
-                Les personnages apparaîtront ici une fois que vous aurez créé des personnages dans d'autres sessions.
+                Les personnages apparaîtront ici une fois que vous aurez créé des personnages dans d&apos;autres sessions.
               </p>
             </div>
           ) : (
@@ -166,10 +167,13 @@ export default function ImportCharacterDialog({ open, onOpenChange, sessionId }:
                       <div className="flex-1">
                         <CardTitle className="font-cinzel text-xl text-aged-gold flex items-center gap-2">
                           {character.avatarUrl && (
-                            <img
+                            <NextImage
                               src={character.avatarUrl}
                               alt={character.name}
-                              className="w-10 h-10 rounded-full object-cover border border-aged-gold"
+                              width={40}
+                                  height={40}
+                                  unoptimized
+                                  className="w-10 h-10 rounded-full object-cover border border-aged-gold"
                             />
                           )}
                           {character.name}
@@ -192,7 +196,7 @@ export default function ImportCharacterDialog({ open, onOpenChange, sessionId }:
                         Session: {character.sessionName}
                       </Badge>
                     </div>
-                    
+
                     <div className="grid grid-cols-3 gap-2 text-xs">
                       <div className="text-aged-parchment">
                         <div className="font-cinzel text-aged-gold">FOR</div>

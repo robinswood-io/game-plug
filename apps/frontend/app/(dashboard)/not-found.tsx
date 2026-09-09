@@ -12,7 +12,7 @@ export default function NotFound() {
           </div>
 
           <p className="mt-4 text-sm text-aged-parchment">
-            La page que vous recherchez n'existe pas ou a été déplacée.
+            La page que vous recherchez n&apos;existe pas ou a été déplacée.
           </p>
         </CardContent>
       </Card>

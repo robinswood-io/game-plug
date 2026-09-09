@@ -7,6 +7,8 @@ describe('EffectsController', () => {
   let controller: EffectsController;
   let service: EffectsService;
 
+  const mockReq = { user: { id: 'user-1' } };
+
   const mockEffect = {
     id: 'effect-1',
     characterId: 'char-1',
@@ -57,10 +59,10 @@ describe('EffectsController', () => {
 
       jest.spyOn(service, 'create').mockResolvedValue(mockEffect);
 
-      const result = await controller.create(createDto);
+      const result = await controller.create(createDto, mockReq);
 
       expect(result).toEqual(mockEffect);
-      expect(service.create).toHaveBeenCalledWith(createDto);
+      expect(service.create).toHaveBeenCalledWith(createDto, 'user-1');
       expect(service.create).toHaveBeenCalledTimes(1);
     });
 
@@ -82,11 +84,11 @@ describe('EffectsController', () => {
 
       jest.spyOn(service, 'create').mockResolvedValue(buffEffect);
 
-      const result = await controller.create(createDto);
+      const result = await controller.create(createDto, mockReq);
 
       expect(result.name).toBe('Strength Buff');
       expect(result.value).toBe('+5');
-      expect(service.create).toHaveBeenCalledWith(createDto);
+      expect(service.create).toHaveBeenCalledWith(createDto, 'user-1');
     });
 
     it('should handle creation errors', async () => {
@@ -98,7 +100,7 @@ describe('EffectsController', () => {
 
       jest.spyOn(service, 'create').mockRejectedValue(new Error('Creation failed'));
 
-      await expect(controller.create(createDto)).rejects.toThrow('Creation failed');
+      await expect(controller.create(createDto, mockReq)).rejects.toThrow('Creation failed');
     });
   });
 
@@ -116,10 +118,10 @@ describe('EffectsController', () => {
 
       jest.spyOn(service, 'update').mockResolvedValue(updatedEffect);
 
-      const result = await controller.update('effect-1', updateDto);
+      const result = await controller.update('effect-1', updateDto, mockReq);
 
       expect(result).toEqual(updatedEffect);
-      expect(service.update).toHaveBeenCalledWith('effect-1', updateDto);
+      expect(service.update).toHaveBeenCalledWith('effect-1', updateDto, 'user-1');
       expect(service.update).toHaveBeenCalledTimes(1);
     });
 
@@ -135,10 +137,10 @@ describe('EffectsController', () => {
 
       jest.spyOn(service, 'update').mockResolvedValue(updatedEffect);
 
-      const result = await controller.update('effect-1', updateDto);
+      const result = await controller.update('effect-1', updateDto, mockReq);
 
       expect(result.value).toBe('+10');
-      expect(service.update).toHaveBeenCalledWith('effect-1', updateDto);
+      expect(service.update).toHaveBeenCalledWith('effect-1', updateDto, 'user-1');
     });
 
     it('should handle effect not found', async () => {
@@ -146,8 +148,8 @@ describe('EffectsController', () => {
 
       jest.spyOn(service, 'update').mockRejectedValue(new NotFoundException('Active effect effect-1 not found'));
 
-      await expect(controller.update('effect-1', updateDto)).rejects.toThrow(NotFoundException);
-      await expect(controller.update('effect-1', updateDto)).rejects.toThrow('Active effect effect-1 not found');
+      await expect(controller.update('effect-1', updateDto, mockReq)).rejects.toThrow(NotFoundException);
+      await expect(controller.update('effect-1', updateDto, mockReq)).rejects.toThrow('Active effect effect-1 not found');
     });
 
     it('should update effect name', async () => {
@@ -156,10 +158,10 @@ describe('EffectsController', () => {
 
       jest.spyOn(service, 'update').mockResolvedValue(updatedEffect);
 
-      const result = await controller.update('effect-1', updateDto);
+      const result = await controller.update('effect-1', updateDto, mockReq);
 
       expect(result.name).toBe('New Effect Name');
-      expect(service.update).toHaveBeenCalledWith('effect-1', updateDto);
+      expect(service.update).toHaveBeenCalledWith('effect-1', updateDto, 'user-1');
     });
   });
 });

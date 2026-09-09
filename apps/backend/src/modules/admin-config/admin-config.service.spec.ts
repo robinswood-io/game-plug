@@ -140,6 +140,7 @@ describe('AdminConfigService', () => {
   describe('initializeDefaults', () => {
     it('should initialize default configs if they do not exist', async () => {
       jest.spyOn(cacheService, 'get').mockResolvedValue(undefined);
+      jest.spyOn(databaseService.db as any, 'limit').mockResolvedValue([]);
       jest.spyOn(service, 'set').mockResolvedValue(mockSystemConfig);
 
       await service.initializeDefaults();

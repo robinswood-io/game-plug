@@ -13,13 +13,13 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  Plus, 
-  Dice6, 
-  BookOpen, 
-  Brain, 
-  Shield, 
-  Compass, 
+import {
+  Plus,
+  Dice6,
+  BookOpen,
+  Brain,
+  Shield,
+  Compass,
   Trophy,
   MessageSquare,
   AlertTriangle,
@@ -111,7 +111,7 @@ export default function ChapterEventHistory({ chapterId, sessionId, isGM, charac
       queryClient.setQueryData<ChapterEvent[]>(['/api/chapters', chapterId, 'events'], (old) =>
         old ? [data, ...old] : [data]
       );
-      
+
       setShowAddEvent(false);
       setNewEvent({
         eventType: "narration",
@@ -121,7 +121,7 @@ export default function ChapterEventHistory({ chapterId, sessionId, isGM, charac
         isImportant: false,
         metadata: {},
       });
-      
+
       toast({
         title: "Événement ajouté",
         description: "L'événement a été enregistré dans l'historique",
@@ -146,7 +146,7 @@ export default function ChapterEventHistory({ chapterId, sessionId, isGM, charac
       queryClient.setQueryData(['/api/chapters', chapterId, 'events'], (old: ChapterEvent[] | undefined) => {
         return old ? old.filter(e => e.id !== eventId) : [];
       });
-      
+
       toast({
         title: "Événement supprimé",
         description: "L'événement a été retiré de l'historique",
@@ -217,10 +217,10 @@ export default function ChapterEventHistory({ chapterId, sessionId, isGM, charac
                     Nouvel Événement
                   </DialogTitle>
                 </DialogHeader>
-                
+
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-source mb-2">Type d'événement</label>
+                    <label className="block text-sm font-source mb-2">Type d&apos;événement</label>
                     <Select
                       value={newEvent.eventType}
                       onValueChange={(value) => setNewEvent({ ...newEvent, eventType: value })}
@@ -235,7 +235,7 @@ export default function ChapterEventHistory({ chapterId, sessionId, isGM, charac
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-source mb-2">Titre</label>
                     <Input
@@ -246,7 +246,7 @@ export default function ChapterEventHistory({ chapterId, sessionId, isGM, charac
                       data-testid="input-event-title"
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-source mb-2">Description</label>
                     <Textarea
@@ -257,15 +257,15 @@ export default function ChapterEventHistory({ chapterId, sessionId, isGM, charac
                       data-testid="input-event-description"
                     />
                   </div>
-                  
+
                   {characters.length > 0 && (
                     <div>
                       <label className="block text-sm font-source mb-2">Personnage impliqué</label>
                       <Select
                         value={newEvent.characterId || "none"}
-                        onValueChange={(value) => setNewEvent({ 
-                          ...newEvent, 
-                          characterId: value === "none" ? null : value 
+                        onValueChange={(value) => setNewEvent({
+                          ...newEvent,
+                          characterId: value === "none" ? null : value
                         })}
                       >
                         <SelectTrigger className="bg-cosmic-void border-aged-gold text-bone-white">
@@ -282,14 +282,14 @@ export default function ChapterEventHistory({ chapterId, sessionId, isGM, charac
                       </Select>
                     </div>
                   )}
-                  
+
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="important"
                       checked={newEvent.isImportant}
-                      onCheckedChange={(checked) => setNewEvent({ 
-                        ...newEvent, 
-                        isImportant: checked as boolean 
+                      onCheckedChange={(checked) => setNewEvent({
+                        ...newEvent,
+                        isImportant: checked as boolean
                       })}
                       className="border-aged-gold data-[state=checked]:bg-aged-gold"
                     />
@@ -301,7 +301,7 @@ export default function ChapterEventHistory({ chapterId, sessionId, isGM, charac
                       Marquer comme moment clé
                     </label>
                   </div>
-                  
+
                   <div className="flex justify-end gap-2">
                     <Button
                       variant="outline"
@@ -328,14 +328,14 @@ export default function ChapterEventHistory({ chapterId, sessionId, isGM, charac
       <CardContent>
         {isLoading ? (
           <div className="text-center py-8 text-aged-parchment">
-            Chargement de l'historique...
+            Chargement de l&apos;historique...
           </div>
         ) : events.length === 0 ? (
           <div className="text-center py-8 text-aged-parchment">
             <BookOpen className="h-12 w-12 mx-auto mb-3 text-aged-gold/30" />
             <p>Aucun événement enregistré</p>
             {isGM && (
-              <p className="text-sm mt-2">Ajoutez des événements pour créer l'historique</p>
+              <p className="text-sm mt-2">Ajoutez des événements pour créer l&apos;historique</p>
             )}
           </div>
         ) : (
@@ -367,22 +367,22 @@ export default function ChapterEventHistory({ chapterId, sessionId, isGM, charac
                             </span>
                           )}
                         </div>
-                        
+
                         <h4 className="font-semibold text-bone-white mb-1">
                           {event.title}
                         </h4>
-                        
+
                         {event.description && (
                           <p className="text-sm text-aged-parchment mb-2">
                             {event.description}
                           </p>
                         )}
-                        
+
                         <p className="text-xs text-aged-parchment/60">
                           {event.createdAt ? format(new Date(event.createdAt), "dd MMMM yyyy à HH:mm", { locale: fr }) : ""}
                         </p>
                       </div>
-                      
+
                       {isGM && (
                         <Button
                           size="sm"

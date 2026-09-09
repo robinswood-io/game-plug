@@ -74,6 +74,9 @@ describe('CharactersService', () => {
                   findMany: jest.fn(),
                   findFirst: jest.fn(),
                 },
+                gameSessions: {
+                  findFirst: jest.fn(),
+                },
               },
               insert: jest.fn(),
               update: jest.fn(),
@@ -86,6 +89,8 @@ describe('CharactersService', () => {
 
     service = module.get<CharactersService>(CharactersService);
     dbService = module.get<DatabaseService>(DatabaseService);
+    (dbService.db.query.characters.findFirst as jest.Mock).mockResolvedValue(mockCharacter);
+    (dbService.db.query.gameSessions.findFirst as jest.Mock).mockResolvedValue({ id: 'session-1', gmId: 'gm-1' });
   });
 
   afterEach(() => {
@@ -233,7 +238,7 @@ describe('CharactersService', () => {
 
       jest.spyOn(dbService.db, 'update').mockReturnValue(mockUpdateChain as any);
 
-      const result = await service.update('1', updateData);
+      const result = await service.update('1', updateData, 'user-1');
 
       expect(result).toEqual(updatedCharacter);
       expect(dbService.db.update).toHaveBeenCalled();
@@ -258,28 +263,23 @@ describe('CharactersService', () => {
 
       jest.spyOn(dbService.db, 'update').mockReturnValue(mockUpdateChain as any);
 
-      const result = await service.update('1', updateData);
+      const result = await service.update('1', updateData, 'user-1');
 
       expect(result).toEqual(updatedCharacter);
       expect(mockUpdateChain.set).toHaveBeenCalledWith(updateData);
     });
 
-    it('should handle update on non-existent character', async () => {
+    it('should throw NotFoundException before updating a non-existent character', async () => {
       const updateData = { name: 'Updated' };
 
-      const mockUpdateChain = {
-        set: jest.fn().mockReturnValue({
-          where: jest.fn().mockReturnValue({
-            returning: jest.fn().mockResolvedValue([undefined]),
-          }),
-        }),
-      };
+      jest
+        .spyOn(dbService.db.query.characters, 'findFirst')
+        .mockResolvedValue(null as any);
 
-      jest.spyOn(dbService.db, 'update').mockReturnValue(mockUpdateChain as any);
-
-      const result = await service.update('999', updateData);
-
-      expect(result).toBeUndefined();
+      await expect(
+        service.update('999', updateData, 'user-1'),
+      ).rejects.toThrow(NotFoundException);
+      expect(dbService.db.update).not.toHaveBeenCalled();
     });
   });
 
@@ -291,22 +291,21 @@ describe('CharactersService', () => {
 
       jest.spyOn(dbService.db, 'delete').mockReturnValue(mockDeleteChain as any);
 
-      await service.delete('1');
+      await service.delete('1', 'user-1');
 
       expect(dbService.db.delete).toHaveBeenCalled();
       expect(mockDeleteChain.where).toHaveBeenCalled();
     });
 
-    it('should handle delete on non-existent character', async () => {
-      const mockDeleteChain = {
-        where: jest.fn().mockResolvedValue(undefined),
-      };
+    it('should throw NotFoundException before deleting a non-existent character', async () => {
+      jest
+        .spyOn(dbService.db.query.characters, 'findFirst')
+        .mockResolvedValue(null as any);
 
-      jest.spyOn(dbService.db, 'delete').mockReturnValue(mockDeleteChain as any);
-
-      await service.delete('999');
-
-      expect(dbService.db.delete).toHaveBeenCalled();
+      await expect(service.delete('999', 'user-1')).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(dbService.db.delete).not.toHaveBeenCalled();
     });
 
     it('should handle database errors during deletion', async () => {
@@ -316,7 +315,7 @@ describe('CharactersService', () => {
 
       jest.spyOn(dbService.db, 'delete').mockReturnValue(mockDeleteChain as any);
 
-      await expect(service.delete('1')).rejects.toThrow('DB Error');
+      await expect(service.delete('1', 'user-1')).rejects.toThrow('DB Error');
     });
   });
 });

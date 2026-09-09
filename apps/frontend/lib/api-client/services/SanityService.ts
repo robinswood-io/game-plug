@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+
 import type { CreateSanityConditionDto } from '../models/CreateSanityConditionDto';
 import type { UpdateSanityConditionDto } from '../models/UpdateSanityConditionDto';
 import type { CancelablePromise } from '../core/CancelablePromise';

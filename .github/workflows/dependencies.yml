@@ -35,9 +35,8 @@ jobs:
 
       - name: Run npm audit
         id: audit
-        continue-on-error: true
         run: |
-          npm audit --json > audit.json || true
+          npm audit --json > audit.json
 
           CRITICAL=$(jq '.metadata.vulnerabilities.critical // 0' audit.json)
           HIGH=$(jq '.metadata.vulnerabilities.high // 0' audit.json)
@@ -116,7 +115,6 @@ jobs:
 
       - name: Check for outdated packages
         id: outdated
-        continue-on-error: true
         run: |
           npm outdated --json > outdated.json || true
 

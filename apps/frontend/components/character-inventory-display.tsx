@@ -23,9 +23,9 @@ interface CharacterInventoryDisplayProps {
   onRemoveItem?: (itemId: string) => void;
 }
 
-export default function CharacterInventoryDisplay({ 
-  characterId, 
-  onRemoveItem 
+export default function CharacterInventoryDisplay({
+  characterId,
+  onRemoveItem
 }: CharacterInventoryDisplayProps) {
   const { data: inventory = [], isLoading } = useQuery<InventoryItem[]>({
     queryKey: ["/api/characters", characterId, "inventory"],
@@ -36,7 +36,7 @@ export default function CharacterInventoryDisplay({
   if (isLoading) {
     return (
       <div className="text-aged-parchment text-center py-4">
-        Chargement de l'inventaire...
+        Chargement de l&apos;inventaire...
       </div>
     );
   }
@@ -48,7 +48,7 @@ export default function CharacterInventoryDisplay({
   if (inventory.length === 0) {
     return (
       <div className="text-aged-parchment text-center py-4 bg-cosmic-void/50 rounded border border-aged-gold/30">
-        L'inventaire est vide
+        L&apos;inventaire est vide
       </div>
     );
   }
@@ -60,10 +60,10 @@ export default function CharacterInventoryDisplay({
       <div className="text-sm text-aged-parchment mb-2">
         Poids total: {totalWeight} slots
       </div>
-      
+
       {inventory.map((item) => (
-        <div 
-          key={item.id} 
+        <div
+          key={item.id}
           className="bg-cosmic-void border border-aged-gold/50 rounded p-2 flex items-center justify-between"
         >
           <div className="flex-1">

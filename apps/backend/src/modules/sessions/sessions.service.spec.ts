@@ -63,7 +63,9 @@ describe('SessionsService', () => {
   describe('findAll', () => {
     it('should return all sessions when no gmId provided', async () => {
       const mockSessions = [mockSession, mockSession2];
-      jest.spyOn(dbService.db.query.gameSessions, 'findMany').mockResolvedValue(mockSessions as any);
+      jest
+        .spyOn(dbService.db.query.gameSessions, 'findMany')
+        .mockResolvedValue(mockSessions as any);
 
       const result = await service.findAll();
 
@@ -73,7 +75,9 @@ describe('SessionsService', () => {
 
     it('should return sessions filtered by gmId', async () => {
       const mockSessions = [mockSession, mockSession2];
-      jest.spyOn(dbService.db.query.gameSessions, 'findMany').mockResolvedValue(mockSessions as any);
+      jest
+        .spyOn(dbService.db.query.gameSessions, 'findMany')
+        .mockResolvedValue(mockSessions as any);
 
       const result = await service.findAll('gm-1');
 
@@ -102,7 +106,9 @@ describe('SessionsService', () => {
 
   describe('findOne', () => {
     it('should return a session by id', async () => {
-      jest.spyOn(dbService.db.query.gameSessions, 'findFirst').mockResolvedValue(mockSession as any);
+      jest
+        .spyOn(dbService.db.query.gameSessions, 'findFirst')
+        .mockResolvedValue(mockSession as any);
 
       const result = await service.findOne('session-1');
 
@@ -113,25 +119,57 @@ describe('SessionsService', () => {
     });
 
     it('should throw NotFoundException when session not found', async () => {
-      jest.spyOn(dbService.db.query.gameSessions, 'findFirst').mockResolvedValue(null as any);
+      jest
+        .spyOn(dbService.db.query.gameSessions, 'findFirst')
+        .mockResolvedValue(null as any);
 
-      await expect(service.findOne('nonexistent')).rejects.toThrow(NotFoundException);
-      await expect(service.findOne('nonexistent')).rejects.toThrow('Session nonexistent not found');
+      await expect(service.findOne('nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.findOne('nonexistent')).rejects.toThrow(
+        'Session nonexistent not found',
+      );
     });
 
     it('should throw NotFoundException when session is undefined', async () => {
-      jest.spyOn(dbService.db.query.gameSessions, 'findFirst').mockResolvedValue(undefined);
+      jest
+        .spyOn(dbService.db.query.gameSessions, 'findFirst')
+        .mockResolvedValue(undefined);
 
-      await expect(service.findOne('invalid-id')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('invalid-id')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('findOneForGm', () => {
+    it('should return a session owned by the GM', async () => {
+      jest
+        .spyOn(dbService.db.query.gameSessions, 'findFirst')
+        .mockResolvedValue(mockSession as any);
+
+      await expect(service.findOneForGm('session-1', 'gm-1')).resolves.toEqual(
+        mockSession,
+      );
+    });
+
+    it('should reject cross-GM session access as not found', async () => {
+      jest
+        .spyOn(dbService.db.query.gameSessions, 'findFirst')
+        .mockResolvedValue({ ...mockSession, gmId: 'gm-2' } as any);
+
+      await expect(service.findOneForGm('session-1', 'gm-1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('create', () => {
-    it('should create a session', async () => {
+    it('should create a session with generated code and active status', async () => {
       const createData = {
         gmId: 'gm-1',
         name: 'New Campaign',
-        status: 'active',
+        status: 'preparation',
       };
 
       const mockInsertChain = {
@@ -146,7 +184,13 @@ describe('SessionsService', () => {
 
       expect(result).toEqual(mockSession);
       expect(dbService.db.insert).toHaveBeenCalled();
-      expect(mockInsertChain.values).toHaveBeenCalledWith(createData);
+      expect(mockInsertChain.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ...createData,
+          code: expect.stringMatching(/^[A-Z2-9]{6}$/),
+          status: 'active',
+        }),
+      );
     });
 
     it('should create a minimal session', async () => {
@@ -166,7 +210,13 @@ describe('SessionsService', () => {
       const result = await service.create(createData);
 
       expect(result).toEqual(mockSession2);
-      expect(mockInsertChain.values).toHaveBeenCalledWith(createData);
+      expect(mockInsertChain.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ...createData,
+          code: expect.stringMatching(/^[A-Z2-9]{6}$/),
+          status: 'active',
+        }),
+      );
     });
 
     it('should handle database errors during creation', async () => {
@@ -188,9 +238,13 @@ describe('SessionsService', () => {
   });
 
   describe('update', () => {
-    it('should update a session', async () => {
+    it('should update a session owned by the GM', async () => {
       const updateData = { name: 'Updated Campaign' };
       const updatedSession = { ...mockSession, ...updateData };
+
+      jest
+        .spyOn(dbService.db.query.gameSessions, 'findFirst')
+        .mockResolvedValue(mockSession as any);
 
       const mockUpdateChain = {
         set: jest.fn().mockReturnValue({
@@ -202,110 +256,96 @@ describe('SessionsService', () => {
 
       jest.spyOn(dbService.db, 'update').mockReturnValue(mockUpdateChain as any);
 
-      const result = await service.update('session-1', updateData);
+      const result = await service.update('session-1', updateData, 'gm-1');
 
       expect(result).toEqual(updatedSession);
       expect(dbService.db.update).toHaveBeenCalled();
       expect(mockUpdateChain.set).toHaveBeenCalledWith(updateData);
     });
 
-    it('should update session status', async () => {
-      const updateData = { status: 'ended', isActive: false };
-      const updatedSession = { ...mockSession, ...updateData };
+    it('should reject cross-GM updates', async () => {
+      jest
+        .spyOn(dbService.db.query.gameSessions, 'findFirst')
+        .mockResolvedValue({ ...mockSession, gmId: 'gm-2' } as any);
 
-      const mockUpdateChain = {
-        set: jest.fn().mockReturnValue({
-          where: jest.fn().mockReturnValue({
-            returning: jest.fn().mockResolvedValue([updatedSession]),
-          }),
-        }),
-      };
-
-      jest.spyOn(dbService.db, 'update').mockReturnValue(mockUpdateChain as any);
-
-      const result = await service.update('session-1', updateData);
-
-      expect(result).toEqual(updatedSession);
-      expect(mockUpdateChain.set).toHaveBeenCalledWith(updateData);
+      await expect(
+        service.update('session-1', { name: 'Updated' }, 'gm-1'),
+      ).rejects.toThrow(NotFoundException);
+      expect(dbService.db.update).not.toHaveBeenCalled();
     });
 
-    it('should update multiple session fields', async () => {
-      const updateData = {
-        name: 'New Title',
-        code: 'NEW123',
-        status: 'active',
-      };
-      const updatedSession = { ...mockSession, ...updateData };
+    it('should throw NotFoundException for a non-existent session', async () => {
+      jest
+        .spyOn(dbService.db.query.gameSessions, 'findFirst')
+        .mockResolvedValue(null as any);
 
-      const mockUpdateChain = {
-        set: jest.fn().mockReturnValue({
-          where: jest.fn().mockReturnValue({
-            returning: jest.fn().mockResolvedValue([updatedSession]),
-          }),
-        }),
-      };
-
-      jest.spyOn(dbService.db, 'update').mockReturnValue(mockUpdateChain as any);
-
-      const result = await service.update('session-1', updateData);
-
-      expect(result).toEqual(updatedSession);
-      expect(mockUpdateChain.set).toHaveBeenCalledWith(updateData);
-    });
-
-    it('should handle update on non-existent session', async () => {
-      const updateData = { title: 'Updated' };
-
-      const mockUpdateChain = {
-        set: jest.fn().mockReturnValue({
-          where: jest.fn().mockReturnValue({
-            returning: jest.fn().mockResolvedValue([undefined]),
-          }),
-        }),
-      };
-
-      jest.spyOn(dbService.db, 'update').mockReturnValue(mockUpdateChain as any);
-
-      const result = await service.update('nonexistent', updateData);
-
-      expect(result).toBeUndefined();
+      await expect(
+        service.update('nonexistent', { title: 'Updated' }, 'gm-1'),
+      ).rejects.toThrow(NotFoundException);
+      expect(dbService.db.update).not.toHaveBeenCalled();
     });
   });
 
   describe('delete', () => {
-    it('should delete a session', async () => {
-      const mockDeleteChain = {
-        where: jest.fn().mockResolvedValue(undefined),
+    it('should soft delete a session owned by the GM', async () => {
+      const endedSession = { ...mockSession, isActive: false, status: 'ended' };
+
+      jest
+        .spyOn(dbService.db.query.gameSessions, 'findFirst')
+        .mockResolvedValue(mockSession as any);
+
+      const mockUpdateChain = {
+        set: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            returning: jest.fn().mockResolvedValue([endedSession]),
+          }),
+        }),
       };
 
-      jest.spyOn(dbService.db, 'delete').mockReturnValue(mockDeleteChain as any);
+      jest.spyOn(dbService.db, 'update').mockReturnValue(mockUpdateChain as any);
 
-      await service.delete('session-1');
+      await expect(service.delete('session-1', 'gm-1')).resolves.toEqual(
+        endedSession,
+      );
 
-      expect(dbService.db.delete).toHaveBeenCalled();
-      expect(mockDeleteChain.where).toHaveBeenCalled();
+      expect(dbService.db.delete).not.toHaveBeenCalled();
+      expect(dbService.db.update).toHaveBeenCalled();
+      expect(mockUpdateChain.set).toHaveBeenCalledWith({
+        isActive: false,
+        status: 'ended',
+      });
     });
 
-    it('should handle delete on non-existent session', async () => {
-      const mockDeleteChain = {
-        where: jest.fn().mockResolvedValue(undefined),
-      };
+    it('should reject cross-GM deletion', async () => {
+      jest
+        .spyOn(dbService.db.query.gameSessions, 'findFirst')
+        .mockResolvedValue({ ...mockSession, gmId: 'gm-2' } as any);
 
-      jest.spyOn(dbService.db, 'delete').mockReturnValue(mockDeleteChain as any);
-
-      await service.delete('nonexistent');
-
-      expect(dbService.db.delete).toHaveBeenCalled();
+      await expect(service.delete('session-1', 'gm-1')).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(dbService.db.update).not.toHaveBeenCalled();
+      expect(dbService.db.delete).not.toHaveBeenCalled();
     });
 
-    it('should handle database errors during deletion', async () => {
-      const mockDeleteChain = {
-        where: jest.fn().mockRejectedValue(new Error('DB Error')),
+    it('should handle update failures during soft deletion', async () => {
+      jest
+        .spyOn(dbService.db.query.gameSessions, 'findFirst')
+        .mockResolvedValue(mockSession as any);
+
+      const mockUpdateChain = {
+        set: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            returning: jest.fn().mockRejectedValue(new Error('DB Error')),
+          }),
+        }),
       };
 
-      jest.spyOn(dbService.db, 'delete').mockReturnValue(mockDeleteChain as any);
+      jest.spyOn(dbService.db, 'update').mockReturnValue(mockUpdateChain as any);
 
-      await expect(service.delete('session-1')).rejects.toThrow('DB Error');
+      await expect(service.delete('session-1', 'gm-1')).rejects.toThrow(
+        'DB Error',
+      );
     });
   });
 });

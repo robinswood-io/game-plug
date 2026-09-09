@@ -22,7 +22,7 @@ Ce document décrit techniquement comment activer et mettre en place l'intégrat
 ```bash
 # Tester la clé API
 curl https://api.openai.com/v1/models \
-  -H "Authorization: Bearer sk-YOUR_KEY_HERE" | head -20
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
 ```
 
 ### 1.2 Configuration Docker Compose
@@ -39,7 +39,7 @@ game-plug-backend:
   restart: unless-stopped
   environment:
     - NODE_ENV=production
-    - DATABASE_URL=${GAME_PLUG_DATABASE_URL:-...}
+    - DATABASE_URL=${DATABASE_URL:?DATABASE_URL is required}
     - JWT_SECRET=${GAME_PLUG_JWT_SECRET}
     - PORT=4000
 ```
@@ -54,10 +54,10 @@ game-plug-backend:
   restart: unless-stopped
   environment:
     - NODE_ENV=production
-    - DATABASE_URL=${GAME_PLUG_DATABASE_URL:-...}
+    - DATABASE_URL=${DATABASE_URL:?DATABASE_URL is required}
     - JWT_SECRET=${GAME_PLUG_JWT_SECRET}
     - PORT=4000
-    - OPENAI_API_KEY=${GAME_PLUG_OPENAI_API_KEY}  # ← AJOUTER
+    - OPENAI_API_KEY=<key>  # ← AJOUTER
 ```
 
 ### 1.3 Fichier .env Global
@@ -67,7 +67,7 @@ game-plug-backend:
 **Ajoutez:**
 ```bash
 # OpenAI Configuration for game-plug
-GAME_PLUG_OPENAI_API_KEY=sk-YOUR_ACTUAL_KEY_HERE
+GAME_PLUG_OPENAI_API_KEY=<key>
 ```
 
 ### 1.4 Vérification de Configuration
@@ -81,7 +81,7 @@ docker compose -f docker-compose.apps.yml restart game-plug-backend
 docker exec game-plug-backend printenv | grep OPENAI
 
 # Output attendu:
-# OPENAI_API_KEY=sk-...
+# OPENAI_API_KEY=<key>
 ```
 
 ---
@@ -128,7 +128,7 @@ export class AiOpenAiService {
   constructor() {
     // Initialise le client OpenAI avec la clé d'env
     this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+      apiKey: <key>
     });
   }
 
@@ -549,7 +549,7 @@ TOKEN=$(docker exec game-plug-backend sh -c 'curl -s -X POST http://localhost:40
 
 # 2. Tester generate-avatar
 curl -X POST http://localhost:4000/api/ai/generate-avatar \
-  -H "Authorization: Bearer $TOKEN" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
   -H "Content-Type: application/json" \
   -d '{
     "characterName": "Dr. Henry Armitage",
@@ -665,7 +665,7 @@ npm run test:cov
 docker compose -f docker-compose.apps.yml restart game-plug-backend
 
 # 5. Valider que les endpoints marchent
-curl -H "Authorization: Bearer {TOKEN}" \
+curl -H "Authorization: Bearer ${ACCESS_TOKEN}
   http://localhost:4000/api/ai/generate-avatar
 
 # 6. Monitorer les logs
@@ -708,7 +708,7 @@ cat /srv/workspace/docker-compose.apps.yml | grep OPENAI
 ```bash
 # Tester la clé manuellement
 curl https://api.openai.com/v1/models \
-  -H "Authorization: Bearer sk-YOUR_KEY" | head
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
 
 # Si 401, la clé est invalide
 ```

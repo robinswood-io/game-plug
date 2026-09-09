@@ -2,11 +2,13 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, BadRequestException } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { resolveAllowedOrigins } from './security-config';
 
 async function bootstrap() {
+  const allowedOrigins = resolveAllowedOrigins();
   const app = await NestFactory.create(AppModule, {
     cors: {
-      origin: process.env.CORS_ORIGIN || '*',
+      origin: allowedOrigins,
       credentials: true,
     },
   });
@@ -30,18 +32,19 @@ async function bootstrap() {
     }),
   );
 
-  // Configure Swagger
-  const config = new DocumentBuilder()
-    .setTitle('Game-Plug API')
-    .setDescription('Call of Cthulhu 7e RPG Platform API')
-    .setVersion('1.0.0')
-    .addBearerAuth()
-    .addServer('http://localhost:4000', 'Development')
-    .addServer(`${process.env.API_URL || 'http://localhost:4000'}`, 'Production')
-    .build();
+  if (process.env.NODE_ENV !== 'production' || process.env.SWAGGER_ENABLED === 'true') {
+    const config = new DocumentBuilder()
+      .setTitle('Game-Plug API')
+      .setDescription('Call of Cthulhu 7e RPG Platform API')
+      .setVersion('1.0.0')
+      .addBearerAuth()
+      .addServer('http://localhost:4000', 'Development')
+      .addServer(`${process.env.API_URL || 'http://localhost:4000'}`, 'Production')
+      .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
   const port = process.env.PORT || 4000;
   await app.listen(port, '0.0.0.0');

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
+import NextImage from "next/image";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -229,9 +230,12 @@ export default function SelectCharacter() {
                           <CardContent className="p-4">
                             <div className="flex items-start gap-4">
                               {character.avatarUrl ? (
-                                <img
+                                <NextImage
                                   src={character.avatarUrl}
                                   alt={character.name}
+                                  width={80}
+                                  height={80}
+                                  unoptimized
                                   className="w-20 h-20 rounded-lg object-cover border-2 border-aged-gold/50"
                                 />
                               ) : (

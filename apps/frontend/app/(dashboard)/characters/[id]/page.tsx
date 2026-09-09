@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import NextImage from 'next/image';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CharactersService } from '@/lib/api-client';
 import { useToast } from '@/hooks/use-toast';
@@ -11,12 +12,10 @@ import RollHistoryVisual from '@/components/roll-history-visual';
 import SanityTracker from '@/components/sanity-tracker';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ArrowLeft, Edit3, Heart, Brain, Shield, AlertTriangle, Skull, Activity, AlertCircle, RefreshCw, Wand2, BookOpen, Save, Package, Plus, Trash2, Sword, ShieldCheck, Image, Sparkles, Coins, Edit2 } from 'lucide-react';
+import { ArrowLeft, Brain, Shield, AlertTriangle, Skull, Activity, AlertCircle, RefreshCw, BookOpen, Save, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { SKILL_TRANSLATIONS } from '@/lib/cthulhu-data';
 import type { Character, SanityCondition, ActiveEffect } from '@shared/schema';
 
@@ -38,30 +37,37 @@ interface CharacterWithDetails extends Character {
   activeEffects: ActiveEffect[];
 }
 
+const getAgeCategory = (ageNumber: number): string => {
+  if (ageNumber <= 25) return 'young';
+  if (ageNumber <= 40) return 'adult';
+  if (ageNumber <= 60) return 'middle';
+  return 'elderly';
+};
+
+const getGenderCategory = (genderStr: string | undefined | null): string => {
+  if (!genderStr) return 'male';
+  const normalized = genderStr.toLowerCase().trim();
+  if (
+    normalized.includes('femme') ||
+    normalized.includes('female') ||
+    normalized.includes('f')
+  ) {
+    return 'female';
+  }
+  if (normalized.includes('autre') || normalized.includes('other')) {
+    return 'other';
+  }
+  return 'male';
+};
+
 export default function CharacterSheetPage() {
   const params = useParams();
-  const router = useRouter();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const characterId = params.id as string;
 
   const [notes, setNotes] = useState<string>('');
-  const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [notesModified, setNotesModified] = useState(false);
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [showAddItem, setShowAddItem] = useState(false);
-  const [newItem, setNewItem] = useState({
-    name: '',
-    description: '',
-    category: 'misc',
-    quantity: 1,
-    weight: 1,
-    damage: '',
-    armor: 0,
-  });
-  const [isEditingMoney, setIsEditingMoney] = useState(false);
-  const [moneyValue, setMoneyValue] = useState('0.00');
-  const [isGeneratingAvatar, setIsGeneratingAvatar] = useState(false);
   const [showAvatarDialog, setShowAvatarDialog] = useState(false);
   const [avatarSettings, setAvatarSettings] = useState({
     gender: 'male',
@@ -102,44 +108,14 @@ export default function CharacterSheetPage() {
   });
 
   // Helper function to convert age number to age category
-  const getAgeCategory = (ageNumber: number): string => {
-    if (ageNumber <= 25) return 'young';
-    if (ageNumber <= 40) return 'adult';
-    if (ageNumber <= 60) return 'middle';
-    return 'elderly';
-  };
 
-  // Helper function to convert gender string to gender category
-  const getGenderCategory = (genderStr: string | undefined | null): string => {
-    if (!genderStr) return 'male';
-    const normalized = genderStr.toLowerCase().trim();
-    if (normalized.includes('femme') || normalized.includes('female') || normalized.includes('f')) return 'female';
-    if (normalized.includes('autre') || normalized.includes('other')) return 'other';
-    return 'male';
-  };
+  const currentNotes = notesModified ? notes : character?.notes || '';
 
-  useEffect(() => {
-    if (character?.notes) {
-      setNotes(character.notes);
-    }
-    if (character?.money) {
-      setMoneyValue(character.money.toString());
-    }
-    // Auto-populate avatar settings from character data
-    if (character) {
-      setAvatarSettings((prev) => ({
-        ...prev,
-        gender: getGenderCategory(character.gender),
-        age: getAgeCategory(character.age || 25),
-      }));
-    }
-  }, [character?.notes, character?.money, character?.gender, character?.age, character?.id]);
-
-  const saveNotes = async () => {
+  const saveNotes = useCallback(() => {
     if (!notesModified || !characterId) return;
 
-    updateNotesMutation.mutate(notes);
-  };
+    updateNotesMutation.mutate(currentNotes);
+  }, [characterId, currentNotes, notesModified, updateNotesMutation]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -149,17 +125,7 @@ export default function CharacterSheetPage() {
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [notes, notesModified]);
-
-  const calculateMaxSlots = () => {
-    if (!character) return 10;
-    const baseSlots = 10;
-    const strengthBonus = Math.floor((character.strength - 10) / 10);
-    return Math.max(5, baseSlots + strengthBonus);
-  };
-
-  const totalWeight = inventory.reduce((sum, item) => sum + item.weight * item.quantity, 0);
-  const maxSlots = calculateMaxSlots();
+  }, [currentNotes, notesModified, saveNotes]);
 
   const calculateConditionalStatuses = () => {
     if (!character) return [];
@@ -257,7 +223,7 @@ export default function CharacterSheetPage() {
           <h1 className="text-2xl font-cinzel text-aged-gold mb-4">Personnage introuvable</h1>
           <Link href="/">
             <Button className="bg-blood-burgundy hover:bg-dark-crimson text-bone-white">
-              Retour à l'accueil
+              Retour à l&apos;accueil
             </Button>
           </Link>
         </div>
@@ -302,9 +268,12 @@ export default function CharacterSheetPage() {
             <div className="flex flex-col items-center gap-2">
               <div className="flex justify-center">
                 {character.avatarUrl ? (
-                  <img
+                  <NextImage
                     src={character.avatarUrl}
                     alt={`Portrait de ${character.name}`}
+                    width={192}
+                    height={192}
+                    unoptimized
                     className="w-48 h-48 rounded-lg border-2 border-aged-gold object-cover"
                   />
                 ) : (
@@ -495,7 +464,7 @@ export default function CharacterSheetPage() {
             <div className="space-y-4">
               <div className="relative">
                 <textarea
-                  value={notes}
+                  value={currentNotes}
                   onChange={(e) => {
                     setNotes(e.target.value);
                     setNotesModified(true);
@@ -508,10 +477,14 @@ export default function CharacterSheetPage() {
                     <Button
                       size="sm"
                       onClick={saveNotes}
-                      disabled={isSavingNotes}
+                      disabled={updateNotesMutation.isPending}
                       className="bg-eldritch-green hover:bg-green-800 text-bone-white"
                     >
-                      {isSavingNotes ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      {updateNotesMutation.isPending ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4" />
+                      )}
                       <span className="ml-2">Sauvegarder</span>
                     </Button>
                   </div>
@@ -519,7 +492,7 @@ export default function CharacterSheetPage() {
               </div>
               <p className="text-aged-parchment text-sm">
                 Ces notes sont privées et ne sont visibles que par vous et le Maître de Jeu. Sauvegarde automatique
-                après 2 secondes d'inactivité.
+                après 2 secondes d&apos;inactivité.
               </p>
             </div>
           </CardContent>
@@ -531,7 +504,7 @@ export default function CharacterSheetPage() {
         <DialogContent className="bg-charcoal border-aged-gold max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-cinzel text-aged-gold flex items-center gap-2">
-              <Image className="h-5 w-5" />
+              <ImageIcon className="h-5 w-5" />
               Personnaliser le portrait
             </DialogTitle>
           </DialogHeader>

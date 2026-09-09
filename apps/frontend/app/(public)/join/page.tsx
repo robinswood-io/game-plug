@@ -167,7 +167,7 @@ function JoinSessionContent() {
                   data-testid="button-back-home"
                 >
                   <BookOpen className="h-4 w-4 mr-2" />
-                  Retour à l'accueil
+                  Retour à l&apos;accueil
                 </Button>
               </div>
             </div>

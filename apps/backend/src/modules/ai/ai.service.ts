@@ -155,7 +155,12 @@ export class AiService {
   async generateCharacterAvatar(
     characterId: string,
     dto: GenerateCharacterAvatarDto,
+    userId: string,
   ) {
+    if (!userId) {
+      throw new ForbiddenException('Authenticated user context is required');
+    }
+
     // Get character from database
     const character = await this.db.db
       .select()
@@ -166,6 +171,26 @@ export class AiService {
 
     if (!character) {
       throw new BadRequestException('Character not found');
+    }
+
+    const isOwner = character.userId === userId;
+    let isSessionGm = false;
+
+    if (!isOwner && character.sessionId) {
+      const session = await this.db.db
+        .select()
+        .from(schema.gameSessions)
+        .where(eq(schema.gameSessions.id, character.sessionId))
+        .limit(1)
+        .then((results) => results[0] || null);
+
+      isSessionGm = session?.gmId === userId;
+    }
+
+    if (!isOwner && !isSessionGm) {
+      throw new ForbiddenException(
+        'Only the character owner or session GM can generate this avatar',
+      );
     }
 
     try {

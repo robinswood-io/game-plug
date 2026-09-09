@@ -300,7 +300,7 @@ export const dice = {
 };
 
 // Export tous les endpoints
-export default {
+const endpoints = {
   health,
   auth,
   gameSessions,
@@ -312,3 +312,5 @@ export default {
   sanity,
   dice,
 };
+
+export default endpoints;

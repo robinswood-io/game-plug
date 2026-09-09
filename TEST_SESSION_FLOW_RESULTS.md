@@ -21,7 +21,7 @@ Test du flow complet de gestion de session pour le MJ:
 **Status**: ✓ PASSÉ
 
 ```
-✓ Token obtenu: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+✓ Token obtenu: <token>
 ✓ User ID: 95d2b2eb-eb63-40f5-9c96-c4f68a970e7b
 ✓ Email: gm@example.com
 ✓ Issu par endpoint: POST /api/auth/dev-login
@@ -40,7 +40,7 @@ Observations:
 ```
 POST /api/sessions
 Headers:
-  - Authorization: Bearer <token>
+  - Authorization: Bearer ${ACCESS_TOKEN}
   - Content-Type: application/json
 
 Payload:
@@ -55,11 +55,11 @@ Response: HTTP 500
 }
 
 Error Logs:
-  error: null value in column "gm_id" of relation "game_sessions" 
+  error: null value in column "gm_id" of relation "game_sessions"
   violates not-null constraint
 ```
 
-**Cause racine**: 
+**Cause racine**:
 - Le contrôleur `SessionsController.create()` n'extrait pas l'ID utilisateur du JWT
 - Le paramètre `gmId` n'est pas défini lors de la création
 - La base de données a une contrainte NOT NULL sur la colonne `gm_id`
@@ -177,7 +177,7 @@ updated_at    │ TIMESTAMP  │ DEFAULT now()
 ### À vérifier
 1. `/srv/workspace/game-plug/apps/backend/src/modules/sessions/sessions.service.ts`
    - Logique `create()` semble correcte, attend juste `gmId` dans data
-   
+
 2. `/srv/workspace/game-plug/apps/backend/src/modules/sessions/dto/create-session.dto.ts`
    - DTO actuel correct, mais ne capture pas `gmId`
 

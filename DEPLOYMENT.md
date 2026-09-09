@@ -146,7 +146,7 @@ LOG_LEVEL=info
 POSTGRES_DB=game_plug
 POSTGRES_USER=game_plug
 POSTGRES_PASSWORD=<strong-random-password-32-chars>
-DATABASE_URL=postgresql://game_plug:<password>@postgres:5432/game_plug
+DATABASE_URL=${DATABASE_URL:?DATABASE_URL is required}
 
 # Redis
 REDIS_PASSWORD=<strong-random-password-32-chars>
@@ -154,7 +154,7 @@ REDIS_URL=redis://:password@redis:6379
 
 # JWT (générer avec: openssl rand -hex 32)
 JWT_SECRET=<strong-jwt-secret-64-chars>
-SESSION_SECRET=<strong-session-secret-64-chars>
+SESSION_SECRET=${SESSION_SECRET}
 JWT_EXPIRATION=86400
 
 # CORS (votre domaine)
@@ -165,7 +165,7 @@ NEXT_PUBLIC_API_URL=https://api.gameplug.dev
 NEXT_PUBLIC_WS_URL=wss://api.gameplug.dev
 
 # OpenAI (optionnel)
-OPENAI_API_KEY=sk-<votre-clé>
+OPENAI_API_KEY=<key>
 OPENAI_MODEL=gpt-4-turbo-preview
 
 # Ports (derrière Nginx, ports internes)
@@ -412,7 +412,7 @@ curl -X POST https://api.gameplug.dev/api/auth/login \
 
 # 2. Créer personnage
 curl -X POST https://api.gameplug.dev/api/characters \
-  -H "Authorization: Bearer <token>" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
   -H "Content-Type: application/json" \
   -d '{"name":"John Doe","occupation":"Detective","age":35}'
 

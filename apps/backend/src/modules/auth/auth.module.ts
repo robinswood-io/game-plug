@@ -8,13 +8,14 @@ import { LocalStrategy } from './strategies/local.strategy';
 import { DatabaseModule } from '../database/database.module';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { DemoTokenPolicyMiddleware } from './middleware/demo-token-policy.middleware';
+import { getRequiredJwtSecret } from '../../security-config';
 
 @Module({
   imports: [
     DatabaseModule,
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'dev-secret-change-in-production',
+      secret: getRequiredJwtSecret(),
       signOptions: { expiresIn: '15m' },
     }),
   ],

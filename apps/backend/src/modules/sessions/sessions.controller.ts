@@ -123,8 +123,9 @@ export class SessionsController {
   async update(
     @Param('id') id: string,
     @Body() data: UpdateSessionDto,
+    @Req() req: any,
   ) {
-    return this.sessionsService.update(id, data);
+    return this.sessionsService.update(id, data, req.user.id);
   }
 
   @Delete(':id')
@@ -132,8 +133,8 @@ export class SessionsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete session' })
   @ApiResponse({ status: 200, description: 'Session deleted' })
-  async delete(@Param('id') id: string) {
-    await this.sessionsService.delete(id);
+  async delete(@Param('id') id: string, @Req() req: any) {
+    await this.sessionsService.delete(id, req.user.id);
     return { success: true };
   }
 

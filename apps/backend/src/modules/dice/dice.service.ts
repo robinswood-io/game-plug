@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { eq, desc } from 'drizzle-orm';
 import * as schema from '@shared/schema';
@@ -49,6 +49,21 @@ export class DiceService {
       .limit(limit);
 
     return rolls;
+  }
+
+  async getSessionRollHistoryForGm(sessionId: string, limit: number = 50, gmId: string) {
+    const session = await this.db.db.query.gameSessions.findFirst({
+      where: eq(schema.gameSessions.id, sessionId),
+    });
+
+    if (!session) {
+      throw new NotFoundException(`Session ${sessionId} not found`);
+    }
+    if (session.gmId !== gmId) {
+      throw new ForbiddenException('Only the GM can access roll history for this session');
+    }
+
+    return this.getSessionRollHistory(sessionId, limit);
   }
 
   private evaluateDiceFormula(formula: string): number {

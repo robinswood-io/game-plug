@@ -567,7 +567,7 @@ export default function GMDashboard() {
           <DialogHeader>
             <DialogTitle className="font-cinzel text-aged-gold flex items-center gap-2">
               <Package className="h-5 w-5" />
-              Gestion de l'Inventaire
+              Gestion de l&apos;Inventaire
             </DialogTitle>
           </DialogHeader>
           {selectedCharacterForInventory && (

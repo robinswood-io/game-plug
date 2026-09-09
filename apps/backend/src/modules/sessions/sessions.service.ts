@@ -71,7 +71,8 @@ export class SessionsService {
     return code;
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, data: any, gmId: string) {
+    await this.findOneForGm(id, gmId);
     const [updated] = await this.db.db
       .update(gameSessions)
       .set(data)
@@ -80,7 +81,8 @@ export class SessionsService {
     return updated;
   }
 
-  async delete(id: string) {
+  async delete(id: string, gmId: string) {
+    await this.findOneForGm(id, gmId);
     // Soft delete: mark session as inactive instead of hard delete (BUG-010 fix)
     // This prevents cascade delete foreign key constraint errors
     const updateData: any = { isActive: false, status: 'ended' };

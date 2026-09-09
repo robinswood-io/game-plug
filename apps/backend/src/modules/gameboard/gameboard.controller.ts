@@ -6,6 +6,7 @@ import {
   Body,
   Param,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { GameboardService } from './gameboard.service';
@@ -32,8 +33,8 @@ export class GameboardController {
   @ApiParam({ name: 'sessionId', description: 'Game session ID' })
   @ApiResponse({ status: 200, description: 'Gameboard retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Gameboard not found' })
-  async getGameboard(@Param('sessionId') sessionId: string) {
-    return this.gameboardService.getGameboard(sessionId);
+  async getGameboard(@Param('sessionId') sessionId: string, @Req() req: any) {
+    return this.gameboardService.getGameboard(sessionId, req.user.id);
   }
 
   @Post()
@@ -43,8 +44,8 @@ export class GameboardController {
   })
   @ApiResponse({ status: 201, description: 'Gameboard created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid gameboard data' })
-  async create(@Body() dto: CreateGameboardDto) {
-    return this.gameboardService.create(dto);
+  async create(@Body() dto: CreateGameboardDto, @Req() req: any) {
+    return this.gameboardService.create(dto, req.user.id);
   }
 
   @Patch(':id')
@@ -58,8 +59,9 @@ export class GameboardController {
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateGameboardDto,
+    @Req() req: any,
   ) {
-    return this.gameboardService.update(id, dto);
+    return this.gameboardService.update(id, dto, req.user.id);
   }
 
   @Post('projection')
@@ -70,8 +72,8 @@ export class GameboardController {
   @ApiResponse({ status: 201, description: 'Projection created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid projection data' })
   @ApiResponse({ status: 404, description: 'Session or character not found' })
-  async createProjection(@Body() dto: CreateProjectionDto) {
-    return this.gameboardService.createProjection(dto);
+  async createProjection(@Body() dto: CreateProjectionDto, @Req() req: any) {
+    return this.gameboardService.createProjection(dto, req.user.id);
   }
 
   @Get('projection/:sessionId')
@@ -82,8 +84,8 @@ export class GameboardController {
   @ApiParam({ name: 'sessionId', description: 'Game session ID' })
   @ApiResponse({ status: 200, description: 'Projection retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Session not found' })
-  async getProjection(@Param('sessionId') sessionId: string) {
-    return this.gameboardService.getProjection(sessionId);
+  async getProjection(@Param('sessionId') sessionId: string, @Req() req: any) {
+    return this.gameboardService.getProjection(sessionId, req.user.id);
   }
 
   @Patch('projection/:id')
@@ -97,7 +99,8 @@ export class GameboardController {
   async updateProjection(
     @Param('id') id: string,
     @Body() dto: UpdateProjectionDto,
+    @Req() req: any,
   ) {
-    return this.gameboardService.updateProjection(id, dto);
+    return this.gameboardService.updateProjection(id, dto, req.user.id);
   }
 }
