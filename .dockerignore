@@ -75,3 +75,7 @@ attached_assets/
 # Cache
 .cache/
 .eslintcache
+**/node_modules
+**/.next
+**/dist
+**/coverage

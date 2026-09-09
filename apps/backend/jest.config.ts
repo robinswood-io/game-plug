@@ -21,10 +21,10 @@ const config: Config = {
     '^@shared/(.*)$': '<rootDir>/../../../shared/$1',
     '^@modules/(.*)$': '<rootDir>/modules/$1',
     '^@common/(.*)$': '<rootDir>/common/$1',
-    '^rxjs(|/.*)$': '<rootDir>/../node_modules/rxjs$1',
+    '^rxjs(|/.*)$': '<rootDir>/../../../node_modules/rxjs$1',
   },
   roots: ['<rootDir>'],
-  moduleDirectories: ['node_modules', '<rootDir>/../node_modules'],
+  moduleDirectories: ['node_modules', '<rootDir>/../node_modules', '<rootDir>/../../../node_modules'],
 };
 
 export default config;
