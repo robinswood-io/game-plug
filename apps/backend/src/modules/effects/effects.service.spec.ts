@@ -2,10 +2,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { EffectsService } from './effects.service';
 import { DatabaseService } from '../database/database.service';
+import { CharactersService } from '../characters/characters.service';
 
 describe('EffectsService', () => {
   let service: EffectsService;
   let dbService: DatabaseService;
+  let charactersService: CharactersService;
 
   const mockEffect = {
     id: 'effect-1',
@@ -53,11 +55,18 @@ describe('EffectsService', () => {
             },
           },
         },
+        {
+          provide: CharactersService,
+          useValue: {
+            findOneAuthorized: jest.fn().mockResolvedValue({ id: 'char-1' }),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<EffectsService>(EffectsService);
     dbService = module.get<DatabaseService>(DatabaseService);
+    charactersService = module.get<CharactersService>(CharactersService);
   });
 
   afterEach(() => {
@@ -82,10 +91,11 @@ describe('EffectsService', () => {
 
       jest.spyOn(dbService.db, 'insert').mockReturnValue(mockInsertChain as any);
 
-      const result = await service.create(createData);
+      const result = await service.create(createData, 'user-1');
 
       expect(result).toEqual(mockEffect);
       expect(dbService.db.insert).toHaveBeenCalled();
+      expect(charactersService.findOneAuthorized).toHaveBeenCalledWith('char-1', 'user-1');
       expect(mockInsertChain.values).toHaveBeenCalledWith(createData);
     });
 
@@ -106,7 +116,7 @@ describe('EffectsService', () => {
 
       jest.spyOn(dbService.db, 'insert').mockReturnValue(mockInsertChain as any);
 
-      const result = await service.create(createData);
+      const result = await service.create(createData, 'user-1');
 
       expect(result).toEqual(mockEffect2);
       expect(mockInsertChain.values).toHaveBeenCalledWith(createData);
@@ -127,7 +137,7 @@ describe('EffectsService', () => {
 
       jest.spyOn(dbService.db, 'insert').mockReturnValue(mockInsertChain as any);
 
-      await expect(service.create(createData)).rejects.toThrow('DB Error');
+      await expect(service.create(createData, 'user-1')).rejects.toThrow('DB Error');
     });
   });
 
@@ -198,9 +208,12 @@ describe('EffectsService', () => {
         }),
       };
 
+      jest
+        .spyOn(dbService.db.query.activeEffects, 'findFirst')
+        .mockResolvedValue(mockEffect as any);
       jest.spyOn(dbService.db, 'update').mockReturnValue(mockUpdateChain as any);
 
-      const result = await service.update('effect-1', updateData);
+      const result = await service.update('effect-1', updateData, 'user-1');
 
       expect(result).toEqual(updatedEffect);
       expect(dbService.db.update).toHaveBeenCalled();
@@ -219,9 +232,12 @@ describe('EffectsService', () => {
         }),
       };
 
+      jest
+        .spyOn(dbService.db.query.activeEffects, 'findFirst')
+        .mockResolvedValue(mockEffect as any);
       jest.spyOn(dbService.db, 'update').mockReturnValue(mockUpdateChain as any);
 
-      const result = await service.update('effect-1', updateData);
+      const result = await service.update('effect-1', updateData, 'user-1');
 
       expect(result).toEqual(updatedEffect);
       expect(mockUpdateChain.set).toHaveBeenCalledWith(updateData);
@@ -240,8 +256,8 @@ describe('EffectsService', () => {
 
       jest.spyOn(dbService.db, 'update').mockReturnValue(mockUpdateChain as any);
 
-      await expect(service.update('nonexistent', updateData)).rejects.toThrow(NotFoundException);
-      await expect(service.update('nonexistent', updateData)).rejects.toThrow(
+      await expect(service.update('nonexistent', updateData, 'user-1')).rejects.toThrow(NotFoundException);
+      await expect(service.update('nonexistent', updateData, 'user-1')).rejects.toThrow(
         'Active effect nonexistent not found',
       );
     });
@@ -257,9 +273,12 @@ describe('EffectsService', () => {
         }),
       };
 
+      jest
+        .spyOn(dbService.db.query.activeEffects, 'findFirst')
+        .mockResolvedValue(mockEffect as any);
       jest.spyOn(dbService.db, 'update').mockReturnValue(mockUpdateChain as any);
 
-      await expect(service.update('effect-1', updateData)).rejects.toThrow('DB Error');
+      await expect(service.update('effect-1', updateData, 'user-1')).rejects.toThrow('DB Error');
     });
   });
 

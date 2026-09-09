@@ -29,6 +29,9 @@ interface RollResult {
   skillValue: number;
 }
 
+const randomDiceFrequency = (): number => Math.floor(Math.random() * 6) + 1;
+const randomPercentileRoll = (): number => Math.floor(Math.random() * 100) + 1;
+
 // Dice face components for visualization
 const DiceFaces = {
   1: Dice1,
@@ -82,26 +85,26 @@ export default function DiceRoller({ character }: DiceRollerProps) {
     const ctx = audioContext.current;
     const oscillator = ctx.createOscillator();
     const gainNode = ctx.createGain();
-    
+
     oscillator.connect(gainNode);
     gainNode.connect(ctx.destination);
-    
+
     const now = ctx.currentTime;
-    
+
     switch (type) {
       case 'roll':
         // Dice rolling sound - multiple quick clicks
         oscillator.type = 'square';
         oscillator.frequency.setValueAtTime(800, now);
         for (let i = 0; i < 5; i++) {
-          oscillator.frequency.setValueAtTime(Math.random() * 400 + 600, now + i * 0.05);
+          oscillator.frequency.setValueAtTime(randomDiceFrequency(), now + i * 0.05);
         }
         gainNode.gain.setValueAtTime(0.1, now);
         gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
         oscillator.start(now);
         oscillator.stop(now + 0.3);
         break;
-        
+
       case 'success':
         // Success - ascending ethereal tone
         oscillator.type = 'sine';
@@ -112,7 +115,7 @@ export default function DiceRoller({ character }: DiceRollerProps) {
         oscillator.start(now);
         oscillator.stop(now + 0.5);
         break;
-        
+
       case 'failure':
         // Failure - descending ominous drone
         oscillator.type = 'sawtooth';
@@ -123,7 +126,7 @@ export default function DiceRoller({ character }: DiceRollerProps) {
         oscillator.start(now);
         oscillator.stop(now + 0.7);
         break;
-        
+
       case 'critical':
         // Critical success - mysterious whisper
         oscillator.type = 'triangle';
@@ -141,7 +144,7 @@ export default function DiceRoller({ character }: DiceRollerProps) {
         oscillator.stop(now + 1);
         lfo.stop(now + 1);
         break;
-        
+
       case 'fumble':
         // Fumble - eldritch scream
         oscillator.type = 'square';
@@ -150,7 +153,7 @@ export default function DiceRoller({ character }: DiceRollerProps) {
         oscillator.frequency.exponentialRampToValueAtTime(50, now + 0.4);
         gainNode.gain.setValueAtTime(0.3, now);
         gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-        
+
         // Add distortion for horror effect
         const distortion = ctx.createWaveShaper();
         const curve = new Float32Array(256);
@@ -160,7 +163,7 @@ export default function DiceRoller({ character }: DiceRollerProps) {
         distortion.curve = curve;
         oscillator.connect(distortion);
         distortion.connect(gainNode);
-        
+
         oscillator.start(now);
         oscillator.stop(now + 0.5);
         break;
@@ -186,23 +189,23 @@ export default function DiceRoller({ character }: DiceRollerProps) {
     setIsRolling(true);
     setShowDice(true);
     playSound('roll');
-    
+
     // Show animated dice
     const diceSequence = [];
     for (let i = 0; i < 10; i++) {
-      diceSequence.push(Math.floor(Math.random() * 100) + 1);
+      diceSequence.push(randomPercentileRoll());
     }
-    
+
     // Animate dice rolling
     for (let i = 0; i < diceSequence.length; i++) {
       setAnimatingDice([diceSequence[i]]);
       await new Promise(resolve => setTimeout(resolve, 100));
     }
-    
+
     const roll = rollDice("1d100");
     const result = roll.total;
     setAnimatingDice([result]);
-    
+
     await processRollResult(skillName, skillValue, result);
   };
 
@@ -236,7 +239,7 @@ export default function DiceRoller({ character }: DiceRollerProps) {
 
     setLastRoll(rollResult);
     setIsRolling(false);
-    
+
     // Hide dice after a delay
     setTimeout(() => {
       setShowDice(false);
@@ -576,7 +579,7 @@ export default function DiceRoller({ character }: DiceRollerProps) {
                 Cible: {pendingRoll.skillValue}% - Entrez le résultat de votre dé physique
               </p>
             </div>
-            
+
             <div className="flex gap-2 items-center">
               <Input
                 type="number"

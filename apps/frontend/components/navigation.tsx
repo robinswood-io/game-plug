@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth, type User } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -65,7 +65,7 @@ export default function Navigation() {
                 </Button>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               {!!user && (
                 <>
@@ -75,11 +75,11 @@ export default function Navigation() {
                       {user?.email || 'Utilisateur'}
                     </span>
                   </div>
-                  
+
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => window.location.href = '/api/logout'}
+                    onClick={() => window.location.assign(new URL('/api/logout', window.location.origin).toString())}
                     className="text-bone-white hover:text-aged-gold"
                     data-testid="button-logout"
                   >
@@ -87,7 +87,7 @@ export default function Navigation() {
                   </Button>
                 </>
               )}
-              
+
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-eldritch-green rounded-full animate-pulse"></div>
                 <span className="text-sm font-source text-aged-parchment hidden sm:inline">
@@ -116,7 +116,7 @@ export default function Navigation() {
               </div>
             </Button>
           </Link>
-          
+
           <Link href="/sessions" className="flex-1">
             <Button
               variant="ghost"
@@ -131,7 +131,7 @@ export default function Navigation() {
               </div>
             </Button>
           </Link>
-          
+
           <Button
             variant="ghost"
             className={`flex-1 py-3 text-center text-bone-white hover:text-aged-gold transition-colors ${

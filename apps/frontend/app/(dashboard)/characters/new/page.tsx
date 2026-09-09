@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -30,6 +30,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dice6, Wand2, Save, X, AlertCircle, Info } from 'lucide-react';
 import type { InsertCharacter } from '@shared/schema';
+import NextImage from "next/image";
 
 const characterCreationSchema = z.object({
   name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
@@ -78,6 +79,19 @@ export default function CharacterCreationPage() {
     distinctiveFeatures: [] as string[],
   });
 
+  const form = useForm<CharacterCreationForm>({
+    resolver: zodResolver(characterCreationSchema),
+    defaultValues: {
+      name: '',
+      occupation: '',
+      age: 25,
+      birthplace: '',
+      residence: '',
+      gender: '',
+      sessionId: '',
+    },
+  });
+
   // Initialize skills with defaults
   useEffect(() => {
     const baseSkills = { ...DEFAULT_SKILLS };
@@ -88,20 +102,6 @@ export default function CharacterCreationPage() {
     setAvailablePersonalPoints(characteristics.intelligence * 2);
   }, [characteristics]);
 
-  // Update occupation points when occupation changes
-  useEffect(() => {
-    if (selectedOccupation) {
-      const occupation = OCCUPATIONS.find((occ) => occ.name === selectedOccupation);
-      if (occupation) {
-        const points = calculateOccupationPoints(occupation.skillPointsFormula, characteristics);
-        setAvailableOccupationPoints(points);
-
-        if (!manualSkillMode) {
-          autoAllocateSkills(occupation, points);
-        }
-      }
-    }
-  }, [selectedOccupation, characteristics, manualSkillMode]);
 
   // Calculate used points
   useEffect(() => {
@@ -123,7 +123,20 @@ export default function CharacterCreationPage() {
     setUsedPersonalPoints(persUsed);
   }, [allocatedPoints, selectedOccupation]);
 
-  const autoAllocateSkills = (occupation: typeof OCCUPATIONS[0], totalPoints: number) => {
+  const updateSkillTotals = useCallback((allocations: Record<string, number>) => {
+    const baseSkills = { ...DEFAULT_SKILLS };
+    baseSkills.dodge = Math.floor(characteristics.dexterity / 2);
+    baseSkills.language_own = characteristics.education;
+
+    const finalSkills = { ...baseSkills };
+    Object.entries(allocations).forEach(([skill, points]) => {
+      finalSkills[skill] = Math.min((baseSkills[skill] || 0) + points, 90);
+    });
+
+    setSkillPoints(finalSkills);
+  }, [characteristics]);
+
+  const autoAllocateSkills = useCallback((occupation: typeof OCCUPATIONS[0], totalPoints: number) => {
     const newAllocations: Record<string, number> = {};
     const baseSkills = { ...DEFAULT_SKILLS };
     baseSkills.dodge = Math.floor(characteristics.dexterity / 2);
@@ -193,33 +206,22 @@ export default function CharacterCreationPage() {
 
     setAllocatedPoints(newAllocations);
     updateSkillTotals(newAllocations);
-  };
+  }, [characteristics, form, updateSkillTotals]);
 
-  const updateSkillTotals = (allocations: Record<string, number>) => {
-    const baseSkills = { ...DEFAULT_SKILLS };
-    baseSkills.dodge = Math.floor(characteristics.dexterity / 2);
-    baseSkills.language_own = characteristics.education;
+  // Update occupation points when occupation changes
+  useEffect(() => {
+    if (selectedOccupation) {
+      const occupation = OCCUPATIONS.find((occ) => occ.name === selectedOccupation);
+      if (occupation) {
+        const points = calculateOccupationPoints(occupation.skillPointsFormula, characteristics);
+        setAvailableOccupationPoints(points);
 
-    const finalSkills = { ...baseSkills };
-    Object.entries(allocations).forEach(([skill, points]) => {
-      finalSkills[skill] = Math.min((baseSkills[skill] || 0) + points, 90);
-    });
-
-    setSkillPoints(finalSkills);
-  };
-
-  const form = useForm<CharacterCreationForm>({
-    resolver: zodResolver(characterCreationSchema),
-    defaultValues: {
-      name: '',
-      occupation: '',
-      age: 25,
-      birthplace: '',
-      residence: '',
-      gender: '',
-      sessionId: '',
-    },
-  });
+        if (!manualSkillMode) {
+          autoAllocateSkills(occupation, points);
+        }
+      }
+    }
+  }, [selectedOccupation, characteristics, manualSkillMode, autoAllocateSkills]);
 
   // Update form when sessionId is loaded from localStorage
   useEffect(() => {
@@ -246,7 +248,7 @@ export default function CharacterCreationPage() {
       }
     },
     onError: (error: any) => {
-      console.error('Character creation error:', error); 
+      console.error('Character creation error:', error);
       toast({
         title: 'Erreur',
         description: 'Impossible de créer le personnage.',
@@ -365,7 +367,7 @@ export default function CharacterCreationPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="text-center mb-8">
-        <h1 className="font-cinzel text-4xl font-bold text-aged-gold mb-2">Création d'Investigateur</h1>
+        <h1 className="font-cinzel text-4xl font-bold text-aged-gold mb-2">Création d&apos;Investigateur</h1>
         <p className="font-crimson text-lg text-aged-parchment">
           Donnez naissance à celui qui défiera les ténèbres cosmiques
         </p>
@@ -547,7 +549,7 @@ export default function CharacterCreationPage() {
                       variant="outline"
                       className="border-blood-burgundy text-blood-burgundy animate-pulse"
                     >
-                      Sélectionnez une occupation d'abord
+                      Sélectionnez une occupation d&apos;abord
                     </Badge>
                   )}
                 </span>
@@ -588,7 +590,7 @@ export default function CharacterCreationPage() {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="bg-cosmic-void rounded-lg p-4 border border-aged-gold">
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-source text-aged-parchment">Points d'Occupation</span>
+                        <span className="text-sm font-source text-aged-parchment">Points d&apos;Occupation</span>
                         <span
                           className={`text-sm font-bold ${
                             usedOccupationPoints > availableOccupationPoints
@@ -609,7 +611,7 @@ export default function CharacterCreationPage() {
 
                     <div className="bg-cosmic-void rounded-lg p-4 border border-aged-gold">
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-source text-aged-parchment">Points d'Intérêts Personnels</span>
+                        <span className="text-sm font-source text-aged-parchment">Points d&apos;Intérêts Personnels</span>
                         <span
                           className={`text-sm font-bold ${
                             usedPersonalPoints > availablePersonalPoints
@@ -632,7 +634,7 @@ export default function CharacterCreationPage() {
                   <Alert className="bg-cosmic-void border-aged-gold">
                     <Info className="h-4 w-4 text-aged-gold" />
                     <AlertDescription className="text-aged-parchment">
-                      <strong className="text-bone-white">Compétences d'occupation:</strong>
+                      <strong className="text-bone-white">Compétences d&apos;occupation:</strong>
                       {' ' +
                         (OCCUPATIONS.find((occ) => occ.name === selectedOccupation)?.occupationSkills
                           .map(
@@ -878,7 +880,7 @@ export default function CharacterCreationPage() {
                     <div className="flex justify-center">
                       <div className="w-48 h-48 bg-cosmic-void border border-aged-gold rounded-lg flex items-center justify-center">
                         {avatarUrl ? (
-                          <img src={avatarUrl} alt="Portrait du personnage" className="w-full h-full object-cover rounded-lg" />
+                          <NextImage src={avatarUrl} alt="Portrait du personnage" width={192} height={192} unoptimized className="w-full h-full object-cover rounded-lg" />
                         ) : (
                           <div className="text-center text-aged-parchment">
                             <Wand2 className="mx-auto h-12 w-12 mb-2" />
@@ -941,7 +943,7 @@ export default function CharacterCreationPage() {
                           />
                         </FormControl>
                         <div className="text-xs text-aged-parchment mt-1">
-                          L'âge saisi dans les informations de base sera utilisé pour la génération du portrait.
+                          L&apos;âge saisi dans les informations de base sera utilisé pour la génération du portrait.
                         </div>
                       </FormItem>
                     )}

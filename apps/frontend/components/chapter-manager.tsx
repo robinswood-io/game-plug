@@ -17,8 +17,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest } from "@/lib/queryClient";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  BookOpen, Plus, Edit, Trash2, ChevronUp, ChevronDown, 
+import {
+  BookOpen, Plus, Edit, Trash2, ChevronUp, ChevronDown,
   CheckCircle, Clock, PlayCircle, Archive, History
 } from "lucide-react";
 import ChapterEventHistory from "./chapter-event-history";
@@ -137,17 +137,17 @@ export default function ChapterManager({ sessionId, isGM, characters = [] }: Cha
     mutationFn: async ({ id, direction }: { id: string; direction: 'up' | 'down' }) => {
       const currentIndex = chapters.findIndex(c => c.id === id);
       const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-      
+
       if (newIndex < 0 || newIndex >= chapters.length) return;
-      
+
       const updates = [];
-      updates.push(apiRequest("PATCH", `/api/chapters/${chapters[currentIndex].id}`, { 
-        orderIndex: newIndex 
+      updates.push(apiRequest("PATCH", `/api/chapters/${chapters[currentIndex].id}`, {
+        orderIndex: newIndex
       }));
-      updates.push(apiRequest("PATCH", `/api/chapters/${chapters[newIndex].id}`, { 
-        orderIndex: currentIndex 
+      updates.push(apiRequest("PATCH", `/api/chapters/${chapters[newIndex].id}`, {
+        orderIndex: currentIndex
       }));
-      
+
       await Promise.all(updates);
     },
     onSuccess: () => {
@@ -257,7 +257,7 @@ export default function ChapterManager({ sessionId, isGM, characters = [] }: Cha
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="description"
@@ -276,7 +276,7 @@ export default function ChapterManager({ sessionId, isGM, characters = [] }: Cha
                         </FormItem>
                       )}
                     />
-                    
+
                     {isGM && (
                       <FormField
                         control={form.control}
@@ -297,7 +297,7 @@ export default function ChapterManager({ sessionId, isGM, characters = [] }: Cha
                         )}
                       />
                     )}
-                    
+
                     <FormField
                       control={form.control}
                       name="status"
@@ -320,7 +320,7 @@ export default function ChapterManager({ sessionId, isGM, characters = [] }: Cha
                         </FormItem>
                       )}
                     />
-                    
+
                     <div className="flex justify-end gap-2">
                       <Button
                         type="button"
@@ -350,7 +350,7 @@ export default function ChapterManager({ sessionId, isGM, characters = [] }: Cha
             <BookOpen className="h-12 w-12 mx-auto mb-3 text-aged-gold/30" />
             <p>Aucun chapitre créé pour cette session</p>
             {isGM && (
-              <p className="text-sm mt-2">Créez votre premier chapitre pour organiser l'aventure</p>
+              <p className="text-sm mt-2">Créez votre premier chapitre pour organiser l&apos;aventure</p>
             )}
           </div>
         ) : (
@@ -382,13 +382,13 @@ export default function ChapterManager({ sessionId, isGM, characters = [] }: Cha
                               {chapter.name}
                             </h3>
                           </div>
-                          
+
                           {chapter.description && (
                             <p className="text-sm text-aged-parchment mb-2">
                               {chapter.description || ""}
                             </p>
                           )}
-                          
+
                           {isGM && chapter.notes && (
                             <div className="bg-cosmic-void rounded p-2 mt-2">
                               <p className="text-xs text-aged-parchment/60">Notes MJ:</p>
@@ -396,16 +396,16 @@ export default function ChapterManager({ sessionId, isGM, characters = [] }: Cha
                             </div>
                           )}
                         </div>
-                        
+
                         {isGM && (
                           <div className="flex items-center gap-1 ml-3">
                             {index > 0 && (
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => reorderChapterMutation.mutate({ 
-                                  id: chapter.id, 
-                                  direction: 'up' 
+                                onClick={() => reorderChapterMutation.mutate({
+                                  id: chapter.id,
+                                  direction: 'up'
                                 })}
                                 className="text-aged-gold hover:text-aged-gold/80"
                                 data-testid={`button-move-up-${chapter.id}`}
@@ -417,9 +417,9 @@ export default function ChapterManager({ sessionId, isGM, characters = [] }: Cha
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => reorderChapterMutation.mutate({ 
-                                  id: chapter.id, 
-                                  direction: 'down' 
+                                onClick={() => reorderChapterMutation.mutate({
+                                  id: chapter.id,
+                                  direction: 'down'
                                 })}
                                 className="text-aged-gold hover:text-aged-gold/80"
                                 data-testid={`button-move-down-${chapter.id}`}
@@ -467,15 +467,15 @@ export default function ChapterManager({ sessionId, isGM, characters = [] }: Cha
 export function ChapterManagerWithHistory({ sessionId, isGM, characters = [] }: ChapterManagerProps) {
   const [activeTab, setActiveTab] = useState<"chapters" | "history">("chapters");
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
-  
+
   // Get chapters to determine active chapter
   const { data: chapters = [] } = useQuery<Chapter[]>({
     queryKey: ["/api/sessions", sessionId, "chapters"],
     retry: false,
   });
-  
+
   const activeChapter = chapters.find(c => c.status === 'active') || chapters[0];
-  
+
   return (
     <div className="space-y-4">
       {/* Tab Navigation */}
@@ -483,8 +483,8 @@ export function ChapterManagerWithHistory({ sessionId, isGM, characters = [] }: 
         <Button
           variant={activeTab === "chapters" ? "default" : "outline"}
           onClick={() => setActiveTab("chapters")}
-          className={activeTab === "chapters" 
-            ? "bg-aged-gold text-deep-black hover:bg-gold-700" 
+          className={activeTab === "chapters"
+            ? "bg-aged-gold text-deep-black hover:bg-gold-700"
             : "border-aged-gold text-aged-gold hover:bg-aged-gold hover:text-deep-black"
           }
           data-testid="button-tab-chapters"
@@ -495,8 +495,8 @@ export function ChapterManagerWithHistory({ sessionId, isGM, characters = [] }: 
         <Button
           variant={activeTab === "history" ? "default" : "outline"}
           onClick={() => setActiveTab("history")}
-          className={activeTab === "history" 
-            ? "bg-aged-gold text-deep-black hover:bg-gold-700" 
+          className={activeTab === "history"
+            ? "bg-aged-gold text-deep-black hover:bg-gold-700"
             : "border-aged-gold text-aged-gold hover:bg-aged-gold hover:text-deep-black"
           }
           disabled={!activeChapter}
@@ -511,21 +511,21 @@ export function ChapterManagerWithHistory({ sessionId, isGM, characters = [] }: 
           </span>
         )}
       </div>
-      
+
       {/* Tab Content */}
       {activeTab === "chapters" ? (
         <ChapterManager sessionId={sessionId} isGM={isGM} characters={characters} />
       ) : activeChapter ? (
-        <ChapterEventHistory 
-          chapterId={activeChapter.id} 
-          sessionId={sessionId} 
+        <ChapterEventHistory
+          chapterId={activeChapter.id}
+          sessionId={sessionId}
           isGM={isGM}
           characters={characters}
         />
       ) : (
         <Card className="bg-charcoal border-aged-gold parchment-bg">
           <CardContent className="py-8 text-center text-aged-parchment">
-            Créez un chapitre pour commencer à enregistrer l'historique
+            Créez un chapitre pour commencer à enregistrer l&apos;historique
           </CardContent>
         </Card>
       )}

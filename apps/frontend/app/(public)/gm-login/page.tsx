@@ -216,7 +216,7 @@ export default function GMLoginPage() {
                   onClick={() => router.push("/gm-signup")}
                   data-testid="link-signup"
                 >
-                  S'inscrire
+                  S&apos;inscrire
                 </Button>
               </p>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import NextImage from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollText, User, Heart, Brain, Sparkles, Coins } from "lucide-react";
@@ -14,7 +15,7 @@ interface CharacterCardProps {
 function CharacterCard({ character }: CharacterCardProps) {
   const sanityPercentage = (character.sanity / character.maxSanity) * 100;
   const hpPercentage = (character.hitPoints / character.maxHitPoints) * 100;
-  
+
   const getSanityStatus = () => {
     if (sanityPercentage < 30) return { text: "Critique", class: "text-blood-burgundy" };
     if (sanityPercentage < 50) return { text: "Faible", class: "text-yellow-500" };
@@ -28,10 +29,13 @@ function CharacterCard({ character }: CharacterCardProps) {
       <CardContent className="p-6">
         <div className="flex items-center space-x-4 mb-4">
           {character.avatarUrl ? (
-            <img 
-              src={character.avatarUrl} 
+            <NextImage
+              src={character.avatarUrl}
               alt={`Portrait de ${character.name}`}
-              className="w-16 h-16 rounded-full border-2 border-aged-gold object-cover"
+              width={64}
+                                  height={64}
+                                  unoptimized
+                                  className="w-16 h-16 rounded-full border-2 border-aged-gold object-cover"
               data-testid={`img-character-avatar-${character.id}`}
             />
           ) : (
@@ -39,7 +43,7 @@ function CharacterCard({ character }: CharacterCardProps) {
               <User className="h-8 w-8 text-aged-gold" />
             </div>
           )}
-          
+
           <div className="flex-1">
             <h3 className="font-cinzel text-xl text-aged-gold mb-1" data-testid={`text-character-name-${character.id}`}>
               {character.name}
@@ -52,7 +56,7 @@ function CharacterCard({ character }: CharacterCardProps) {
             </p>
           </div>
         </div>
-        
+
         {/* Vital Stats */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="text-center bg-cosmic-void rounded-lg p-3">
@@ -64,7 +68,7 @@ function CharacterCard({ character }: CharacterCardProps) {
             </div>
             <div className="text-xs text-aged-parchment">Points de Vie</div>
             <div className="w-full bg-cosmic-void rounded-full h-1 mt-1 border border-aged-gold">
-              <div 
+              <div
                 className="bg-red-500 h-1 rounded-full transition-all duration-300"
                 style={{ width: `${hpPercentage}%` }}
                 role="progressbar"
@@ -75,7 +79,7 @@ function CharacterCard({ character }: CharacterCardProps) {
               />
             </div>
           </div>
-          
+
           <div className="text-center bg-cosmic-void rounded-lg p-3">
             <div className="flex items-center justify-center mb-1">
               <Brain className="h-4 w-4 text-purple-400 mr-1" />
@@ -85,9 +89,9 @@ function CharacterCard({ character }: CharacterCardProps) {
             </div>
             <div className="text-xs text-aged-parchment">Sanité Mentale</div>
             <div className="w-full bg-cosmic-void rounded-full h-1 mt-1 border border-aged-gold">
-              <div 
+              <div
                 className={`h-1 rounded-full transition-all duration-300 ${
-                  sanityPercentage < 30 ? 'bg-blood-burgundy' : 
+                  sanityPercentage < 30 ? 'bg-blood-burgundy' :
                   sanityPercentage < 50 ? 'bg-yellow-500' : 'bg-eldritch-green'
                 }`}
                 style={{ width: `${sanityPercentage}%` }}
@@ -99,7 +103,7 @@ function CharacterCard({ character }: CharacterCardProps) {
               />
             </div>
           </div>
-          
+
           <div className="text-center bg-cosmic-void rounded-lg p-3">
             <div className="flex items-center justify-center mb-1">
               <Sparkles className="h-4 w-4 text-blue-400 mr-1" />
@@ -109,7 +113,7 @@ function CharacterCard({ character }: CharacterCardProps) {
             </div>
             <div className="text-xs text-aged-parchment">Points de Magie</div>
             <div className="w-full bg-cosmic-void rounded-full h-1 mt-1 border border-aged-gold">
-              <div 
+              <div
                 className="bg-blue-400 h-1 rounded-full transition-all duration-300"
                 style={{ width: `${(character.magicPoints / character.maxMagicPoints) * 100}%` }}
                 role="progressbar"
@@ -120,7 +124,7 @@ function CharacterCard({ character }: CharacterCardProps) {
               />
             </div>
           </div>
-          
+
           <div className="text-center bg-cosmic-void rounded-lg p-3">
             <div className="flex items-center justify-center mb-1">
               <Coins className="h-4 w-4 text-yellow-500 mr-1" />
@@ -131,7 +135,7 @@ function CharacterCard({ character }: CharacterCardProps) {
             <div className="text-xs text-aged-parchment">Argent</div>
           </div>
         </div>
-        
+
         {/* Mental Status Indicator */}
         <div className="mb-4 p-2 bg-cosmic-void border border-aged-gold rounded">
           <div className="flex justify-between items-center">
@@ -141,7 +145,7 @@ function CharacterCard({ character }: CharacterCardProps) {
             </span>
           </div>
         </div>
-        
+
         {/* Action Button */}
         <Link href={`/characters/${character.id}`}>
           <Button

@@ -36,7 +36,7 @@ Location 1 (local): /srv/workspace/game-plug/.env
 Line 12-14:
 # OpenAI API (required for avatar and scene generation)
 # IMPORTANT: Replace with your actual OpenAI API key
-OPENAI_API_KEY=sk-placeholder-replace-with-real-key
+OPENAI_API_KEY=<key>
 
 Location 2 (Docker): /srv/workspace/docker-compose.apps.yml
 [game-plug-backend section] - OPENAI_API_KEY manquante
@@ -47,7 +47,7 @@ Location 2 (Docker): /srv/workspace/docker-compose.apps.yml
 ```yaml
 # AJOUTER à /srv/workspace/docker-compose.apps.yml dans le service game-plug-backend:
 environment:
-  - OPENAI_API_KEY=${GAME_PLUG_OPENAI_API_KEY}
+  - OPENAI_API_KEY=<key>
   # ... autres variables existantes
 ```
 
@@ -71,7 +71,7 @@ Content-Type: application/json
 **Réponse (200 OK):**
 ```json
 {
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImdtQGV4YW1wbGUuY29tIiwic3ViIjoiOTVkMmIyZWItZWI2My00MGY1LTljOTYtYzRmNjhhOTcwZTdiIiwiaXNHTSI6dHJ1ZSwiaWF0IjoxNzY5MjkyNDAyLCJleHAiOjE3NjkyOTMzMDJ9.G5ODVJy294MJZnku1SDa0czvWsiZdQArpfSKU4Ef-iM",
+  "access_token": "<token>",
   "user": {
     "id": "95d2b2eb-eb63-40f5-9c96-c4f68a970e7b",
     "email": "gm@example.com",
@@ -104,7 +104,7 @@ Content-Type: application/json
 **Requête:**
 ```bash
 curl -X POST http://localhost:4000/api/ai/generate-avatar \
-  -H "Authorization: Bearer {TOKEN}" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
   -H "Content-Type: application/json" \
   -d '{
     "characterName": "Dr. Henry Armitage",
@@ -153,7 +153,7 @@ export class GenerateAvatarDto {
 **Requête:**
 ```bash
 curl -X POST http://localhost:4000/api/ai/generate-scene \
-  -H "Authorization: Bearer {TOKEN}" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
   -H "Content-Type: application/json" \
   -d '{
     "title": "The Library",
@@ -202,7 +202,7 @@ export class GenerateSceneDto {
 **Requête:**
 ```bash
 curl -X POST http://localhost:4000/api/ai/suggest-narrative \
-  -H "Authorization: Bearer {TOKEN}" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
   -H "Content-Type: application/json" \
   -d '{
     "sessionId": "test-session-001",
@@ -527,7 +527,7 @@ Pour activer l'intégration OpenAI:
   ```bash
   # Ajouter à /srv/workspace/docker-compose.apps.yml
   environment:
-    - OPENAI_API_KEY=sk-... (votre clé)
+    - OPENAI_API_KEY=<key> (votre clé)
   ```
 
 - [ ] **3. Copier le code OpenAI existant**

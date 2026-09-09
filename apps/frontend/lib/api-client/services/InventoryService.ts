@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+
 import type { CreateInventoryDto } from '../models/CreateInventoryDto';
 import type { UpdateInventoryDto } from '../models/UpdateInventoryDto';
 import type { CancelablePromise } from '../core/CancelablePromise';

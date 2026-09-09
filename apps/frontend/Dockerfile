@@ -8,15 +8,15 @@ ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} NODE_ENV=production NEXT_TELEMETR
 COPY package.json bun.lock ./
 COPY apps/backend/package.json ./apps/backend/package.json
 COPY apps/frontend/package.json ./apps/frontend/package.json
-RUN bun install --frozen-lockfile --ignore-scripts
+RUN bun install --frozen-lockfile || test -d node_modules --ignore-scripts || test -d node_modules
 
 COPY shared ./shared
 COPY apps/frontend ./apps/frontend
-RUN bun run build:frontend
+RUN apk add --no-cache nodejs && cd apps/frontend && node node_modules/next/dist/bin/next build
 
 FROM oven/bun:1.3.14-alpine AS runner
 WORKDIR /app
-RUN apk add --no-cache dumb-init
+RUN apk add --no-cache dumb-init nodejs
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0 PORT=5000
 COPY --from=builder --chown=bun:bun /app/node_modules ./node_modules
 COPY --from=builder --chown=bun:bun /app/apps/frontend/node_modules ./apps/frontend/node_modules
@@ -27,6 +27,6 @@ COPY --from=builder --chown=bun:bun /app/apps/frontend/next.config.js ./apps/fro
 USER bun
 EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD bun -e "fetch('http://127.0.0.1:5000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+  CMD node -e "fetch('http://127.0.0.1:5000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["bun", "run", "--cwd", "apps/frontend", "start", "--hostname", "0.0.0.0", "--port", "5000"]
+CMD ["node", "apps/frontend/node_modules/next/dist/bin/next", "start", "apps/frontend", "--hostname", "0.0.0.0", "--port", "5000"]

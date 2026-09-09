@@ -31,7 +31,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         }
       }
 
-      return activated;
+      return Boolean(activated);
     } catch (err) {
       if (err instanceof ForbiddenException) throw err;
       this.logger.error(`Auth failed for ${req.path}: ${err.message}`);

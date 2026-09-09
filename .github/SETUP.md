@@ -33,9 +33,7 @@ Description: Utilisateur SSH sur le serveur
 #### 3. DEPLOY_KEY
 ```
 Nom: DEPLOY_KEY
-Valeur: -----BEGIN OPENSSH PRIVATE KEY-----
-        [contenu complet de la clé]
-        -----END OPENSSH PRIVATE KEY-----
+Valeur: <private-key-redacted>
 Description: Clé privée SSH (avec BEGIN et END)
 ```
 
@@ -57,7 +55,7 @@ cat ~/.ssh/game-plug.pub | ssh user@host "mkdir -p ~/.ssh && cat >> ~/.ssh/autho
 #### 4. SLACK_WEBHOOK (Optionnel)
 ```
 Nom: SLACK_WEBHOOK
-Valeur: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
+Valeur: https://hooks.slack.com/services/<workspace>/<channel>/<secret>
 Description: Webhook Slack pour notifications
 ```
 

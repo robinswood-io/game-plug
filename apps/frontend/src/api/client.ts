@@ -82,7 +82,7 @@ apiClient.interceptors.response.use(
 
           // Redirection vers la page de login
           if (typeof window !== 'undefined') {
-            window.location.href = '/login';
+            window.location.assign(new URL('/login', window.location.origin).toString());
           }
 
           return Promise.reject(refreshError);
@@ -93,7 +93,7 @@ apiClient.interceptors.response.use(
         localStorage.removeItem('user');
 
         if (typeof window !== 'undefined') {
-          window.location.href = '/login';
+          window.location.assign(new URL('/login', window.location.origin).toString());
         }
 
         return Promise.reject(error);

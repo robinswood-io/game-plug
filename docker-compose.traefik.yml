@@ -10,11 +10,11 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=5000
-      - DATABASE_URL=postgresql://devuser:pUhk3vwiflaanYbbyLhpYvdllxsLpW2@dev_postgres:5432/game_plug
+      - DATABASE_URL=${DATABASE_URL:?DATABASE_URL is required}
       - REDIS_URL=redis://dev_redis:6379
       - S3_ENDPOINT=http://dev_minio:9000
-      - S3_ACCESS_KEY_ID=minioadmin
-      - S3_SECRET_ACCESS_KEY=minioadmin123
+      - S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID:?S3_ACCESS_KEY_ID is required}
+      - S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY:?S3_SECRET_ACCESS_KEY is required}
     networks:
       - traefik_public
       - dev_network

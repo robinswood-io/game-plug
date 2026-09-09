@@ -1,7 +1,7 @@
 client:495 [vite] connecting...
-client:536 WebSocket connection to 'wss://96499cd2-6109-47e7-9205-561fd7108f5f-00-2ucguq6ozeiab.spock.replit.dev/?token=QAmdx31J8woq' failed: Error during WebSocket handshake: Unexpected response code: 400
+client:536 WebSocket connection to 'wss://96499cd2-6109-47e7-9205-561fd7108f5f-00-2ucguq6ozeiab.spock.replit.dev/[token omitted]' failed: Error during WebSocket handshake: Unexpected response code: 400
 setupWebSocket @ client:536
-client:536 Uncaught (in promise) DOMException: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=QAmdx31J8woq' is invalid.
+client:536 Uncaught (in promise) DOMException: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/[token omitted]' is invalid.
     at setupWebSocket (https://96499cd2-6109-47e7-9205-561fd7108f5f-00-2ucguq6ozeiab.spock.replit.dev/@vite/client:536:19)
     at fallback (https://96499cd2-6109-47e7-9205-561fd7108f5f-00-2ucguq6ozeiab.spock.replit.dev/@vite/client:509:16)
     at WebSocket.<anonymous> (https://96499cd2-6109-47e7-9205-561fd7108f5f-00-2ucguq6ozeiab.spock.replit.dev/@vite/client:555:7)

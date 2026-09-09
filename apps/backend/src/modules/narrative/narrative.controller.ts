@@ -9,30 +9,24 @@ import {
   Query,
   UseGuards,
   Req,
-  ForbiddenException,
-  NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { NarrativeService } from './narrative.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { SessionsService } from '../sessions/sessions.service';
 
 @ApiTags('Narrative')
 @ApiBearerAuth()
 @Controller('api')
 @UseGuards(JwtAuthGuard)
 export class NarrativeController {
-  constructor(
-    private readonly narrativeService: NarrativeService,
-    private readonly sessionsService: SessionsService,
-  ) {}
+  constructor(private readonly narrativeService: NarrativeService) {}
 
   @Get('narrative')
   @ApiOperation({ summary: 'Get narrative elements for session' })
   @ApiResponse({ status: 200, description: 'Narrative elements' })
-  async findBySession(@Query('sessionId') sessionId: string) {
-    return this.narrativeService.findBySession(sessionId);
+  async findBySession(@Query('sessionId') sessionId: string, @Req() req: any) {
+    return this.narrativeService.findBySessionForGm(sessionId, req.user.id);
   }
 
   @Get('sessions/:sessionId/narrative')
@@ -44,22 +38,14 @@ export class NarrativeController {
     @Param('sessionId') sessionId: string,
     @Req() req: any,
   ) {
-    const userId = req.user.id;
-
-    // Check if user is GM of this session
-    const session = await this.sessionsService.findOne(sessionId);
-    if (!session || session.gmId !== userId) {
-      throw new ForbiddenException('Only the GM can access narrative entries');
-    }
-
-    return this.narrativeService.findBySession(sessionId);
+    return this.narrativeService.findBySessionForGm(sessionId, req.user.id);
   }
 
   @Post('narrative')
   @ApiOperation({ summary: 'Create narrative element' })
   @ApiResponse({ status: 201, description: 'Narrative element created' })
-  async create(@Body() data: any) {
-    return this.narrativeService.create(data);
+  async create(@Body() data: any, @Req() req: any) {
+    return this.narrativeService.create(data, req.user.id);
   }
 
   @Post('sessions/:sessionId/narrative')
@@ -73,39 +59,30 @@ export class NarrativeController {
     @Body() data: { content: string; entryType?: string },
     @Req() req: any,
   ) {
-    const userId = req.user.id;
-
-    // Check if user is GM of this session
-    const session = await this.sessionsService.findOne(sessionId);
-    if (!session || session.gmId !== userId) {
-      throw new ForbiddenException('Only the GM can create narrative entries');
-    }
-
     if (!data.content || !data.content.trim()) {
       throw new BadRequestException('Content is required');
     }
 
     return this.narrativeService.create({
       sessionId,
-      gmId: userId,
       content: data.content.trim(),
       entryType: data.entryType || 'note',
       isAiGenerated: false,
-    });
+    }, req.user.id);
   }
 
   @Patch('narrative/:id')
   @ApiOperation({ summary: 'Update narrative element' })
   @ApiResponse({ status: 200, description: 'Narrative element updated' })
-  async update(@Param('id') id: string, @Body() data: any) {
-    return this.narrativeService.update(id, data);
+  async update(@Param('id') id: string, @Body() data: any, @Req() req: any) {
+    return this.narrativeService.update(id, data, req.user.id);
   }
 
   @Delete('narrative/:id')
   @ApiOperation({ summary: 'Delete narrative element' })
   @ApiResponse({ status: 200, description: 'Narrative element deleted' })
-  async delete(@Param('id') id: string) {
-    await this.narrativeService.delete(id);
+  async delete(@Param('id') id: string, @Req() req: any) {
+    await this.narrativeService.delete(id, req.user.id);
     return { success: true };
   }
 }

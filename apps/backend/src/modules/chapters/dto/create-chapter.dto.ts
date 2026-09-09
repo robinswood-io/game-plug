@@ -7,6 +7,11 @@ export class CreateChapterDto {
   @IsNotEmpty({ message: 'Le nom du chapitre est requis' })
   name: string;
 
+  @ApiPropertyOptional({ example: 'sess_123', description: 'Session ID' })
+  @IsOptional()
+  @IsString()
+  sessionId?: string;
+
   @ApiPropertyOptional({ example: 'Les investigateurs decouvrent...', description: 'Chapter description' })
   @IsOptional()
   @IsString()

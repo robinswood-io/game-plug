@@ -320,7 +320,7 @@ DEPLOY_PORT        = port SSH (optionnel, défaut: 22)
 #### Pour les notifications (deploy.yml, release.yml)
 
 ```
-SLACK_WEBHOOK      = https://hooks.slack.com/services/...
+SLACK_WEBHOOK      = SLACK_WEBHOOK_REDACTED_ROTATE_GITHUB_SECRET_SCANNING_ALERT_1
 ```
 
 #### Pour les artefacts

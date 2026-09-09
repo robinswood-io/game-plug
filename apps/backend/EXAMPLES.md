@@ -33,8 +33,8 @@ curl -X POST http://localhost:5002/api/auth/signup \
 **Response (201 Created):**
 ```json
 {
-  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "accessToken": "<token>",
+  "refreshToken": "<token>",
   "user": {
     "id": "550e8400-e29b-41d4-a716-446655440000",
     "email": "gm@example.com",
@@ -68,7 +68,7 @@ Get a new access token using a refresh token.
 curl -X POST http://localhost:5002/api/auth/refresh \
   -H "Content-Type: application/json" \
   -d '{
-    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    "refreshToken": "<token>"
   }'
 ```
 
@@ -85,7 +85,7 @@ Create a new player character.
 ```bash
 curl -X POST http://localhost:5002/api/characters \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
   -d '{
     "sessionId": "550e8400-e29b-41d4-a716-446655440001",
     "userId": "550e8400-e29b-41d4-a716-446655440000",
@@ -162,7 +162,7 @@ Get all characters for the current user.
 
 ```bash
 curl -X GET "http://localhost:5002/api/characters?userId=550e8400-e29b-41d4-a716-446655440000" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
 ```
 
 ### 6. Get a Specific Character
@@ -171,7 +171,7 @@ Retrieve a character by ID.
 
 ```bash
 curl -X GET http://localhost:5002/api/characters/550e8400-e29b-41d4-a716-446655440002 \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
 ```
 
 ### 7. Update Character
@@ -181,7 +181,7 @@ Update character attributes (e.g., after damage).
 ```bash
 curl -X PATCH http://localhost:5002/api/characters/550e8400-e29b-41d4-a716-446655440002 \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
   -d '{
     "hitPoints": 65,
     "sanity": 68,
@@ -202,7 +202,7 @@ Remove a character from the game.
 
 ```bash
 curl -X DELETE http://localhost:5002/api/characters/550e8400-e29b-41d4-a716-446655440002 \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
 ```
 
 ---
@@ -216,7 +216,7 @@ Start a new game session.
 ```bash
 curl -X POST http://localhost:5002/api/sessions \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
   -d '{
     "name": "The Shadow Over Innsmouth",
     "gmId": "550e8400-e29b-41d4-a716-446655440000",
@@ -244,7 +244,7 @@ Get all sessions for a Game Master.
 
 ```bash
 curl -X GET "http://localhost:5002/api/sessions?gmId=550e8400-e29b-41d4-a716-446655440000" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
 ```
 
 ### 11. Start Session
@@ -254,7 +254,7 @@ Update session status to "active".
 ```bash
 curl -X PATCH http://localhost:5002/api/sessions/550e8400-e29b-41d4-a716-446655440001 \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
   -d '{
     "status": "active"
   }'
@@ -269,7 +269,7 @@ curl -X PATCH http://localhost:5002/api/sessions/550e8400-e29b-41d4-a716-4466554
 ```bash
 curl -X POST http://localhost:5002/api/inventory \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
   -d '{
     "characterId": "550e8400-e29b-41d4-a716-446655440002",
     "name": ".38 Revolver",
@@ -290,7 +290,7 @@ curl -X POST http://localhost:5002/api/inventory \
 
 ```bash
 curl -X GET "http://localhost:5002/api/inventory?characterId=550e8400-e29b-41d4-a716-446655440002" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
 ```
 
 ### 14. Update Inventory Item
@@ -300,7 +300,7 @@ Update item quantity or equipped status.
 ```bash
 curl -X PATCH http://localhost:5002/api/inventory/550e8400-e29b-41d4-a716-446655440003 \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
   -d '{
     "quantity": 12,
     "isEquipped": false
@@ -316,7 +316,7 @@ curl -X PATCH http://localhost:5002/api/inventory/550e8400-e29b-41d4-a716-446655
 ```bash
 curl -X POST http://localhost:5002/api/chapters \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
   -d '{
     "sessionId": "550e8400-e29b-41d4-a716-446655440001",
     "name": "Chapter 1: Whispers in the Dark",
@@ -330,7 +330,7 @@ curl -X POST http://localhost:5002/api/chapters \
 
 ```bash
 curl -X GET "http://localhost:5002/api/chapters?sessionId=550e8400-e29b-41d4-a716-446655440001" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
 ```
 
 ### 17. Log Chapter Event
@@ -340,7 +340,7 @@ Record what happens in a chapter.
 ```bash
 curl -X POST http://localhost:5002/api/chapter-events \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
   -d '{
     "chapterId": "550e8400-e29b-41d4-a716-446655440004",
     "sessionId": "550e8400-e29b-41d4-a716-446655440001",
@@ -367,7 +367,7 @@ Execute a dice roll with skill check.
 ```bash
 curl -X POST http://localhost:5002/api/dice/roll \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
   -d '{
     "diceFormula": "1d100",
     "rollType": "skill",
@@ -407,7 +407,7 @@ Assign a mental condition to a character.
 ```bash
 curl -X POST http://localhost:5002/api/sanity \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
   -d '{
     "characterId": "550e8400-e29b-41d4-a716-446655440002",
     "type": "phobia",
@@ -421,7 +421,7 @@ curl -X POST http://localhost:5002/api/sanity \
 
 ```bash
 curl -X GET "http://localhost:5002/api/sanity?characterId=550e8400-e29b-41d4-a716-446655440002" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
 ```
 
 ---
@@ -435,7 +435,7 @@ Record a GM note or story development.
 ```bash
 curl -X POST http://localhost:5002/api/narrative \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
   -d '{
     "sessionId": "550e8400-e29b-41d4-a716-446655440001",
     "gmId": "550e8400-e29b-41d4-a716-446655440000",
@@ -456,7 +456,7 @@ curl -X POST http://localhost:5002/api/narrative \
 
 ```bash
 curl -X GET http://localhost:5002/api/characters \
-  -H "Authorization: Bearer INVALID_TOKEN"
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
 ```
 
 **Response (401 Unauthorized):**
@@ -472,7 +472,7 @@ curl -X GET http://localhost:5002/api/characters \
 
 ```bash
 curl -X GET http://localhost:5002/api/characters/550e8400-invalid-id \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+  -H "Authorization: Bearer ${ACCESS_TOKEN}
 ```
 
 **Response (404 Not Found):**
@@ -513,7 +513,7 @@ curl -X POST http://localhost:5002/api/auth/signup \
 Always include the Bearer token in the Authorization header for protected endpoints:
 
 ```bash
--H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+-H "Authorization: Bearer ${ACCESS_TOKEN}
 ```
 
 ### 2. Query Parameters
@@ -569,7 +569,7 @@ The API validates:
 ```typescript
 const API_URL = 'http://localhost:5002';
 
-async function createCharacter(accessToken: string, characterData: any) {
+async function createCharacter(accessToken: <token> characterData: any) {
   const response = await fetch(`${API_URL}/api/characters`, {
     method: 'POST',
     headers: {
@@ -578,7 +578,7 @@ async function createCharacter(accessToken: string, characterData: any) {
     },
     body: JSON.stringify(characterData)
   });
-  
+
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   return response.json();
 }

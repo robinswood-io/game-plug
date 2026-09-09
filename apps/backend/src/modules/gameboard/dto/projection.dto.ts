@@ -33,6 +33,11 @@ export class CreateProjectionDto {
 }
 
 export class UpdateProjectionDto {
+  @ApiPropertyOptional({ description: 'Session ID for authorization' })
+  @IsOptional()
+  @IsString()
+  sessionId?: string;
+
   @ApiPropertyOptional({ description: 'Projection title' })
   @IsOptional()
   @IsString()

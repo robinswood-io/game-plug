@@ -19,7 +19,7 @@ export default function LandingPage() {
             Game Plug
           </h1>
           <p className="text-xl md:text-3xl font-crimson italic text-aged-parchment animate-pulse-slow">
-            "Le réveil des Grands Anciens est proche..."
+            &quot;Le réveil des Grands Anciens est proche...&quot;
           </p>
         </header>
 
@@ -32,7 +32,7 @@ export default function LandingPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="font-source text-sm text-aged-parchment/80">
-                Dirigez l'enquête, manipulez le destin et observez vos joueurs sombrer.
+                Dirigez l&apos;enquête, manipulez le destin et observez vos joueurs sombrer.
               </p>
               <Button asChild className="w-full btn-primary font-cinzel">
                 <Link href="/gm-login">Invoquer le Gardien</Link>
@@ -47,7 +47,7 @@ export default function LandingPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="font-source text-sm text-aged-parchment/80">
-                Rejoignez une session existante et tentez de survivre à l'horreur.
+                Rejoignez une session existante et tentez de survivre à l&apos;horreur.
               </p>
               <Button
                 asChild

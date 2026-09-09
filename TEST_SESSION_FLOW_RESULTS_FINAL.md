@@ -1,7 +1,7 @@
 # TEST FLOW COMPLET GESTION SESSION MJ - RAPPORT FINAL
 
-**Date**: 2026-01-24  
-**Environnement**: GamePlug Backend (NestJS/PostgreSQL)  
+**Date**: 2026-01-24
+**Environnement**: GamePlug Backend (NestJS/PostgreSQL)
 **Statut**: TEST EXÉCUTÉ - BUG IDENTIFIÉ ET DOCUMENTÉ
 
 ---
@@ -76,7 +76,7 @@ Test complet du flow de gestion de session pour le Maître de Jeu (MJ):
 
 ### BUG #1: CRÉATION SESSION - gmId manquant (CRITIQUE)
 
-**Fichier**: `/srv/workspace/game-plug/apps/backend/src/modules/sessions/sessions.controller.ts`  
+**Fichier**: `/srv/workspace/game-plug/apps/backend/src/modules/sessions/sessions.controller.ts`
 **Lignes**: 74-79
 
 **Code actuel**:
@@ -170,7 +170,7 @@ POST /api/auth/dev-login
 Payload: {"email":"gm@example.com"}
 Response: HTTP 200
 {
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "access_token": "<token>",
   "user": {
     "id": "95d2b2eb-eb63-40f5-9c96-c4f68a970e7b",
     "email": "gm@example.com",
@@ -185,7 +185,7 @@ Response: HTTP 200
 ### Test 2: Create Session ✗ FAIL
 ```
 POST /api/sessions
-Headers: Authorization: Bearer <token>
+Headers: Authorization: Bearer ${ACCESS_TOKEN}
 Payload: {"name":"Test Session Flow Complete"}
 Response: HTTP 500
 {
@@ -256,7 +256,7 @@ Le script teste:
 
 ## CONCLUSION
 
-Un **bug critique a été identifié et documenté** qui empêche la création de sessions. 
+Un **bug critique a été identifié et documenté** qui empêche la création de sessions.
 Le fix est simple et a été implémenté localement.
 Une fois appliqué au container, tous les tests devraient passer.
 

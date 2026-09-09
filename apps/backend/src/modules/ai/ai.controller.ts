@@ -69,10 +69,15 @@ export class AiController {
   @ApiResponse({ status: 200, description: 'Character avatar generated successfully' })
   @ApiResponse({ status: 400, description: 'Invalid character avatar parameters' })
   async generateCharacterAvatar(
+    @Request() req: any,
     @Param('characterId') characterId: string,
     @Body() dto: GenerateCharacterAvatarDto,
   ) {
-    return this.aiService.generateCharacterAvatar(characterId, dto);
+    return this.aiService.generateCharacterAvatar(
+      characterId,
+      dto,
+      req.user?.id || req.user?.sub,
+    );
   }
 
   @Post('sessions/:sessionId/generate-all-avatars')

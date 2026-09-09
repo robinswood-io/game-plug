@@ -80,7 +80,7 @@ gcTime: 10 * 60 * 1000,
 **Fichier:** `/srv/workspace/.env`
 
 ```bash
-GAME_PLUG_JWT_SECRET=06650432a8b21232edd3912af740e1869318579fae9b63effa2769b6c046f69a
+GAME_PLUG_JWT_SECRET=<jwt-secret>
 ```
 
 **Impact:** Tokens JWT valides et sécurisés (64 caractères hex)
@@ -141,7 +141,7 @@ DEV_TOKEN=$(echo "$DEV_RESPONSE" | jq -r '.access_token // empty' 2>/dev/null)
    useAuth() hook
    ↓
    GET /api/auth/user
-   Authorization: Bearer {token}
+   Authorization: Bearer ${ACCESS_TOKEN}
    ↓
    Response: { id, email, isGM, ... }
    ↓
@@ -149,7 +149,7 @@ DEV_TOKEN=$(echo "$DEV_RESPONSE" | jq -r '.access_token // empty' 2>/dev/null)
 
 3. Créer Session
    POST /api/sessions
-   Authorization: Bearer {token}
+   Authorization: Bearer ${ACCESS_TOKEN}
    ↓
    Response: { id, name, code, ... }
    ↓
@@ -157,7 +157,7 @@ DEV_TOKEN=$(echo "$DEV_RESPONSE" | jq -r '.access_token // empty' 2>/dev/null)
 
 4. Lister Sessions
    GET /api/sessions
-   Authorization: Bearer {token}
+   Authorization: Bearer ${ACCESS_TOKEN}
    ↓
    Response: [ {...}, {...}, ... ]
    ↓

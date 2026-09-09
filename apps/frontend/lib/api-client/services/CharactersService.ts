@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+
 import type { CreateCharacterDto } from '../models/CreateCharacterDto';
 import type { UpdateCharacterDto } from '../models/UpdateCharacterDto';
 import type { CancelablePromise } from '../core/CancelablePromise';

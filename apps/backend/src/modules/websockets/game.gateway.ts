@@ -6,9 +6,10 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
+import { resolveAllowedOrigins } from '../../security-config';
 
 @WebSocketGateway({
-  cors: { origin: '*', credentials: true },
+  cors: { origin: resolveAllowedOrigins(), credentials: true },
   path: '/game-ws',
   namespace: '/game',
 })

@@ -81,9 +81,9 @@ const MAX_HISTORY_SIZE = 100;
 export function useWebSocket(autoConnect = true) {
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
-  const messageHistoryRef = useRef<WebSocketMessage[]>([]);
-  const [historyUpdateTrigger, setHistoryUpdateTrigger] = useState(0);
+  const [messageHistory, setMessageHistory] = useState<WebSocketMessage[]>([]);
   const socketRef = useRef<Socket | null>(null);
+  const [socketInstance, setSocketInstance] = useState<Socket | null>(null);
   const eventHandlersRef = useRef<Map<string, Set<EventHandler>>>(new Map());
   const toastShownRef = useRef(false);
   const { toast } = useToast();
@@ -96,6 +96,7 @@ export function useWebSocket(autoConnect = true) {
 
     const socket = getSocket();
     socketRef.current = socket;
+    setSocketInstance(socket);
 
     // Connection events
     socket.on('connect', () => {
@@ -162,11 +163,12 @@ export function useWebSocket(autoConnect = true) {
 
       setLastMessage(messageWithTimestamp);
 
-      if (messageHistoryRef.current.length >= MAX_HISTORY_SIZE) {
-        messageHistoryRef.current = messageHistoryRef.current.slice(-MAX_HISTORY_SIZE + 1);
-      }
-      messageHistoryRef.current.push(messageWithTimestamp);
-      setHistoryUpdateTrigger(prev => prev + 1);
+      setMessageHistory((currentHistory) => {
+        const retainedHistory = currentHistory.length >= MAX_HISTORY_SIZE
+          ? currentHistory.slice(-MAX_HISTORY_SIZE + 1)
+          : currentHistory;
+        return [...retainedHistory, messageWithTimestamp];
+      });
 
       // Call user handler
       handler(messageWithTimestamp);
@@ -255,18 +257,21 @@ export function useWebSocket(autoConnect = true) {
    */
   useEffect(() => {
     if (autoConnect) {
-      connect();
+      queueMicrotask(connect);
     }
+
+    const eventHandlers = eventHandlersRef.current;
 
     return () => {
       // Cleanup: remove all event handlers
-      if (socketRef.current) {
-        eventHandlersRef.current.forEach((handlers, event) => {
+      const socket = socketRef.current;
+      if (socket) {
+        eventHandlers.forEach((handlers, event) => {
           handlers.forEach((handler) => {
-            socketRef.current?.off(event, (data: unknown) => handler({ type: event, data } as WebSocketMessage));
+            socket.off(event, (data: unknown) => handler({ type: event, data } as WebSocketMessage));
           });
         });
-        eventHandlersRef.current.clear();
+        eventHandlers.clear();
       }
 
       // Don't disconnect on unmount - keep connection alive for app lifetime
@@ -274,16 +279,10 @@ export function useWebSocket(autoConnect = true) {
     };
   }, [autoConnect, connect]);
 
-  // Memoized message history
-  const messageHistory = useMemo(
-    () => [...messageHistoryRef.current],
-    [historyUpdateTrigger]
-  );
-
   return useMemo(() => ({
     // Connection state
     isConnected,
-    socket: socketRef.current,
+    socket: socketInstance,
 
     // Event subscription
     on,
@@ -322,5 +321,6 @@ export function useWebSocket(autoConnect = true) {
     ping,
     lastMessage,
     messageHistory,
+    socketInstance,
   ]);
 }

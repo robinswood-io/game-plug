@@ -39,8 +39,9 @@ export class DiceController {
   async getSessionRolls(
     @Param('sessionId') sessionId: string,
     @Query('limit') limit?: string,
+    @Request() req?: any,
   ) {
     const limitNumber = limit ? parseInt(limit, 10) : 50;
-    return this.diceService.getSessionRollHistory(sessionId, limitNumber);
+    return this.diceService.getSessionRollHistoryForGm(sessionId, limitNumber, req.user?.id || req.user?.sub);
   }
 }

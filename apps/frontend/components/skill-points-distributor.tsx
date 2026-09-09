@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
-import { 
+import {
   GraduationCap, Plus, Minus, Save, X, Info,
   TrendingUp, CheckCircle, AlertTriangle
 } from "lucide-react";
@@ -17,15 +17,15 @@ import { SKILL_TRANSLATIONS, DEFAULT_SKILLS } from "@/lib/cthulhu-data";
 import type { Character } from "@shared/schema";
 
 interface SkillPointsDistributorProps {
-  character: Character & { 
+  character: Character & {
     availableSkillPoints?: number | null;
   };
   onDistributePoints: (skillUpdates: Record<string, number>) => Promise<void>;
 }
 
-export default function SkillPointsDistributor({ 
-  character, 
-  onDistributePoints 
+export default function SkillPointsDistributor({
+  character,
+  onDistributePoints
 }: SkillPointsDistributorProps) {
   const { toast } = useToast();
   const [pendingPoints, setPendingPoints] = useState<Record<string, number>>({});
@@ -45,8 +45,8 @@ export default function SkillPointsDistributor({
     name,
     base: DEFAULT_SKILLS[key] || 0
   }));
-  
-  const filteredSkills = allSkills.filter(skill => 
+
+  const filteredSkills = allSkills.filter(skill =>
     skill.name.toLowerCase().includes(searchTerm.toLowerCase())
   ).sort((a, b) => a.name.localeCompare(b.name, 'fr'));
 
@@ -55,10 +55,10 @@ export default function SkillPointsDistributor({
       const currentPending = prev[skillName] || 0;
       const currentSkillValue = currentSkills[skillName] || 0;
       const newPending = currentPending + delta;
-      
+
       // Prevent negative pending points
       if (newPending < 0) return prev;
-      
+
       // Prevent exceeding available points
       const totalAfterChange = usedPoints - currentPending + newPending;
       if (totalAfterChange > availablePoints) {
@@ -69,7 +69,7 @@ export default function SkillPointsDistributor({
         });
         return prev;
       }
-      
+
       // Prevent skill from exceeding 99%
       if (currentSkillValue + newPending > 99) {
         toast({
@@ -79,13 +79,13 @@ export default function SkillPointsDistributor({
         });
         return prev;
       }
-      
+
       // Remove entry if back to 0
       if (newPending === 0) {
         const { [skillName]: _, ...rest } = prev;
         return rest;
       }
-      
+
       return { ...prev, [skillName]: newPending };
     });
   };
@@ -102,22 +102,22 @@ export default function SkillPointsDistributor({
 
     try {
       setIsSaving(true);
-      
+
       // Create the updated skills object
       const updatedSkills: Record<string, number> = {};
       Object.entries(pendingPoints).forEach(([skillName, points]) => {
         const currentValue = currentSkills[skillName] || 0;
         updatedSkills[skillName] = Math.min(99, currentValue + points);
       });
-      
+
       await onDistributePoints(updatedSkills);
-      
+
       toast({
         title: "Points distribués avec succès",
         description: `${usedPoints} points de compétence ont été appliqués.`,
         className: "bg-eldritch-green/20 border-eldritch-green"
       });
-      
+
       // Reset pending points
       setPendingPoints({});
     } catch (error) {
@@ -153,7 +153,7 @@ export default function SkillPointsDistributor({
           <Alert className="bg-cosmic-void/50 border-aged-gold/50">
             <Info className="h-4 w-4 text-aged-gold" />
             <AlertDescription className="text-aged-parchment">
-              Vous n'avez pas de points de compétence disponibles pour le moment.
+              Vous n&apos;avez pas de points de compétence disponibles pour le moment.
               Le Gardien peut vous en attribuer suite à vos expériences.
             </AlertDescription>
           </Alert>
@@ -189,8 +189,8 @@ export default function SkillPointsDistributor({
 
         {/* Progress Bar */}
         <div>
-          <Progress 
-            value={(usedPoints / availablePoints) * 100} 
+          <Progress
+            value={(usedPoints / availablePoints) * 100}
             className="h-2 bg-cosmic-void"
           />
         </div>
@@ -214,7 +214,7 @@ export default function SkillPointsDistributor({
               const pendingValue = pendingPoints[skill.key] || 0;
               const finalValue = Math.min(99, currentValue + pendingValue);
               const hasChanges = pendingValue > 0;
-              
+
               return (
                 <div
                   key={skill.name}
@@ -246,7 +246,7 @@ export default function SkillPointsDistributor({
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-1">
                     <Button
                       size="sm"
@@ -257,11 +257,11 @@ export default function SkillPointsDistributor({
                     >
                       <Minus className="h-3 w-3" />
                     </Button>
-                    
+
                     <div className="w-12 text-center font-cinzel text-bone-white">
                       {pendingValue || 0}
                     </div>
-                    
+
                     <Button
                       size="sm"
                       variant="outline"

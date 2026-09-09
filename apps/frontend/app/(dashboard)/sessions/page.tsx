@@ -395,7 +395,7 @@ export default function SessionManager() {
                 Supprimer la Session
               </DialogTitle>
               <DialogDescription className="text-aged-parchment">
-                Êtes-vous sûr de vouloir supprimer la session "{selectedSession?.name}" ?
+                Êtes-vous sûr de vouloir supprimer la session &quot;{selectedSession?.name}&quot; ?
                 Cette action est irréversible et supprimera tous les personnages associés.
               </DialogDescription>
             </DialogHeader>

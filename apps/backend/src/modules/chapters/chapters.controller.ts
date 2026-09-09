@@ -9,13 +9,11 @@ import {
   Query,
   UseGuards,
   Req,
-  ForbiddenException,
-  NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { ChaptersService } from './chapters.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { SessionsService } from '../sessions/sessions.service';
 import { CreateChapterDto, UpdateChapterDto } from './dto';
 
 @ApiTags('Chapters')
@@ -23,39 +21,39 @@ import { CreateChapterDto, UpdateChapterDto } from './dto';
 @Controller('api')
 @UseGuards(JwtAuthGuard)
 export class ChaptersController {
-  constructor(
-    private readonly chaptersService: ChaptersService,
-    private readonly sessionsService: SessionsService,
-  ) {}
+  constructor(private readonly chaptersService: ChaptersService) {}
 
   @Get('chapters')
   @ApiOperation({ summary: 'Get chapters for session' })
   @ApiResponse({ status: 200, description: 'List of chapters' })
-  async findBySession(@Query('sessionId') sessionId: string) {
-    return this.chaptersService.findBySession(sessionId);
+  async findBySession(@Query('sessionId') sessionId: string, @Req() req: any) {
+    return this.chaptersService.findBySessionForGm(sessionId, req.user.id);
   }
 
   @Get('sessions/:sessionId/chapters')
   @ApiOperation({ summary: 'Get chapters for a specific session' })
   @ApiParam({ name: 'sessionId', description: 'Session ID' })
   @ApiResponse({ status: 200, description: 'List of chapters for the session' })
-  async getSessionChapters(@Param('sessionId') sessionId: string) {
-    return this.chaptersService.findBySession(sessionId);
+  async getSessionChapters(@Param('sessionId') sessionId: string, @Req() req: any) {
+    return this.chaptersService.findBySessionForGm(sessionId, req.user.id);
   }
 
   @Get('chapters/:id')
   @ApiOperation({ summary: 'Get chapter by ID' })
   @ApiResponse({ status: 200, description: 'Chapter details' })
-  async findOne(@Param('id') id: string) {
-    return this.chaptersService.findOne(id);
+  async findOne(@Param('id') id: string, @Req() req: any) {
+    return this.chaptersService.findOneForGm(id, req.user.id);
   }
 
   @Post('chapters')
   @ApiOperation({ summary: 'Create new chapter' })
   @ApiResponse({ status: 201, description: 'Chapter created' })
   @ApiResponse({ status: 400, description: 'Invalid chapter data' })
-  async create(@Body() data: CreateChapterDto) {
-    return this.chaptersService.create(data);
+  async create(@Body() data: CreateChapterDto, @Req() req: any) {
+    if (!('sessionId' in data) || typeof data.sessionId !== 'string') {
+      throw new BadRequestException('Session ID is required');
+    }
+    return this.chaptersService.createForSession(data.sessionId, data, req.user.id);
   }
 
   @Post('sessions/:sessionId/chapters')
@@ -72,31 +70,22 @@ export class ChaptersController {
   ) {
     const userId = (req as { user: { id: string } }).user.id;
 
-    // Check if user is GM of this session
-    const session = await this.sessionsService.findOne(sessionId);
-    if (!session) {
-      throw new NotFoundException('Session not found');
-    }
-    if (session.gmId !== userId) {
-      throw new ForbiddenException('Only the GM can create chapters');
-    }
-
-    return this.chaptersService.create({ ...data, sessionId });
+    return this.chaptersService.createForSession(sessionId, data, userId);
   }
 
   @Patch('chapters/:id')
   @ApiOperation({ summary: 'Update chapter' })
   @ApiResponse({ status: 200, description: 'Chapter updated' })
   @ApiResponse({ status: 404, description: 'Chapter not found' })
-  async update(@Param('id') id: string, @Body() data: UpdateChapterDto) {
-    return this.chaptersService.update(id, data);
+  async update(@Param('id') id: string, @Body() data: UpdateChapterDto, @Req() req: any) {
+    return this.chaptersService.update(id, data, req.user.id);
   }
 
   @Delete('chapters/:id')
   @ApiOperation({ summary: 'Delete chapter' })
   @ApiResponse({ status: 200, description: 'Chapter deleted' })
-  async delete(@Param('id') id: string) {
-    await this.chaptersService.delete(id);
+  async delete(@Param('id') id: string, @Req() req: any) {
+    await this.chaptersService.delete(id, req.user.id);
     return { success: true };
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, memo } from "react";
+import NextImage from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -69,7 +70,7 @@ function EnhancedCharacterCard({
   const [quickPoints, setQuickPoints] = useState("");
   const [activeTab, setActiveTab] = useState("stats");
 
-  const isCriticalCondition = character.hitPoints < character.maxHitPoints * 0.3 || 
+  const isCriticalCondition = character.hitPoints < character.maxHitPoints * 0.3 ||
                               character.sanity < character.maxSanity * 0.3;
 
   const handleQuickRoll = async (formula: string, label: string) => {
@@ -122,10 +123,13 @@ function EnhancedCharacterCard({
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
             {character.avatarUrl ? (
-              <img 
-                src={character.avatarUrl} 
+              <NextImage
+                src={character.avatarUrl}
                 alt={character.name}
-                className="w-14 h-14 rounded-full border-2 border-aged-gold object-cover"
+                width={56}
+                                  height={56}
+                                  unoptimized
+                                  className="w-14 h-14 rounded-full border-2 border-aged-gold object-cover"
                 data-testid={`img-character-avatar-${character.id}`}
               />
             ) : (
@@ -141,7 +145,7 @@ function EnhancedCharacterCard({
               <p className="text-sm text-aged-parchment" data-testid={`text-character-occupation-${character.id}`}>{character.occupation}</p>
             </div>
           </div>
-          
+
           {/* Quick Actions Menu */}
           <Popover>
             <PopoverTrigger asChild>
@@ -384,7 +388,7 @@ function EnhancedCharacterCard({
               <Heart className="h-3 w-3" />
             </Button>
           </div>
-          
+
           <div className="flex gap-1">
             <Input
               type="text"
@@ -425,9 +429,9 @@ function EnhancedCharacterCard({
                 </Badge>
               ))}
               {character.activeEffects.slice(0, 2).map((effect) => (
-                <Badge 
-                  key={effect.id} 
-                  variant="outline" 
+                <Badge
+                  key={effect.id}
+                  variant="outline"
                   className={cn(
                     "text-xs",
                     effect.type === 'buff' ? "bg-eldritch-green/20 border-eldritch-green" : "bg-blood-burgundy/20 border-blood-burgundy"
@@ -470,7 +474,7 @@ function EnhancedCharacterCard({
                 <TabsTrigger value="rolls" className="text-xs">Jets</TabsTrigger>
                 <TabsTrigger value="buffs" className="text-xs" onClick={() => console.log('🎯 Buffs tab clicked')}>Buffs</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="stats" className="mt-3">
                 <div className="grid grid-cols-3 gap-2 text-xs">
                   <Button
@@ -547,7 +551,7 @@ function EnhancedCharacterCard({
                   </Button>
                 </div>
               </TabsContent>
-              
+
               <TabsContent value="skills" className="mt-3">
                 <ScrollArea className="h-32">
                   <div className="space-y-1">
@@ -589,7 +593,7 @@ function EnhancedCharacterCard({
                   </div>
                 )}
               </TabsContent>
-              
+
               <TabsContent value="rolls" className="mt-3">
                 <div className="grid grid-cols-3 gap-2">
                   <Button
@@ -671,7 +675,7 @@ function EnhancedCharacterCard({
                   </Button>
                 </div>
               </TabsContent>
-              
+
               <TabsContent value="buffs" className="mt-3">
                 <div className="space-y-2">
                   <div className="flex gap-1">

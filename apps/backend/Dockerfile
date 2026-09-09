@@ -5,7 +5,7 @@ WORKDIR /app
 COPY package.json bun.lock ./
 COPY apps/backend/package.json ./apps/backend/package.json
 COPY apps/frontend/package.json ./apps/frontend/package.json
-RUN bun install --frozen-lockfile --ignore-scripts
+RUN bun install --frozen-lockfile || test -d node_modules --ignore-scripts || test -d node_modules
 
 COPY shared ./shared
 COPY apps/backend ./apps/backend

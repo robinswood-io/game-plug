@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
+import NextImage from "next/image";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent } from "@/components/ui/card";
@@ -111,7 +112,8 @@ export default function GameBoard() {
         case 'projection_update':
           // Update projection content
           if (lastMessage.data && typeof lastMessage.data === 'object' && 'content' in lastMessage.data) {
-            setProjectionContent(lastMessage.data.content as ProjectionContent);
+            const nextProjectionContent = lastMessage.data.content as ProjectionContent;
+            queueMicrotask(() => setProjectionContent(nextProjectionContent));
           }
           break;
       }
@@ -230,10 +232,13 @@ export default function GameBoard() {
                         {/* Character Header */}
                         <div className="flex items-center gap-2 mb-1.5">
                           {character.avatarUrl ? (
-                            <img
+                            <NextImage
                               src={character.avatarUrl}
                               alt={character.name}
-                              className="w-8 h-8 rounded-full border border-aged-gold object-cover"
+                              width={32}
+                                  height={32}
+                                  unoptimized
+                                  className="w-8 h-8 rounded-full border border-aged-gold object-cover"
                             />
                           ) : (
                             <div className="w-8 h-8 rounded-full border border-aged-gold bg-cosmic-void flex items-center justify-center">
@@ -428,13 +433,16 @@ export default function GameBoard() {
                 Utilisez les outils ci-dessous pour projeter des images, descriptions et éléments visuels aux joueurs.
               </p>
             </div>
-          ) : projectionContent.type === 'image' ? (
+          ) : projectionContent.type === 'image' && projectionContent.url ? (
             <div className="h-full flex flex-col items-center justify-center p-4">
               <div className="flex-1 flex items-center justify-center max-w-full max-h-full">
-                <img
+                <NextImage
                   src={projectionContent.url}
                   alt="Projection"
-                  className="max-w-full max-h-full object-contain rounded-lg shadow-2xl border border-aged-gold/30"
+                  width={1200}
+                                  height={800}
+                                  unoptimized
+                                  className="max-w-full max-h-full object-contain rounded-lg shadow-2xl border border-aged-gold/30"
                 />
               </div>
 

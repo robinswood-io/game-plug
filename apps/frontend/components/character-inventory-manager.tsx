@@ -200,15 +200,15 @@ export default function CharacterInventoryManager({ characterId, isGM = false }:
 
   const handleMoneyChange = () => {
     if (!moneyAmount || !character) return;
-    
+
     const amount = parseFloat(moneyAmount);
     if (isNaN(amount)) return;
-    
+
     const currentMoney = typeof character.money === 'string' ? parseFloat(character.money) : (character.money || 0);
-    const newAmount = moneyOperation === "add" 
-      ? currentMoney + amount 
+    const newAmount = moneyOperation === "add"
+      ? currentMoney + amount
       : Math.max(0, currentMoney - amount);
-    
+
     updateMoneyMutation.mutate(newAmount);
     setMoneyAmount("");
   };
@@ -278,7 +278,7 @@ export default function CharacterInventoryManager({ characterId, isGM = false }:
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-cinzel text-aged-gold flex items-center gap-2">
             <Coins className="h-4 w-4" />
-            Gestion de l'Argent
+            Gestion de l&apos;Argent
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -347,12 +347,12 @@ export default function CharacterInventoryManager({ characterId, isGM = false }:
             <div className="space-y-2">
               {inventory.length === 0 ? (
                 <div className="text-aged-parchment text-center py-8 bg-cosmic-void/50 rounded border border-aged-gold/30">
-                  L'inventaire est vide
+                  L&apos;inventaire est vide
                 </div>
               ) : (
                 inventory.map((item) => (
-                  <div 
-                    key={item.id} 
+                  <div
+                    key={item.id}
                     className="bg-cosmic-void border border-aged-gold/50 rounded p-3 flex items-center justify-between"
                   >
                     <div className="flex-1">
@@ -458,7 +458,7 @@ export default function CharacterInventoryManager({ characterId, isGM = false }:
               <ScrollArea className="h-[350px]">
                 <div className="space-y-2">
                   {filteredEquipment.map((item, index) => (
-                    <div 
+                    <div
                       key={`${item.category}-${index}`}
                       className="bg-cosmic-void border border-aged-gold/30 rounded p-3 flex items-center justify-between hover:border-aged-gold/60 transition-colors"
                     >

@@ -41,7 +41,7 @@ export default function DashboardPage() {
         </h1>
         <p className="font-crimson text-xl text-aged-parchment max-w-2xl mx-auto">
           Gérez vos investigateurs et rejoignez les mystères lovecraftiens
-          qui vous attendent dans l'ombre.
+          qui vous attendent dans l&apos;ombre.
         </p>
       </div>
 
@@ -72,7 +72,7 @@ export default function DashboardPage() {
                 </h3>
                 <p className="text-aged-parchment mb-4 font-source">
                   Créez votre premier personnage pour commencer votre voyage
-                  dans l'univers de Lovecraft.
+                  dans l&apos;univers de Lovecraft.
                 </p>
                 <Link href="/characters/new">
                   <Button
@@ -108,7 +108,7 @@ export default function DashboardPage() {
                   Aucune Session
                 </h3>
                 <p className="text-aged-parchment text-sm font-source mb-4">
-                  Vous n'avez pas encore créé de session de jeu.
+                  Vous n&apos;avez pas encore créé de session de jeu.
                 </p>
                 <Link href="/sessions">
                   <Button

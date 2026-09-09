@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+
 import type { GenerateAvatarDto } from '../models/GenerateAvatarDto';
 import type { GenerateSceneDto } from '../models/GenerateSceneDto';
 import type { SuggestNarrativeDto } from '../models/SuggestNarrativeDto';
